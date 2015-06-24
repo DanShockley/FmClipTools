@@ -1,7 +1,8 @@
 -- Clipboard XML to FileMaker Objects
--- version 3.8, Daniel A. Shockley
+-- version 3.9, Daniel A. Shockley
 
 
+-- 3.9 - updated fmObjectTranslator code
 -- 3.8 - updated fmObjectTranslator code
 -- 3.4 - updated fmObjectTranslator code
 -- 3.1 - updated fmObjectTranslator code
@@ -67,11 +68,13 @@ end run
 
 
 
+
 on fmObjectTranslator_Instantiate(prefs)
 	
 	script fmObjectTranslator
-		-- version 3.8, Daniel A. Shockley
+		-- version 3.9, Daniel A. Shockley
 		
+		-- 3.9 - fixed bug where simpleFormatXML would fail on layout objects.
 		-- 3.8 - default for shouldPrettify is now FALSE; added shouldSimpleFormat option for simpleFormatXML() (modifies text XML in minor, but useful, ways) - as of 3.8, adds line-returns inside the fmxmlsnippet tags; 
 		-- 3.7 - updated dataObjectToUTF8 to indicate non-FM object can be converted; added clipboardPatternCount method; updated logConsole to 1.9; added coerceToString 1.8; 
 		-- 3.6 - currentCode needed to be evaluated WHEN USED, since translator objects retains previous operations; added error-trapping; labeled more handlers as 'Public Methods'
@@ -604,7 +607,7 @@ on fmObjectTranslator_Instantiate(prefs)
 		
 		
 		on simpleFormatXML(someXML)
-			-- version 1.0
+			-- version 1.1
 			
 			set xmlHeader to "<fmxmlsnippet type=\"FMObjectList\">"
 			set xmlFooter to "</fmxmlsnippet>"
@@ -626,6 +629,10 @@ on fmObjectTranslator_Instantiate(prefs)
 						set AppleScript's text item delimiters to oldDelims
 						error errMsg number errNum
 					end try
+					
+					return modifiedXML
+				else
+					return someXML
 				end if
 			on error errMsg number errNum
 				-- any error above should fail gracefully and just return the original code
@@ -634,7 +641,6 @@ on fmObjectTranslator_Instantiate(prefs)
 				
 			end try
 			
-			return modifiedXML
 			
 		end simpleFormatXML
 		

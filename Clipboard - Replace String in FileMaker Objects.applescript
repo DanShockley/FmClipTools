@@ -1,10 +1,11 @@
 -- Clipboard - Replace String in FileMaker Objects
--- version 3.7, Daniel A. Shockley
+-- version 3.9, Daniel A. Shockley
 
 -- Translates FileMaker clipboard objects to XML, performs a string replace within, then back to objects.
 
 -- VERSION HISTORY: 
--- 3.7- updated fmObjectTranslator code; show count when choosing ReplaceWith and then immediately replace (no 3rd dialog). 
+-- 3.9 - updated fmObjectTranslator code
+-- 3.7 - updated fmObjectTranslator code; show count when choosing ReplaceWith and then immediately replace (no 3rd dialog). 
 -- 3.1.1 - the Replace With dialog now shows what you just chose to SearchFor. 
 -- 2.7 - fixed parameter calls to replaceSimple and patternCount (multi-params => list)
 -- 2.6 - updated fmObjectTranslator code
@@ -67,11 +68,14 @@ end run
 
 
 
+
 on fmObjectTranslator_Instantiate(prefs)
 	
 	script fmObjectTranslator
-		-- version 3.7, Daniel A. Shockley
+		-- version 3.9, Daniel A. Shockley
 		
+		-- 3.9 - fixed bug where simpleFormatXML would fail on layout objects.
+		-- 3.8 - default for shouldPrettify is now FALSE; added shouldSimpleFormat option for simpleFormatXML() (modifies text XML in minor, but useful, ways) - as of 3.8, adds line-returns inside the fmxmlsnippet tags; 
 		-- 3.7 - updated dataObjectToUTF8 to indicate non-FM object can be converted; added clipboardPatternCount method; updated logConsole to 1.9; added coerceToString 1.8; 
 		-- 3.6 - currentCode needed to be evaluated WHEN USED, since translator objects retains previous operations; added error-trapping; labeled more handlers as 'Public Methods'
 		-- 3.5 - moved a file write operation out of unneeded tell System Events block to avoid AppleEvents/sandbox errAEPrivilegeError; CHANGED clipboardSetObjectsUsingXML to actually completely SET clipboard; original behavior now named clipboardAddObjectsUsingXML; brought back handling of FM10 ASCII-10 bug, for backwards compatibility.
@@ -121,7 +125,8 @@ on fmObjectTranslator_Instantiate(prefs)
 		property codeAsXML : ""
 		property codeAsObjects : ""
 		
-		property shouldPrettify : true
+		property shouldPrettify : false
+		property shouldSimpleFormat : false
 		
 		on run
 			-- initialize properties of this script object:
@@ -454,6 +459,7 @@ on fmObjectTranslator_Instantiate(prefs)
 			set objectsAsXML to dataObjectToUTF8({fmObjects:fmObjects})
 			
 			if shouldPrettify then set objectsAsXML to prettifyXML(objectsAsXML)
+			if shouldSimpleFormat then set objectsAsXML to simpleFormatXML(objectsAsXML)
 			
 			return objectsAsXML
 			
@@ -599,6 +605,44 @@ on fmObjectTranslator_Instantiate(prefs)
 			return dirPosix
 		end makeTempDirPosix
 		
+		
+		on simpleFormatXML(someXML)
+			-- version 1.1
+			
+			set xmlHeader to "<fmxmlsnippet type=\"FMObjectList\">"
+			set xmlFooter to "</fmxmlsnippet>"
+			
+			if debugMode then logConsole(ScriptName, "simpleFormatXML: START")
+			try
+				
+				
+				if someXML begins with xmlHeader and someXML ends with xmlFooter then
+					try
+						set {oldDelims, AppleScript's text item delimiters} to {AppleScript's text item delimiters, xmlHeader}
+						set modifiedXML to (text items 2 thru -1 of someXML) as string
+						set AppleScript's text item delimiters to xmlFooter
+						set modifiedXML to ((text items 1 thru -2 of modifiedXML) as string)
+						set modifiedXML to xmlHeader & return & modifiedXML & return & xmlFooter
+						set AppleScript's text item delimiters to oldDelims
+					on error errMsg number errNum
+						-- trap here so we can restore ASTIDs, then pass out the actual error: 
+						set AppleScript's text item delimiters to oldDelims
+						error errMsg number errNum
+					end try
+					
+					return modifiedXML
+				else
+					return someXML
+				end if
+			on error errMsg number errNum
+				-- any error above should fail gracefully and just return the original code
+				if debugMode then logConsole(ScriptName, "simpleFormatXML: ERROR: " & errMsg & "(" & errNum & ")")
+				return someXML
+				
+			end try
+			
+			
+		end simpleFormatXML
 		
 		
 		on prettifyXML(someXML)
@@ -1043,6 +1087,9 @@ on fmObjectTranslator_Instantiate(prefs)
 	
 	
 end fmObjectTranslator_Instantiate
+
+
+
 
 
 

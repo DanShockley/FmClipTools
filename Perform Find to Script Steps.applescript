@@ -1,59 +1,235 @@
--- Clipboard FileMaker Objects to XML
--- version 3.9, Daniel A. Shockley
+-- Perform Find to Script Steps
+-- version 3.8, Daniel A. Shockley
 
--- 3.9 - updated fmObjectTranslator code
--- 3.8 - updated fmObjectTranslator code; added line breaks inside the fmxmlsnippet when text is added to clipboard for script steps. 
--- 3.1 - updated fmObjectTranslator code
--- 3.0 - updated fmObjectTranslator code
--- 2.6 - updated fmObjectTranslator code
--- 2.5 - updated fmObjectTranslator code
--- 2.2 - updated fmObjectTranslator code
--- 2.1 - updated fmObjectTranslator code
--- 2.0 - updated fmObjectTranslator code
--- 1.9 - updated fmObjectTranslator code
--- 1.8 - "clipboard convert" now ADDs the other data, not replace clipboard
--- 1.7 - handles UTF-8 properly now
--- 1.6 - updated fmObjectTranslator code - fix FM line return char
--- 1.5 - updated fmObjectTranslator code - handles larger data sets
--- 1.4 - updated fmObjectTranslator code
--- 1.3 - put the actual conversion code into a handler with script object
--- 1.2 - cleaned up for use in Script menu
--- 1.1 - added ability to determine which FM class is in clipboard
+-- Takes 'Perform Find' script step object in clipboard and converts to multiple script steps specifying a Find in detail. 
+
+-- VERSION HISTORY: 
+-- 3.8 - updated fmObjectTranslator to 3.8; double-check warning for ellipsis (and three dots).
+-- 2.6 - original version using fmObjectTranslator 2.6.
+
+property debugMode : false
+
+
+
 
 on run
-	
 	set objTrans to fmObjectTranslator_Instantiate({})
 	
-	set shouldPrettify of objTrans to false
-	set shouldSimpleFormat of objTrans to true
+	set pfXML to clipboardGetObjectsAsXML({}) of objTrans
 	
 	
 	
-	set debugMode of objTrans to true
+	set detailedFindXML to xmlFindStart()
 	
+	set onFirstRequest to true
 	
+	tell application "System Events"
+		set xmlData to make new XML data with data pfXML
+		set scriptStepElement to XML element "Step" of XML element "fmxmlsnippet" of xmlData
+		
+		if (value of XML attribute "name" of scriptStepElement) is not "Perform Find" then return false
+		
+		set queryElement to XML element "Query" of scriptStepElement
+		
+		
+		set requestRowElements to (every XML element of queryElement whose name is "RequestRow")
+		
+		repeat with oneRequestRowElement in requestRowElements
+			
+			if not onFirstRequest then
+				set detailedFindXML to detailedFindXML & return & my getXmlNewRequest()
+			else
+				set onFirstRequest to false
+			end if
+			
+			if (value of XML attribute "operation" of oneRequestRowElement) is "Exclude" then
+				set detailedFindXML to detailedFindXML & return & my getXmlOmit()
+			end if
+			
+			set criteriaElements to (every XML element of oneRequestRowElement whose name is "Criteria")
+			
+			repeat with oneCriteriaElement in criteriaElements
+				
+				set fieldElement to XML element "Field" of oneCriteriaElement
+				set tableName to value of XML attribute "table" of fieldElement
+				set fieldName to value of XML attribute "name" of fieldElement
+				
+				set textElement to XML element "Text" of oneCriteriaElement
+				set textValue to value of textElement
+				
+				if "><²³=" contains (text 1 thru 1 of textValue) or textValue contains "É" or textValue contains "..." then
+					-- some operator, so WARN: 
+					set textValue to textValue & "  // DOUBLE-CHECK THIS!!!!"
+				end if
+				
+				set oneSetFieldXML to my getXmlSetField(tableName, fieldName, textValue)
+				set detailedFindXML to detailedFindXML & return & oneSetFieldXML
+				
+			end repeat
+			
+			
+			
+		end repeat
+		
+		
+		set detailedFindXML to detailedFindXML & return & my xmlFindEnd()
+		
+		set currentCode of objTrans to "XMSS"
+		set scriptStepsObjects to convertXmlToObjects(detailedFindXML) of objTrans
+		
+		set newClip to {Çclass XMSSÈ:scriptStepsObjects}
+		
+		set the clipboard to newClip
+		
+		
+		return true
+		
+		
+	end tell
 	
-	set clipboardType to checkClipboardForObjects({}) of objTrans
-	
-	if clipboardType is false then
-		display dialog "The clipboard did not contain any FileMaker objects."
-		return false
-	end if
-	
-	clipboardConvertToXML({}) of objTrans
-	
-	return true
 	
 	
 end run
 
 
 
+on getXmlNewRequest()
+	return "<Step enable=\"True\" id=\"7\" name=\"New Record/Request\"></Step>"
+end getXmlNewRequest
+
+
+on getXmlOmit()
+	return "<Step enable=\"True\" id=\"25\" name=\"Omit Record\"></Step>"
+end getXmlOmit
+
+
+
+on getXmlSetField(tocName, fieldName, cdataString)
+	
+	set templateXML to "<Step enable=\"True\" id=\"76\" name=\"Set Field\">
+<Calculation>
+<![CDATA[\"###CDATA###\"]]>
+</Calculation>
+<Field table=\"###TOCNAME###\" id=\"999\" name=\"###FIELDNAME###\">
+</Field>
+</Step>"
+	
+	
+	set xmlSetField to templateXML
+	set xmlSetField to replaceSimple({xmlSetField, "###TOCNAME###", tocName})
+	set xmlSetField to replaceSimple({xmlSetField, "###FIELDNAME###", fieldName})
+	set xmlSetField to replaceSimple({xmlSetField, "###CDATA###", cdataString})
+	
+	return xmlSetField
+	
+	
+end getXmlSetField
+
+
+
+on xmlFindStart()
+	
+	return "<fmxmlsnippet type=\"FMObjectList\">
+<Step enable=\"True\" id=\"22\" name=\"Enter Find Mode\">
+<Pause state=\"False\">
+</Pause>
+<Restore state=\"False\">
+</Restore>
+</Step>
+"
+	
+end xmlFindStart
+
+on xmlFindEnd()
+	return "<Step enable=\"True\" id=\"28\" name=\"Perform Find\">
+<Restore state=\"False\">
+</Restore>
+</Step>
+</fmxmlsnippet>"
+	
+end xmlFindEnd
 
 
 
 
 
+
+
+
+
+on somePerformFindScriptStepXML()
+	-- used when testing, as an example canned Perform Find. 
+	
+	return "<fmxmlsnippet type=\"FMObjectList\"><Step enable=\"True\" id=\"28\" name=\"Perform Find\"><Restore state=\"True\"></Restore><Query><RequestRow operation=\"Include\"><Criteria><Field table=\"C_WORKER\" id=\"37\" name=\"a16C_DriveID\"></Field><Text>dv316</Text></Criteria><Criteria><Field table=\"C_WORKER\" id=\"84\" name=\"b16C_AdrApt\"></Field><Text>2F</Text></Criteria></RequestRow><RequestRow operation=\"Exclude\"><Criteria><Field table=\"C_WORKER\" id=\"92\" name=\"b16C_BargainingUnit\"></Field><Text>YES</Text></Criteria><Criteria><Field table=\"C_WORKER\" id=\"32956\" name=\"b16C_Active__b\"></Field><Text>1</Text></Criteria></RequestRow></Query></Step></fmxmlsnippet>"
+	
+	(*
+	return "<fmxmlsnippet type=\"FMObjectList\">
+<Step enable=\"True\" id=\"28\" name=\"Perform Find\"><Restore state=\"True\"></Restore><Query><RequestRow operation=\"Include\"><Criteria><Field table=\"C_WORKER\" id=\"37\" name=\"a16C_DriveID\"></Field><Text>dv316</Text></Criteria><Criteria><Field table=\"C_WORKER\" id=\"92\" name=\"b16C_BargainingUnit\"></Field><Text>YES</Text></Criteria><Criteria><Field table=\"C_WORKER\" id=\"32956\" name=\"b16C_Active__b\"></Field><Text>1</Text></Criteria></RequestRow></Query></Step>
+</fmxmlsnippet>"
+	*)
+end somePerformFindScriptStepXML
+
+
+
+
+
+on replaceSimple(prefs)
+	-- version 1.4, Daniel A. Shockley http://www.danshockley.com
+	
+	-- 1.4 - Convert sourceText to string, since the previous version failed on numbers. 
+	-- 1.3 - The class record is specified into a variable to avoid a namespace conflict when run within FileMaker. 
+	-- 1.2 - changes parameters to a record to add option to CONSIDER CASE, since the default changed to ignoring case with Snow Leopard. This handler defaults to CONSIDER CASE = true, since that was what older code expected. 
+	-- 1.1 - coerces the newChars to a STRING, since other data types do not always coerce
+	--     (example, replacing "nine" with 9 as number replaces with "")
+	
+	set defaultPrefs to {considerCase:true}
+	
+	if class of prefs is list then
+		if (count of prefs) is greater than 3 then
+			-- get any parameters after the initial 3
+			set prefs to {sourceText:item 1 of prefs, oldChars:item 2 of prefs, newChars:item 3 of prefs, considerCase:item 4 of prefs}
+		else
+			set prefs to {sourceText:item 1 of prefs, oldChars:item 2 of prefs, newChars:item 3 of prefs}
+		end if
+		
+	else if class of prefs is not equal to (class of {someKey:3}) then
+		-- Test by matching class to something that IS a record to avoid FileMaker namespace conflict with the term "record"
+		
+		error "The parameter for 'replaceSimple()' should be a record or at least a list. Wrap the parameter(s) in curly brackets for easy upgrade to 'replaceSimple() version 1.3. " number 1024
+		
+	end if
+	
+	
+	set prefs to prefs & defaultPrefs
+	
+	
+	set considerCase to considerCase of prefs
+	set sourceText to sourceText of prefs
+	set oldChars to oldChars of prefs
+	set newChars to newChars of prefs
+	
+	set sourceText to sourceText as string
+	
+	set oldDelims to AppleScript's text item delimiters
+	set AppleScript's text item delimiters to the oldChars
+	if considerCase then
+		considering case
+			set the parsedList to every text item of sourceText
+			set AppleScript's text item delimiters to the {(newChars as string)}
+			set the newText to the parsedList as string
+		end considering
+	else
+		ignoring case
+			set the parsedList to every text item of sourceText
+			set AppleScript's text item delimiters to the {(newChars as string)}
+			set the newText to the parsedList as string
+		end ignoring
+	end if
+	set AppleScript's text item delimiters to oldDelims
+	return newText
+	
+	
+end replaceSimple
 
 
 
@@ -65,9 +241,8 @@ end run
 on fmObjectTranslator_Instantiate(prefs)
 	
 	script fmObjectTranslator
-		-- version 3.9, Daniel A. Shockley
+		-- version 3.8, Daniel A. Shockley
 		
-		-- 3.9 - fixed bug where simpleFormatXML would fail on layout objects.
 		-- 3.8 - default for shouldPrettify is now FALSE; added shouldSimpleFormat option for simpleFormatXML() (modifies text XML in minor, but useful, ways) - as of 3.8, adds line-returns inside the fmxmlsnippet tags; 
 		-- 3.7 - updated dataObjectToUTF8 to indicate non-FM object can be converted; added clipboardPatternCount method; updated logConsole to 1.9; added coerceToString 1.8; 
 		-- 3.6 - currentCode needed to be evaluated WHEN USED, since translator objects retains previous operations; added error-trapping; labeled more handlers as 'Public Methods'
@@ -600,7 +775,7 @@ on fmObjectTranslator_Instantiate(prefs)
 		
 		
 		on simpleFormatXML(someXML)
-			-- version 1.1
+			-- version 1.0
 			
 			set xmlHeader to "<fmxmlsnippet type=\"FMObjectList\">"
 			set xmlFooter to "</fmxmlsnippet>"
@@ -622,10 +797,6 @@ on fmObjectTranslator_Instantiate(prefs)
 						set AppleScript's text item delimiters to oldDelims
 						error errMsg number errNum
 					end try
-					
-					return modifiedXML
-				else
-					return someXML
 				end if
 			on error errMsg number errNum
 				-- any error above should fail gracefully and just return the original code
@@ -634,6 +805,7 @@ on fmObjectTranslator_Instantiate(prefs)
 				
 			end try
 			
+			return modifiedXML
 			
 		end simpleFormatXML
 		

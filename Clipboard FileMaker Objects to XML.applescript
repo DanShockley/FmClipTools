@@ -24,7 +24,7 @@ on run
 	
 	set objTrans to fmObjectTranslator_Instantiate({})
 	
-	set shouldPrettify of objTrans to false
+	set shouldPrettify of objTrans to true
 	set shouldSimpleFormat of objTrans to true
 	
 	

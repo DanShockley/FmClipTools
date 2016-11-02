@@ -13,8 +13,9 @@ tell fmObjTrans to (clipboardGetTextBetween({beforeString:"// version ", afterSt
 on fmObjectTranslator_Instantiate(prefs)
 	
 	script fmObjectTranslator
-		-- version 3.9, Daniel A. Shockley
+		-- version 3.9.1, Daniel A. Shockley
 		
+		-- 3.9.1 - 2016-11-02 ( dshockley ): debugMode now logs the tempDataPosix in dataObjectToUTF8; add more error-trapping and error-handling.
 		-- 3.9 - fixed bug where simpleFormatXML would fail on layout objects.
 		-- 3.8 - default for shouldPrettify is now FALSE; added shouldSimpleFormat option for simpleFormatXML() (modifies text XML in minor, but useful, ways) - as of 3.8, adds line-returns inside the fmxmlsnippet tags; 
 		-- 3.7 - updated dataObjectToUTF8 to indicate non-FM object can be converted; added clipboardPatternCount method; updated logConsole to 1.9; added coerceToString 1.8; 
@@ -86,6 +87,7 @@ on fmObjectTranslator_Instantiate(prefs)
 		end run
 		
 		
+		
 		-----------------------------------
 		------ PUBLIC METHODS ------
 		-----------------------------------
@@ -111,6 +113,8 @@ on fmObjectTranslator_Instantiate(prefs)
 			end if
 			
 		end clipboardGetTextBetween
+		
+		
 		
 		on clipboardPatternCount(prefs)
 			-- version 1.0
@@ -171,6 +175,7 @@ on fmObjectTranslator_Instantiate(prefs)
 		end clipboardSetObjectsUsingXML
 		
 		
+		
 		on clipboardAddObjectsUsingXML(prefs)
 			
 			-- ADDS FM Objects for the specified XML string TO the clipboard
@@ -209,13 +214,11 @@ on fmObjectTranslator_Instantiate(prefs)
 		
 		
 		
-		
 		on clipboardConvertToFMObjects(prefs)
 			-- version 3.6
 			-- converts the specified XML string to FM Objects and puts BOTH in clipboard
 			
 			-- 3.6 - updated for currentCode issue; some error-trapping added
-			
 			
 			if debugMode then logConsole(ScriptName, "clipboardConvertToFMObjects: START")
 			
@@ -241,6 +244,7 @@ on fmObjectTranslator_Instantiate(prefs)
 		end clipboardConvertToFMObjects
 		
 		
+		
 		on clipboardConvertToXML(prefs)
 			-- version 3.6
 			
@@ -248,7 +252,6 @@ on fmObjectTranslator_Instantiate(prefs)
 			-- 1.9 - remove the extraneous ASCII 10 added after Layout tag by FM10
 			-- 1.8 - ADD XML string to FM objects in clipboard, not replace
 			-- converts the contents of the clipboard from FM Objects to XML string
-			
 			
 			if debugMode then logConsole(ScriptName, "clipboardConvertToXML: START")
 			
@@ -260,7 +263,6 @@ on fmObjectTranslator_Instantiate(prefs)
 				if debugMode then logConsole(ScriptName, "clipboardConvertToXML: ERROR: " & errMsg & ".")
 				return false
 			end try
-			
 			
 			
 			if currentCode is "XMLO" then
@@ -279,6 +281,7 @@ on fmObjectTranslator_Instantiate(prefs)
 			return true
 			
 		end clipboardConvertToXML
+		
 		
 		
 		on clipboardGetObjectsAsXML(prefs)
@@ -441,7 +444,6 @@ on fmObjectTranslator_Instantiate(prefs)
 			return fmObjects
 			
 		end convertXmlToObjects
-		
 		
 		
 		
@@ -611,6 +613,7 @@ on fmObjectTranslator_Instantiate(prefs)
 		on dataObjectToUTF8(prefs)
 			-- version 2.7
 			
+			-- 2.8 - 2016-11-02 ( dshockley ): debugMode now logs the tempDataPosix
 			-- 2.7 - by default, look for someObject instead of 'fmObjects' (but allow calling code to specify 'fmObjects' for backwards compatibility).
 			-- 2.6 - can return the UTF8 ITSELF, or instead a path to the temp file this creates.
 			-- 2.5 - added debugMode logging
@@ -666,7 +669,7 @@ on fmObjectTranslator_Instantiate(prefs)
 				error errMsg number errNum
 			end try
 			
-			
+			if debugMode then my logConsole(ScriptName, "dataObjectToUTF8: tempDataPosix: " & tempDataPosix)
 			
 			if resultType is "utf8" then
 				

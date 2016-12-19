@@ -1,9 +1,10 @@
 -- Clipboard - Replace String in FileMaker Objects
--- version 3.9, Daniel A. Shockley
+-- version 3.9.1, Daniel A. Shockley
 
 -- Translates FileMaker clipboard objects to XML, performs a string replace within, then back to objects.
 
 -- VERSION HISTORY: 
+-- 3.9.1 - updated fmObjectTranslator code
 -- 3.9 - updated fmObjectTranslator code
 -- 3.7 - updated fmObjectTranslator code; show count when choosing ReplaceWith and then immediately replace (no 3rd dialog). 
 -- 3.1.1 - the Replace With dialog now shows what you just chose to SearchFor. 
@@ -67,17 +68,16 @@ end run
 
 
 
-
-
 on fmObjectTranslator_Instantiate(prefs)
 	
 	script fmObjectTranslator
-		-- version 3.9, Daniel A. Shockley
+		-- version 3.9.1, Daniel A. Shockley
 		
+		-- 3.9.1 - 2016-11-02 ( dshockley/eshagdar ): always reset currentCode before reading clipboard; debugMode now logs the tempDataPosix in dataObjectToUTF8; add more error-trapping and error-handling.
 		-- 3.9 - fixed bug where simpleFormatXML would fail on layout objects.
 		-- 3.8 - default for shouldPrettify is now FALSE; added shouldSimpleFormat option for simpleFormatXML() (modifies text XML in minor, but useful, ways) - as of 3.8, adds line-returns inside the fmxmlsnippet tags; 
 		-- 3.7 - updated dataObjectToUTF8 to indicate non-FM object can be converted; added clipboardPatternCount method; updated logConsole to 1.9; added coerceToString 1.8; 
-		-- 3.6 - currentCode needed to be evaluated WHEN USED, since translator objects retains previous operations; added error-trapping; labeled more handlers as 'Public Methods'
+		-- 3.6 - currentCode needed to be evaluated WHEN USED, since translator object retains previous operations; added error-trapping; labeled more handlers as 'Public Methods'
 		-- 3.5 - moved a file write operation out of unneeded tell System Events block to avoid AppleEvents/sandbox errAEPrivilegeError; CHANGED clipboardSetObjectsUsingXML to actually completely SET clipboard; original behavior now named clipboardAddObjectsUsingXML; brought back handling of FM10 ASCII-10 bug, for backwards compatibility.
 		-- 3.4 - added clipboardGetObjectsToXmlFilePath; updated dataObjectToUTF8 to 2.6
 		-- 3.3 - tweaked clipboardSetObjectsUsingXML to use a single 'set clipboard'
@@ -145,6 +145,7 @@ on fmObjectTranslator_Instantiate(prefs)
 		end run
 		
 		
+		
 		-----------------------------------
 		------ PUBLIC METHODS ------
 		-----------------------------------
@@ -170,6 +171,8 @@ on fmObjectTranslator_Instantiate(prefs)
 			end if
 			
 		end clipboardGetTextBetween
+		
+		
 		
 		on clipboardPatternCount(prefs)
 			-- version 1.0
@@ -230,6 +233,7 @@ on fmObjectTranslator_Instantiate(prefs)
 		end clipboardSetObjectsUsingXML
 		
 		
+		
 		on clipboardAddObjectsUsingXML(prefs)
 			
 			-- ADDS FM Objects for the specified XML string TO the clipboard
@@ -268,13 +272,11 @@ on fmObjectTranslator_Instantiate(prefs)
 		
 		
 		
-		
 		on clipboardConvertToFMObjects(prefs)
 			-- version 3.6
 			-- converts the specified XML string to FM Objects and puts BOTH in clipboard
 			
 			-- 3.6 - updated for currentCode issue; some error-trapping added
-			
 			
 			if debugMode then logConsole(ScriptName, "clipboardConvertToFMObjects: START")
 			
@@ -300,6 +302,7 @@ on fmObjectTranslator_Instantiate(prefs)
 		end clipboardConvertToFMObjects
 		
 		
+		
 		on clipboardConvertToXML(prefs)
 			-- version 3.6
 			
@@ -307,7 +310,6 @@ on fmObjectTranslator_Instantiate(prefs)
 			-- 1.9 - remove the extraneous ASCII 10 added after Layout tag by FM10
 			-- 1.8 - ADD XML string to FM objects in clipboard, not replace
 			-- converts the contents of the clipboard from FM Objects to XML string
-			
 			
 			if debugMode then logConsole(ScriptName, "clipboardConvertToXML: START")
 			
@@ -319,7 +321,6 @@ on fmObjectTranslator_Instantiate(prefs)
 				if debugMode then logConsole(ScriptName, "clipboardConvertToXML: ERROR: " & errMsg & ".")
 				return false
 			end try
-			
 			
 			
 			if currentCode is "XMLO" then
@@ -340,21 +341,24 @@ on fmObjectTranslator_Instantiate(prefs)
 		end clipboardConvertToXML
 		
 		
+		
 		on clipboardGetObjectsAsXML(prefs)
+			-- version 1.1
 			-- returns the XML translation of FM objects in the clipboard
 			
+			-- 1.1 - 2016-11-02 ( dshockley/eshagdar ): always check/set currentCode before using; renamed variable, use currentClass() handler.
+			
+			
 			if debugMode then logConsole(ScriptName, "clipboardGetObjectsAsXML: START")
-			if currentCode is "" then
-				if not checkClipboardForObjects({}) then
-					error "clipboardGetObjectsAsXML : Clipboard does not contain valid FileMaker objects." number 1024
-				end if
-			end if
-			if currentCode is "" then
-				return ""
+			set clipboardDoesContainFmObjects to checkClipboardForObjects({}) -- return boolean, also sets currentCode property.
+			if not clipboardDoesContainFmObjects then
+				error "clipboardGetObjectsAsXML : Clipboard does not contain valid FileMaker objects." number 1024
 			end if
 			
-			set thisClass to classFromCode(currentCode)
-			set fmObjects to get the clipboard as thisClass
+			if length of currentCode is 0 then return ""
+			
+			set fmClass to currentClass()
+			set fmObjects to get the clipboard as fmClass
 			
 			return convertObjectsToXML(fmObjects)
 			
@@ -382,20 +386,21 @@ on fmObjectTranslator_Instantiate(prefs)
 		
 		
 		on clipboardGetObjectsToXmlFilePath(prefs)
+			-- version 1.1
 			-- returns the PATH to an XML translation of FM objects in the clipboard
+			
+			-- 1.1 - 2016-11-02 ( dshockley/eshagdar ): always check/set currentCode before using; renamed variable, use currentClass() handler.
 			
 			set defaultPrefs to {outputFilePath:"__TEMP__", resultType:"MacPath"}
 			set prefs to prefs & defaultPrefs
 			
 			if debugMode then logConsole(ScriptName, "clipboardGetObjectsToXmlFilePath: START")
 			
-			if not checkClipboardForObjects({}) then
-				return ""
-			end if
+			set clipboardDoesContainFmObjects to checkClipboardForObjects({}) -- return boolean, also sets currentCode property.			
+			if not clipboardDoesContainFmObjects then return ""
 			
-			set thisClass to classFromCode(currentCode)
-			set fmObjects to get the clipboard as thisClass
-			
+			set fmClass to currentClass()
+			set fmObjects to get the clipboard as fmClass
 			
 			set xmlConverted to dataObjectToUTF8({fmObjects:fmObjects, resultType:resultType of prefs, outputFilePath:outputFilePath of prefs})
 			
@@ -421,8 +426,10 @@ on fmObjectTranslator_Instantiate(prefs)
 		
 		
 		on checkClipboardForObjects(prefs)
-			-- checks clipboard for FM Objects (as classes, not XML)
-			-- returns true if it does, false if not
+			-- version 1.1
+			-- Checks clipboard for FM Objects (as classes, not XML). Returns true if it does, false if not. 
+			
+			-- 1.1 - 2016-11-02 ( dshockley/eshagdar ): added comment, changed test to length of instead of empty string.
 			
 			if debugMode then logConsole(ScriptName, "checkClipboardForObjects: START")
 			
@@ -443,14 +450,17 @@ on fmObjectTranslator_Instantiate(prefs)
 			
 			if debugMode then logConsole(ScriptName, "checkClipboardForObjects: clipboardType: " & clipboardType)
 			
+			-- now, save _whatever_ it was into currentCode.
 			set currentCode to clipboardType
-			if clipboardType is "" then
+			
+			if length of currentCode is 0 then
 				return false
 			else
 				return true
 			end if
 			
 		end checkClipboardForObjects
+		
 		
 		on convertObjectsToXML(fmObjects)
 			
@@ -468,22 +478,23 @@ on fmObjectTranslator_Instantiate(prefs)
 		
 		
 		on convertXmlToObjects(stringFmXML)
-			-- version 3.6
+			-- version 3.7
 			
+			-- 3.7 - 2016-11-02 ( dshockley/eshagdar ): separate test into a variable; renamed variables.
 			-- 3.6 - need to SET currentCode for this object - always.
 			-- 3.5 - no need for file write to be in tell System Events block
 			-- converts some string of XML into fmObjects as FM data type
 			
 			if debugMode then logConsole(ScriptName, "convertXmlToObjects: START")
 			
-			-- 3.6: the check also sets currentCode to correct value: 
-			if not checkStringForValidXML(stringFmXML) then
+			set stringIsValidXML to checkStringForValidXML(stringFmXML) -- return boolean, also sets currentCode property.			
+			if not stringIsValidXML then
 				-- if not valid, give an error.
 				if debugMode then logConsole(ScriptName, "convertXmlToObjects: no valid XML")
 				error "XML does not contain valid FileMaker objects." number 1024
 			end if
 			
-			set thisClass to currentClass()
+			set fmClass to currentClass()
 			
 			set stringLength to length of stringFmXML
 			
@@ -495,7 +506,7 @@ on fmObjectTranslator_Instantiate(prefs)
 			set xmlHandle to open for access file xmlFilePath with write permission
 			write stringFmXML to xmlHandle as «class utf8»
 			close access xmlHandle
-			set fmObjects to read alias xmlFilePath as thisClass
+			set fmObjects to read alias xmlFilePath as fmClass
 			
 			return fmObjects
 			
@@ -503,10 +514,11 @@ on fmObjectTranslator_Instantiate(prefs)
 		
 		
 		
-		
 		on checkStringForValidXML(someString)
-			-- checks someString for XML that represents FM objects
-			-- returns true if it does, false if not
+			-- version 1.1
+			-- Checks someString for XML that represents FM objects. Returns true if it does, false if not. 
+			
+			-- 1.1 - 2016-11-02 ( dshockley/eshagdar ): added comment, changed test to length of instead of empty string.
 			
 			if debugMode then logConsole(ScriptName, "checkStringForValidXML: START")
 			
@@ -569,7 +581,7 @@ on fmObjectTranslator_Instantiate(prefs)
 			
 			if debugMode then logConsole(ScriptName, "checkStringForValidXML: currentCode: " & currentCode)
 			
-			if currentCode is "" then
+			if length of currentCode is 0 then
 				return false
 			else
 				return true
@@ -670,6 +682,7 @@ on fmObjectTranslator_Instantiate(prefs)
 		on dataObjectToUTF8(prefs)
 			-- version 2.7
 			
+			-- 2.8 - 2016-11-02 ( dshockley/eshagdar ): debugMode now logs the tempDataPosix
 			-- 2.7 - by default, look for someObject instead of 'fmObjects' (but allow calling code to specify 'fmObjects' for backwards compatibility).
 			-- 2.6 - can return the UTF8 ITSELF, or instead a path to the temp file this creates.
 			-- 2.5 - added debugMode logging
@@ -725,7 +738,7 @@ on fmObjectTranslator_Instantiate(prefs)
 				error errMsg number errNum
 			end try
 			
-			
+			if debugMode then my logConsole(ScriptName, "dataObjectToUTF8: tempDataPosix: " & tempDataPosix)
 			
 			if resultType is "utf8" then
 				

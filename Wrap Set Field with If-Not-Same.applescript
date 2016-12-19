@@ -1,9 +1,10 @@
 -- Set Fields IF not same
--- version 3.9.1, Daniel A. Shockley
+-- version 3.9.2, Daniel A. Shockley
 
 -- Takes Set Field script step objects in clipboard and puts in those same steps wrapped in IF step that sees if they aren't already the same.
 
 -- VERSION HISTORY: 
+-- 3.9.2 - use 'Not Exact' comparison instead of the inequality operator.
 -- 3.9.1 - updated fmObjectTranslator code
 -- 1.1 - if the Set To was empty string (NULL, ""), then check for Not IsEmpty instead of simplistic comparison.
 -- 1.0 - initial version
@@ -90,7 +91,7 @@ on run
 					-- if clearing the field, then use "Not IsEmpty" in the IF step, instead of not-equals comparison operator:
 					set testCalc to "Not IsEmpty ( " & tableName & "::" & fieldName & " )"
 				else
-					set testCalc to tableName & "::" & fieldName & " ­ " & setFieldToThisCalc
+					set testCalc to "Not Exact ( " & tableName & "::" & fieldName & " ; " & setFieldToThisCalc & " )"
 				end if
 				
 				set step_IF to makeStep_IF(testCalc)

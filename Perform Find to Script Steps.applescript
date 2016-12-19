@@ -1,16 +1,17 @@
 -- Perform Find to Script Steps
--- version 3.9.1, Daniel A. Shockley
+-- version 3.9.2, Daniel A. Shockley
 
 -- Takes 'Perform Find' script step object in clipboard and converts to multiple script steps specifying a Find in detail. 
 
 -- VERSION HISTORY: 
+-- 3.9.2 - warn the user if any of the search-values need to be checked for data-type validity by inserting a Comment script step; also auto-pastes now. 
 -- 3.9.1 - updated fmObjectTranslator code
 -- 3.8 - updated fmObjectTranslator to 3.8; double-check warning for ellipsis (and three dots).
 -- 2.6 - original version using fmObjectTranslator 2.6.
 
 property debugMode : false
 
-
+property needsDataTypeWarning : ""
 
 
 on run
@@ -19,8 +20,10 @@ on run
 	set pfXML to clipboardGetObjectsAsXML({}) of objTrans
 	
 	
+	set needsDataTypeWarning to false -- init
 	
-	set detailedFindXML to xmlFindStart()
+	
+	set detailedFindXML to ""
 	
 	set onFirstRequest to true
 	
@@ -61,6 +64,8 @@ on run
 				if "><²³=" contains (text 1 thru 1 of textValue) or textValue contains "É" or textValue contains "..." then
 					-- some operator, so WARN: 
 					set textValue to textValue & "  // DOUBLE-CHECK THIS!!!!"
+					set needsDataTypeWarning to true
+					
 				end if
 				
 				set oneSetFieldXML to my getXmlSetField(tableName, fieldName, textValue)
@@ -73,7 +78,10 @@ on run
 		end repeat
 		
 		
-		set detailedFindXML to detailedFindXML & return & my xmlFindEnd()
+		
+		
+		set detailedFindXML to my xmlFindStart() & return & detailedFindXML & return & my xmlFindEnd()
+		
 		
 		set currentCode of objTrans to "XMSS"
 		set scriptStepsObjects to convertXmlToObjects(detailedFindXML) of objTrans
@@ -82,11 +90,19 @@ on run
 		
 		set the clipboard to newClip
 		
-		
-		return true
-		
-		
 	end tell
+	
+	
+	
+	tell application "System Events"
+		keystroke "v" using command down
+	end tell
+	
+	
+	
+	return true
+	
+	
 	
 	
 	
@@ -130,8 +146,14 @@ end getXmlSetField
 
 on xmlFindStart()
 	
-	return "<fmxmlsnippet type=\"FMObjectList\">
-<Step enable=\"True\" id=\"22\" name=\"Enter Find Mode\">
+	set xmlHeader to "<fmxmlsnippet type=\"FMObjectList\">"
+	
+	set warningCommentXML to "<Step enable=\"True\" id=\"89\" name=\"comment\">
+<Text>WARNING! The script step was converted, but the data-type of some search values may not working properly without adjustment to an operator (ellipsis, ineqaulity operators, etc), as the single-step Perform Find uses raw text strings as opposed to valid FileMaker calculations.</Text>
+</Step>"
+	
+	
+	set enterFindModeXML to "<Step enable=\"True\" id=\"22\" name=\"Enter Find Mode\">
 <Pause state=\"False\">
 </Pause>
 <Restore state=\"False\">
@@ -139,7 +161,20 @@ on xmlFindStart()
 </Step>
 "
 	
+	set outputXML to xmlHeader
+	
+	if needsDataTypeWarning then
+		set outputXML to outputXML & return & warningCommentXML
+	end if
+	
+	set outputXML to outputXML & return & enterFindModeXML
+	
+	return outputXML
+	
+	
 end xmlFindStart
+
+
 
 on xmlFindEnd()
 	return "<Step enable=\"True\" id=\"28\" name=\"Perform Find\">

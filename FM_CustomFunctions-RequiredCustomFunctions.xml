@@ -1,0 +1,292 @@
+<fmxmlsnippet type="FMObjectList">
+
+<CustomFunction id="5" functionArity="2" visible="True" parameters="name;value" name="#">
+<Calculation>
+<![CDATA[// # ( name; value )
+// version 1.1.1, SixFriedRice.com
+
+/*
+       Entirely self-contained version of DictItem. Creates a name/value (aka key/value) pair for a  SixFriedRice.com-style dictionary.
+
+
+HISTORY:
+       1.1.1 - 2016-09-29 ( eshagdar ): updated documentation. formatted for readibility.
+       1.1 - 201x-xx-xx ( eshagdar ): Reformatted to match standards.
+       1.0 - xxxx-xx-xx ( xxxxx ): Taken from SixFriedRice.com
+*/
+
+
+"<:" 
+& Substitute ( 
+       name; 
+       ["="; "/="]; 
+       [":"; "/:"]; 
+       [">"; "/>"]; 
+       ["<" ; "/<"] 
+) 
+& ":=" 
+& Substitute ( 
+       value; 
+       ["="; "/="]; 
+       [":"; "/:"]; 
+       [">"; "/>"]; 
+       ["<" ; "/<"] 
+)
+& ":>"]]>
+</Calculation>
+</CustomFunction>
+<CustomFunction id="6" functionArity="1" visible="True" parameters="name" name="#P">
+<Calculation>
+<![CDATA[// #P ( name )
+// version 1.2.1, SixFriedRice.com
+
+/*
+       Entirely self-contained calc that gets a specified key name's value from ScriptParameter when it is a  SixFriedRice.com-style dictionary.
+
+
+HISTORY:
+       1.2.1 - 2016-09-29 ( eshagdar ): updated documentation.
+       1.2 - 201x-xx-xx ( eshagdar ): Reformatted to match newer standards.
+       1.1 - 201x-xx-xx ( xxxxx ): Reformatted to match standards.
+       1.0 - 201x-xx-xx ( xxxxx ): Taken from SixFriedRice.com
+*/
+
+
+Let ( [ dict = Get ( ScriptParameter ) ];
+
+       Let ( [
+                       match = 
+                               "<:" 
+                               & Substitute ( 
+                                       name
+                                       ; [ "="; "/=" ] 
+                                       ; [ ":"; "/:" ] 
+                                       ; [ ">"; "/>" ] 
+                                       ; [ "<"; "/<" ] 
+                               ) 
+                               & ":="
+                       ; pstart = Position ( dict; match; 1; 1)
+                       ; start = pstart + Length(match)
+                       ; end = Position ( dict ; ":>"; start; 1)
+                       ; len = If ( end = 0; 999999999; end - start)
+               ];
+
+               If ( pstart = 0
+                       ; ""
+                       ; Substitute( 
+                               Middle ( dict; start; len )
+                               ; [ "/:"; ":" ]
+                               ; [ "/="; "=" ]
+                               ; [ "/>"; ">" ]
+                               ; [ "/<"; "<" ] 
+                       )
+               )
+       )
+)]]>
+</Calculation>
+</CustomFunction>
+<CustomFunction id="94" functionArity="1" visible="True" parameters="name" name="#R">
+<Calculation>
+<![CDATA[// #R ( name )
+// version 1.2.1, SixFriedRice.com
+
+/*
+       Entirely self-contained calc that gets a specified key name's value from ScriptResult when it is a  SixFriedRice.com-style dictionary.
+
+
+HISTORY:
+       1.2.1 - 2016-09-29 ( eshagdar ): updated documentation.
+       1.2 - 201x-xx-xx ( eshagdar ): Reformatted to match newer standards.
+       1.1 - 201x-xx-xx ( xxxxx ): Reformatted to match standards.
+       1.0 - xxxx-xx-xx ( xxxxx ): Taken from SixFriedRice.com
+*/
+
+
+Let( [
+               dict = Get ( ScriptResult )
+               ; match = 
+                       "<:" 
+                       & Substitute ( 
+                               name 
+                               ; [ "="; "/=" ]
+                               ; [ ":"; "/:" ]
+                               ; [ ">"; "/>" ]
+                               ; [ "<"; "/<" ]
+                       ) 
+                       & ":="
+               ; pstart = Position( dict; match; 1; 1 )
+               ; start = pstart + Length( match )
+               ; end = Position( dict ; ":>"; start; 1 )
+               ; len = If( end = 0; 999999999; end - start )
+       ];
+
+       If ( pstart = 0
+               ; ""
+               ; Substitute( 
+                       Middle( dict; start; len )
+                       ; [ "/:"; ":" ]
+                       ; [ "/="; "=" ]
+                       ; [ "/>"; ">" ]
+                       ; [ "/<"; "<" ]
+               )
+       )
+)]]>
+</Calculation>
+</CustomFunction>
+
+<CustomFunction id="14" functionArity="2" visible="True" parameters="dict;name" name="DictContains">
+<Calculation>
+<![CDATA[// DictContains( dict; name )
+// version 1.2.1, Daniel A. Shockley, NYHTC
+
+/* 
+       Simple test for whether a dictionary includes a specified key.
+
+
+REQUIRES:
+       DictEscape
+
+
+HISTORY:
+       1.2.1 - 2016-09-29 ( eshagdar ): updated documentation.
+       1.2 - 201x-xx-xx ( eshagdar ): Reformatted to match newer standards.
+       1.1 - 201x-xx-xx ( dshockley ): Use DictEscape instead of hard-coded Substitute within function.
+       1.0 - 201x-xx-xx ( dshockley ): first created.
+*/
+
+
+Let (
+       pattern = "<:" & DictEscape ( name ) & ":=";
+
+       Position ( dict; pattern; 1; 1 ) > 0
+)]]>
+</Calculation>
+</CustomFunction>
+
+<CustomFunction id="25" functionArity="1" visible="True" parameters="input" name="DictEscape">
+<Calculation>
+<![CDATA[// DictEscape ( input )
+// version 1.1.1, NYHTC
+
+/*
+       Escapes a string (key or value) so it can be used in a SixFriedRice.com-style dictionary.
+
+
+HISTORY:
+       1.1.1 - 2016-09-29 ( eshagdar ): updated documentation.
+       1.1 - 201x-xx-xx ( eshagdar ): Reformatted to match newer standards.
+       1.0 - 201x-xx-xx ( xxxxx ): SixFriedRice.com
+*/
+
+
+Substitute ( 
+       input
+       ; [ "="; "/=" ]
+       ; [ ":"; "/:" ]
+       ; [ ">"; "/>" ]
+       ; [ "<"; "/<" ]
+)]]>
+</Calculation>
+</CustomFunction>
+<CustomFunction id="8" functionArity="2" visible="True" parameters="dict;name" name="DictGet">
+<Calculation>
+<![CDATA[// DictGet ( dict; name )
+// version 1.2, SixFriedRice.com
+
+// Gets the specified key name's value from a SixFriedRice.com-style dictionary.
+
+/*
+VERSION HISTORY:
+       1.2 - Reformatted to match newer standards.
+       1.1 - Reformatted calc to fit standards. Still uses hard-coded escape/unescape so it can stand alone. 
+*/
+
+
+Let( [
+               match =
+                       "<:" 
+                       & Substitute ( 
+                               name 
+                               ; [ "="; "/=" ]
+                               ; [ ":"; "/:" ] 
+                               ; [ ">"; "/>" ]
+                               ; [ "<"; "/<" ]
+                       ) & ":="
+               ; pstart = Position ( dict; match; 1; 1 )
+               ; start = pstart + Length ( match )
+               ; end = Position ( dict ; ":>"; start; 1 )
+               ; len = If ( end = 0; 999999999; end - start )
+       ];
+
+       If ( pstart = 0
+               ; ""
+               ; Substitute ( 
+                       Middle ( dict; start; len)
+                       ; [ "/:"; ":" ]
+                       ; [ "/="; "=" ] 
+                       ; [ "/>"; ">" ] 
+                       ; [ "/<"; "<" ]
+               )
+       )
+)]]>
+</Calculation>
+</CustomFunction>
+<CustomFunction id="118" functionArity="2" visible="True" parameters="name;value" name="DictItem">
+<Calculation>
+<![CDATA[// DictItem ( name; value )
+// version 1.1, SixFriedRice.com
+
+/*
+       Creates a name/value (aka key/value) pair for a SixFriedRice.com-style dictionary.
+
+
+REQUIRES:
+       DictEscape
+
+
+HISTORY:
+       1.1 - 2016-09-29 ( eshagdar ): updated documentation.
+       1.0 - 201x-xx-xx ( xxxxx ): first created.
+*/
+
+
+"<:" & DictEscape ( name ) & ":=" & DictEscape ( value ) & ":>"]]>
+</Calculation>
+</CustomFunction>
+<CustomFunction id="288" functionArity="2" visible="True" parameters="someValue;someType" name="ValueAsType">
+<Calculation>
+<![CDATA[// ValueAsType ( someValue; someType )
+// version 1.1, Daniel A. Shockley, NYHTC
+
+/*
+       coerce the value to the specified type
+
+
+HISTORY:
+       1.1 — 2017-01-04 ( eshagdar ): added documentation.
+       1.0 - 201x-xx-xx ( dshockley ): created.
+*/
+
+
+Case ( 
+       someType = "Text"
+       ; GetAsText ( someValue )
+       ; 
+       someType = "Number"
+       ; GetAsNumber ( someValue )
+       ; 
+       someType = "Date"
+       ; GetAsDate ( someValue )
+       ; 
+       someType = "Time"
+       ; GetAsTime ( someValue )
+       ; 
+       someType = "Timestamp"
+       ; GetAsTimestamp ( someValue )
+       ; 
+       someValue
+       )]]>
+</Calculation>
+</CustomFunction>
+
+</fmxmlsnippet>

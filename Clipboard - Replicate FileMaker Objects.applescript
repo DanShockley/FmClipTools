@@ -1,10 +1,96 @@
+-- Clipboard - Replace String in FileMaker Objects
+-- version 1.0, Daniel A. Shockley
 
-set fmObjTrans to fmObjectTranslator_Instantiate({})
+-- Takes a return-delimited list of strings (optionally tab-delimited for multiple columns), then takes a FileMaker object in the clipboard and replicates it for each list item, then converts to multiple objects.
 
---tell fmObjTrans to clipboardPatternCount({searchString:"// version"})
---tell fmObjTrans to clipboardPatternCount({searchString:"BLAHBLAHBLAH"})
---tell fmObjTrans to clipboardPatternCount({searchHex:"2F2F2076657273696F6E20"})
-tell fmObjTrans to (clipboardGetTextBetween({beforeString:"// version ", afterString:","}))
+-- VERSION HISTORY: 
+-- 1.0 - 2017-04-25 ( dshockley ): first created, based off of Replace String in FileMaker Objects.
+
+
+property debugMode : false
+property colSep : tab
+property rowSep : return
+
+on run
+	
+	
+	set objTrans to fmObjectTranslator_Instantiate({})
+	
+	set shouldPrettify of objTrans to false
+	
+	set debugMode of objTrans to debugMode
+	
+	set clipboardType to checkClipboardForObjects({}) of objTrans
+	
+	if clipboardType is false then
+		display dialog "The clipboard did not contain any FileMaker objects."
+		return false
+	end if
+	
+	set clipboardObjectStringXML to clipboardGetObjectsAsXML({}) of objTrans
+	
+	
+	set dialogTitle to "Replicate FileMaker Objects"
+	set mergeSourceDataDialog to (display dialog "Enter a return-delimited list of merge source data to replicate (use tabs for multiple columns): " with title dialogTitle default answer "" buttons {"Cancel", "Replicate"} default button "Replicate")
+	set mergeSourceDelimData to text returned of mergeSourceDataDialog
+	
+	set mergeSourceRows to paragraphs of mergeSourceDelimData
+	
+	set countOfRows to count of mergeSourceRows
+	set firstRowData to item 1 of mergeSourceRows
+	set countOfColumns to (objTrans's patternCount({firstRowData, colSep})) + 1
+	
+	set totalColumns to (objTrans's patternCount({mergeSourceDelimData, colSep})) + countOfRows
+	
+	if totalColumns / countOfRows is not equal to countOfColumns then
+		error "Error: Each row has to have the same number of column delimiters." number 1024
+		return false
+	end if
+	
+	set firstRowParsed to objTrans's parseChars({firstRowData, colSep})
+	
+	set templateObjectXML to objTrans's removeHeaderFooter(clipboardObjectStringXML)
+	
+	set mergePlaceholderStrings to {}
+	repeat with colNum from 1 to countOfColumns
+		set nextButtonName to "Next"
+		if colNum is equal to countOfColumns then set nextButtonName to "Replicate"
+		set mergePlaceholderDialog to (display dialog "Please strip away the code until you have only the 'merge placeholder string' for column " & colNum & ", where the 1st value that will take its place is '" & item colNum of firstRowParsed & "'." with title dialogTitle default answer templateObjectXML buttons {"Cancel", nextButtonName} default button nextButtonName)
+		set oneMergePlaceholderString to text returned of mergePlaceholderDialog
+		
+		copy oneMergePlaceholderString to end of mergePlaceholderStrings
+		
+	end repeat
+	
+	
+	
+	set newXML to ""
+	-- Loop over the 'replicate' list rows:
+	repeat with oneRowData in mergeSourceRows
+		set oneRowData to contents of oneRowData
+		set oneRowParsed to objTrans's parseChars({oneRowData, colSep})
+		set oneNewObjectXML to templateObjectXML
+		-- Need to find and replace each merge placeholder with this row's matching column string:
+		repeat with colNum from 1 to countOfColumns
+			set oneNewObjectXML to replaceSimple({oneNewObjectXML, item colNum of mergePlaceholderStrings, item colNum of oneRowParsed}) of objTrans
+		end repeat
+		-- add this new object to the final XML:
+		set newXML to newXML & return & oneNewObjectXML
+	end repeat
+	
+	-- Put the header/footer back on the list of XML objects:
+	set newXML to objTrans's addHeaderFooter(newXML)
+	
+	set the clipboard to newXML
+	
+	clipboardConvertToFMObjects({}) of objTrans
+	
+	return newXML
+	
+	
+end run
+
+
 
 
 
@@ -626,7 +712,7 @@ on fmObjectTranslator_Instantiate(prefs)
 			
 			if debugMode then logConsole(ScriptName, "simpleFormatXML: START")
 			
-			return addHeaderFooter(removeHeaderFooter(someXML))			
+			return addHeaderFooter(removeHeaderFooter(someXML))
 			
 		end simpleFormatXML
 		
@@ -1075,6 +1161,10 @@ on fmObjectTranslator_Instantiate(prefs)
 	
 	
 end fmObjectTranslator_Instantiate
+
+
+
+
 
 
 

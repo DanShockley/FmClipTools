@@ -4,6 +4,7 @@
 -- Takes objects in the clipboard and adds multiple types of FileMaker objects into clipboard (plus return-delimited text). 
 
 -- VERSION HISTORY: 
+-- 3.9.1 - now works if the clipboard contains text (assumes those are fully-qualified field names).
 -- 3.9 (skipped version numbers) - uses fmObjectTranslator 3.9.
 -- 2.2 - extract field objects _wthin_ other layout objects
 -- 2.1 - updated flattenList to avoid namespace conflict; 
@@ -31,19 +32,24 @@ on run
 	
 	set objTrans to fmObjectTranslator_Instantiate({})
 	
-	set someXML to clipboardGetObjectsAsXML({}) of objTrans
+	try
+		set someXML to clipboardGetObjectsAsXML({}) of objTrans
+	on error errMsg number errNum
+		set someXML to ""
+	end try
 	
 	set originalClipboardFormat to currentCode of objTrans
 	
 	if debugMode then my logConsole(ScriptName, "original clip: " & originalClipboardFormat)
 	
 	if originalClipboardFormat is "" then
-		-- PLAIN TEXT??
+		-- PLAIN TEXT??  (assume it is)
 		set fieldNames to get the clipboard
 		set fieldNames to my trimWhitespace(fieldNames)
 		set fieldNames to my parseChars({fieldNames, return})
 		
 		set originalClipboardFormat to "TEXT"
+		
 		-- END:		PLAIN TEXT. 
 		
 	else if originalClipboardFormat is "XML2" or originalClipboardFormat is "XMLO" then

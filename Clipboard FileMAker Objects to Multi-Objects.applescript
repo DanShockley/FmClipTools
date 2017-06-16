@@ -1,9 +1,10 @@
 -- FM-XML Objects to Multi-Objects
--- version 3.9, Daniel A. Shockley
+-- version 3.9.2, Daniel A. Shockley
 
 -- Takes objects in the clipboard and adds multiple types of FileMaker objects into clipboard (plus return-delimited text). 
 
 -- VERSION HISTORY: 
+-- 3.9.2 - if the clipboard is text without double-colons then assume those aren't fields, but rather Variable names; Also, if the clipboard contains Set Variable script steps, extract the variable Name and Value into tab-separated columns. 
 -- 3.9.1 - now works if the clipboard contains text (assumes those are fully-qualified field names).
 -- 3.9 (skipped version numbers) - uses fmObjectTranslator 3.9.
 -- 2.2 - extract field objects _wthin_ other layout objects
@@ -24,6 +25,8 @@ property ScriptName : "FMXML Multi"
 
 property debugMode : false
 
+property fieldTableSep : "::"
+property targetValueSep : ASCII character 9
 
 on run
 	
@@ -47,6 +50,15 @@ on run
 		set fieldNames to get the clipboard
 		set fieldNames to my trimWhitespace(fieldNames)
 		set fieldNames to my parseChars({fieldNames, return})
+		
+		if class of fieldNames is not class of {1, 2} then set fieldNames to {fieldNames}
+		
+		set firstListItem to item 1 of fieldNames
+		if firstListItem does not contain fieldTableSep then
+			set varNamesOptionalValues to fieldNames
+			set fieldNames to ""
+		end if
+		
 		
 		set originalClipboardFormat to "TEXT"
 		
@@ -118,6 +130,38 @@ on run
 				
 			end repeat
 			
+			
+			if (count of fieldShortNames) is 0 then
+				
+				-- Look for Set Variable script steps, then put their names and values into text for the clipboard. 
+				
+				set varXmlData to make new XML data with data someXML
+				
+				set varNames to value of every XML element of (every XML element of (every XML element of (XML element 1 of varXmlData) whose name is "Step") whose name is "Name")
+				set varValues to value of XML element "Calculation" of (every XML element of (every XML element of (every XML element of (XML element 1 of varXmlData) whose name is "Step") whose name is "Value"))
+				
+				set varNames to my flattenList(varNames)
+				set varValues to my flattenList(varValues)
+				
+				
+				set varNamesOptionalValues to {}
+				repeat with i from 1 to count of varNames
+					
+					set oneVarName to item i of varNames
+					set oneVarValue to item i of varValues
+					
+					
+					copy (oneVarName & targetValueSep & oneVarValue) as string to end of varNamesOptionalValues
+					
+				end repeat
+				
+				
+				
+				
+				-- END OF: didn't find Set Field, so tried Set Variable. 
+			end if
+			
+			
 		end tell
 		
 		-- END:		SCRIPT STEPS. 
@@ -164,28 +208,32 @@ on run
 	
 	if originalClipboardFormat is not "XMLO" or originalClipboardFormat is "TEXT" then
 		
-		set layoutObjectsFm11_XML to addFieldsAsLayoutObjectsFM11(fieldNames)
-		
-		if originalClipboardFormat is "TEXT" then
-			-- NOTE: if original is TEXT, need to wipe out original clipboard by setting to FM Objects FIRST, then add TEXT at end of script:
+		if (count of fieldNames) is not 0 then
 			
-			set currentCode of objTrans to "XMLO"
+			set layoutObjectsFm11_XML to addFieldsAsLayoutObjectsFM11(fieldNames)
 			
-			set newObjects to convertXmlToObjects(layoutObjectsFm11_XML) of objTrans
-			
-			set newClip to {Çclass XMLOÈ:newObjects}
-			
-			set the clipboard to newClip
-			
+			if originalClipboardFormat is "TEXT" then
+				-- NOTE: if original is TEXT, need to wipe out original clipboard by setting to FM Objects FIRST, then add TEXT at end of script:
+				
+				set currentCode of objTrans to "XMLO"
+				
+				set newObjects to convertXmlToObjects(layoutObjectsFm11_XML) of objTrans
+				
+				set newClip to {Çclass XMLOÈ:newObjects}
+				
+				set the clipboard to newClip
+				
+			end if
 		end if
-		
 		
 	end if
 	
 	
 	if originalClipboardFormat is not "XML2" then
 		
-		set layoutObjectsFm12_XML to addFieldsAsLayoutObjectsFM12(fieldNames)
+		if (count of fieldNames) is not 0 then
+			set layoutObjectsFm12_XML to addFieldsAsLayoutObjectsFM12(fieldNames)
+		end if
 		
 	end if
 	
@@ -194,7 +242,20 @@ on run
 	
 	if originalClipboardFormat is not "XMSS" then
 		
-		set scriptStepsXML to addFieldsAsScriptSteps(fieldNames)
+		if (count of fieldNames) is not 0 then
+			-- they DID have table::field notation, so make Set Field steps:
+			set scriptStepsXML to addFieldsAsScriptSteps(fieldNames)
+			
+		else if (count of varNamesOptionalValues) is not 0 then
+			-- try using as variable names instead:
+			-- 3.9.2 - check whether we should use the source text as variables (with optional values) instead of hoping they are field references 	
+			
+			set scriptStepsXML to addTextToVariableScriptSteps(varNamesOptionalValues)
+			
+			get the clipboard as Çclass XMSSÈ
+			return result
+			
+		end if
 		
 	end if
 	
@@ -202,19 +263,26 @@ on run
 	if originalClipboardFormat is not "XMFD" and originalClipboardFormat is not "XMTB" then
 		-- treat Table like Fields (so don't add fields if it was either). 
 		
-		set fieldDefsXML to addFieldsAsFieldDefs(fieldNames)
+		if (count of fieldNames) is not 0 then
+			set fieldDefsXML to addFieldsAsFieldDefs(fieldNames)
+		end if
 		
 	end if
 	
 	
 	-- NOW, add them in as text, too, even if already there: 
 	set fmClipboard to get the clipboard
+	
 	if originalClipboardFormat is "TEXT" then
 		-- RESTORE what was saved above: 
 		set newClip to textClipboard & fmClipboard
-	else
+	else if (count of fieldNames) is not 0 then
+		
 		set fieldNamesListAsText to unParseChars(fieldNames, return)
 		set newClip to {string:fieldNamesListAsText} & fmClipboard
+	else if (count of varNamesOptionalValues) is not 0 then
+		set varNamesValuesListAsText to unParseChars(varNamesOptionalValues, return)
+		set newClip to {string:varNamesValuesListAsText} & fmClipboard
 	end if
 	set the clipboard to newClip
 	
@@ -223,6 +291,114 @@ on run
 	
 	
 end run
+
+
+
+
+
+on addTextToVariableScriptSteps(nameOptionalValueList)
+	
+	script textToVariableScriptSteps
+		
+		property headerScriptStepsXML : "<fmxmlsnippet type=\"FMObjectList\">"
+		property footerScriptStepsXML : "</fmxmlsnippet>"
+		property stepStartXML : "<Step enable=\"True\" id=\"141\" name=\"Set Variable\">"
+		property varValuePrefixXML : "<Value>"
+		property valueCalcPrefixXML : "<Calculation><![CDATA["
+		property valueCalcSuffixXML : "]]></Calculation>"
+		property varValueSuffixXML : "</Value>"
+		property repPrefixXML : "<Repetition><Calculation><![CDATA["
+		property repSuffixXML : "]]></Calculation></Repetition>"
+		property varNamePrefixXML : "<Name>"
+		property varNameSuffixXML : "</Name>"
+		property stepEndXML : "</Step>"
+		
+		on run
+			set objTrans to fmObjectTranslator_Instantiate({})
+			
+			set colSep to ASCII character 9
+			
+			if item 1 of nameOptionalValueList contains colSep then
+				set hasVarValue to true
+			else
+				set hasVarValue to false
+			end if
+			
+			set buildingXML to headerScriptStepsXML
+			
+			
+			repeat with oneStep in nameOptionalValueList
+				set oneStepRAW to contents of oneStep
+				
+				if hasVarValue then
+					set {varName, varValue} to parseChars({oneStepRAW, colSep})
+				else
+					set varName to oneStepRAW
+					set varValue to "\"\""
+				end if
+				
+				if varName contains "[" and varName contains "]" then
+					set repNum to getTextBetweenMultiple(varName, "[", "]")
+					set varName to item 1 of parseChars({varName, "["})
+				else
+					set repNum to 1
+				end if
+				
+				if varName does not start with "$" then set varName to "$" & varName
+				
+				
+				
+				if length of varName is greater than 0 then
+					
+					set oneScriptStep to ""
+					set oneScriptStep to oneScriptStep & stepStartXML
+					set oneScriptStep to oneScriptStep & varValuePrefixXML
+					set oneScriptStep to oneScriptStep & valueCalcPrefixXML
+					set oneScriptStep to oneScriptStep & varValue
+					set oneScriptStep to oneScriptStep & valueCalcSuffixXML
+					set oneScriptStep to oneScriptStep & varValueSuffixXML
+					set oneScriptStep to oneScriptStep & repPrefixXML
+					set oneScriptStep to oneScriptStep & repNum
+					set oneScriptStep to oneScriptStep & repSuffixXML
+					set oneScriptStep to oneScriptStep & varNamePrefixXML
+					set oneScriptStep to oneScriptStep & varName
+					set oneScriptStep to oneScriptStep & varNameSuffixXML
+					set oneScriptStep to oneScriptStep & stepEndXML
+					
+					set buildingXML to buildingXML & return & oneScriptStep
+				end if
+				
+			end repeat
+			
+			
+			set buildingXML to buildingXML & return & footerScriptStepsXML
+			
+			set currentCode of objTrans to "XMSS"
+			
+			set scriptStepsObjects to convertXmlToObjects(buildingXML) of objTrans
+			
+			
+			set fmClipboard to get the clipboard
+			
+			set newClip to {Çclass XMSSÈ:scriptStepsObjects} & fmClipboard
+			
+			set the clipboard to newClip
+			
+			return buildingXML
+			
+			
+			
+		end run
+		
+	end script
+	
+	
+	run textToVariableScriptSteps
+	
+end addTextToVariableScriptSteps
+
+
+
 
 
 
@@ -240,7 +416,7 @@ on addFieldsAsLayoutObjectsFM12(fieldNameList)
 		property pixelFieldTopStart : 10
 		property pixelFieldHeight : 20
 		
-		property headerXML : "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" & return & "<fmxmlsnippet type=\"LayoutObjectList\">"
+		property headerXML : "<?xml version=\"1.0\" encoding=\"utf-8\"?>" & return & "<fmxmlsnippet type=\"LayoutObjectList\">"
 		property footerXML : "</fmxmlsnippet>"
 		property templateLayoutOpenXML : "<Layout enclosingRectTop =\"###LAYOUT_TOP###\" enclosingRectLeft =\" 3.000000\" enclosingRectBottom =\"###LAYOUT_BOTTOM###\" enclosingRectRight =\"367.000000\">"
 		
@@ -271,7 +447,7 @@ on addFieldsAsLayoutObjectsFM12(fieldNameList)
 </ExtendedAttributes>
 <Styles>
 <LocalCSS>
-self&#10;{&#10;&#09;font-family: -fm-font-family(arial,sans-serif,roman);&#10;&#09;font-weight: normal;&#10;&#09;font-stretch: normal;&#10;&#09;font-style: normal;&#10;&#09;font-variant: normal;&#10;&#09;font-size: 11pt;&#10;&#09;color: rgba(80%,80%,80%,1);&#10;&#09;line-height: 1line;&#10;&#09;text-align: right;&#10;&#09;text-transform: none;&#10;&#09;-fm-strikethrough: false;&#10;&#09;-fm-underline: none;&#10;&#09;-fm-glyph-variant: ;&#10;&#09;-fm-highlight-color: rgba(0%,0%,0%,0);&#10;}&#10;</LocalCSS>
+self&#10;{&#10;&#09;font-family: -fm-font-family(arial,sans-serif,roman);&#10;&#09;font-weight: normal;&#10;&#09;font-stretch: normal;&#10;&#09;font-style: normal;&#10;&#09;font-variant: normal;&#10;&#09;font-size: 11pt;&#10;&#09;color: rgba(40.3922%,40.3922%,40.3922%,1);&#10;&#09;line-height: 1line;&#10;&#09;text-align: right;&#10;&#09;text-transform: none;&#10;&#09;-fm-strikethrough: false;&#10;&#09;-fm-underline: none;&#10;&#09;-fm-glyph-variant: ;&#10;&#09;-fm-highlight-color: rgba(0%,0%,0%,0);&#10;}&#10;</LocalCSS>
 </Styles>
 <CharacterStyleVector>
 <Style>
@@ -280,7 +456,7 @@ self&#10;{&#10;&#09;font-family: -fm-font-family(arial,sans-serif,roman);&#10;&#
 <Font-family codeSet=\"Roman\" fontId=\"21\">arial,sans-serif</Font-family>
 <Font-size>11</Font-size>
 <Face>0</Face>
-<Color>#CCCCCC</Color>
+<Color>#676767</Color>
 </CharacterStyle>
 </Style>
 </CharacterStyleVector>

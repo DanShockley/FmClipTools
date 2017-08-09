@@ -1,9 +1,9 @@
 -- FM-XML Objects to Multi-Objects
--- version 3.9.2, Daniel A. Shockley
-
+-- version 3.9.3, Daniel A. Shockley
 -- Takes objects in the clipboard and adds multiple types of FileMaker objects into clipboard (plus return-delimited text). 
 
--- VERSION HISTORY: 
+
+-- 3.9.3 - 2017-08-09 ( eshagdar ): renamed 'FM-XML Objects to Multi-Objects' to 'fmClip - FM Objects to Multi-Objects' to match other handler name pattern
 -- 3.9.2 - if the clipboard is text without double-colons then assume those aren't fields, but rather Variable names; Also, if the clipboard contains Set Variable script steps, extract the variable Name and Value into tab-separated columns. 
 -- 3.9.1 - now works if the clipboard contains text (assumes those are fully-qualified field names).
 -- 3.9 (skipped version numbers) - uses fmObjectTranslator 3.9.

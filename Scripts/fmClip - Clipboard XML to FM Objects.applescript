@@ -1,13 +1,14 @@
--- Clipboard FileMaker Objects to XML
--- version 3.9.1, Daniel A. Shockley
+-- Clipboard XML to FileMaker Objects
+-- version 3.9.2, Daniel A. Shockley
 
+
+-- 3.9.2 - 2017-08-09 ( eshagdar ): renamed 'Clipboard XML to FileMaker Objects' to 'fmClip - Clipboard XML to FM Objects' to match other handler name pattern
 -- 3.9.1 - updated fmObjectTranslator code
 -- 3.9 - updated fmObjectTranslator code
--- 3.8 - updated fmObjectTranslator code; added line breaks inside the fmxmlsnippet when text is added to clipboard for script steps. 
+-- 3.8 - updated fmObjectTranslator code
+-- 3.4 - updated fmObjectTranslator code
 -- 3.1 - updated fmObjectTranslator code
 -- 3.0 - updated fmObjectTranslator code
--- 2.6 - updated fmObjectTranslator code
--- 2.5 - updated fmObjectTranslator code
 -- 2.2 - updated fmObjectTranslator code
 -- 2.1 - updated fmObjectTranslator code
 -- 2.0 - updated fmObjectTranslator code
@@ -19,40 +20,46 @@
 -- 1.4 - updated fmObjectTranslator code
 -- 1.3 - put the actual conversion code into a handler with script object
 -- 1.2 - cleaned up for use in Script menu
--- 1.1 - added ability to determine which FM class is in clipboard
+
+
+
+property debugMode : false
 
 on run
 	
 	set objTrans to fmObjectTranslator_Instantiate({})
 	
-	set shouldPrettify of objTrans to true
-	set shouldSimpleFormat of objTrans to true
+	
+	set debugMode of objTrans to my debugMode
+	
+	if debugMode then log currentCode of objTrans
+	
+	set clipHasXML to checkClipboardForValidXML({}) of objTrans
 	
 	
-	
-	set debugMode of objTrans to true
-	
-	
-	
-	set clipboardType to checkClipboardForObjects({}) of objTrans
-	
-	if clipboardType is false then
-		display dialog "The clipboard did not contain any FileMaker objects."
+	if clipHasXML is false then
+		--		set the clipboard to ""
+		set dialogMsg to "Could not identify the type of FileMaker data stored in database to send to the clipboard."
+		
+		try
+			-- try to put the first XX characters of the clipboard into the error message
+			set clipboardStartsWith to text 1 thru 20 of (get the clipboard as string) & "É"
+			set dialogMsg to dialogMsg & return & "Clipboard starts with: " & clipboardStartsWith
+		on error
+			try
+				set clipboardStartsWith to text 1 thru 8 of (get the clipboard as string) & "É"
+				set dialogMsg to dialogMsg & return & "Clipboard starts with: " & clipboardStartsWith
+			end try
+		end try
+		display dialog dialogMsg
 		return false
 	end if
 	
-	clipboardConvertToXML({}) of objTrans
+	clipboardConvertToFMObjects({}) of objTrans
 	
-	return true
-	
+	return result
 	
 end run
-
-
-
-
-
-
 
 
 

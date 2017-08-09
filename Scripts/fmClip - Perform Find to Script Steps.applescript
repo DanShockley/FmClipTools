@@ -1,94 +1,268 @@
--- Clipboard - Replace String in FileMaker Objects
--- version 1.0, Daniel A. Shockley
+-- Perform Find to Script Steps
+-- version 3.9.3, Daniel A. Shockley
+-- Takes 'Perform Find' script step object in clipboard and converts to multiple script steps specifying a Find in detail. 
 
--- Takes a return-delimited list of strings (optionally tab-delimited for multiple columns), then takes a FileMaker object in the clipboard and replicates it for each list item, then converts to multiple objects.
 
--- VERSION HISTORY: 
--- 1.0 - 2017-04-25 ( dshockley ): first created, based off of Replace String in FileMaker Objects.
-
+-- 3.9.3 - 2017-08-09 ( eshagdar ): renamed 'Perform Find to Script Steps' to 'fmClip - Perform Find to Script Steps' to match other handler name pattern
+-- 3.9.2 - warn the user if any of the search-values need to be checked for data-type validity by inserting a Comment script step; also auto-pastes now. 
+-- 3.9.1 - updated fmObjectTranslator code
+-- 3.8 - updated fmObjectTranslator to 3.8; double-check warning for ellipsis (and three dots).
+-- 2.6 - original version using fmObjectTranslator 2.6.
 
 property debugMode : false
-property colSep : tab
-property rowSep : return
+
+property needsDataTypeWarning : ""
+
 
 on run
-	
-	
 	set objTrans to fmObjectTranslator_Instantiate({})
 	
-	set shouldPrettify of objTrans to false
+	set pfXML to clipboardGetObjectsAsXML({}) of objTrans
 	
-	set debugMode of objTrans to debugMode
+	set detailedFindXML to ""
 	
-	set clipboardType to checkClipboardForObjects({}) of objTrans
+	set needsDataTypeWarning to false -- init
+	set onFirstRequest to true
 	
-	if clipboardType is false then
-		display dialog "The clipboard did not contain any FileMaker objects."
-		return false
-	end if
-	
-	set clipboardObjectStringXML to clipboardGetObjectsAsXML({}) of objTrans
-	
-	
-	set dialogTitle to "Replicate FileMaker Objects"
-	set mergeSourceDataDialog to (display dialog "Enter a return-delimited list of merge source data to replicate (use tabs for multiple columns): " with title dialogTitle default answer "" buttons {"Cancel", "Replicate"} default button "Replicate")
-	set mergeSourceDelimData to text returned of mergeSourceDataDialog
-	
-	set mergeSourceRows to paragraphs of mergeSourceDelimData
-	
-	set countOfRows to count of mergeSourceRows
-	set firstRowData to item 1 of mergeSourceRows
-	set countOfColumns to (objTrans's patternCount({firstRowData, colSep})) + 1
-	
-	set totalColumns to (objTrans's patternCount({mergeSourceDelimData, colSep})) + countOfRows
-	
-	if totalColumns / countOfRows is not equal to countOfColumns then
-		error "Error: Each row has to have the same number of column delimiters." number 1024
-		return false
-	end if
-	
-	set firstRowParsed to objTrans's parseChars({firstRowData, colSep})
-	
-	set templateObjectXML to objTrans's removeHeaderFooter(clipboardObjectStringXML)
-	
-	set mergePlaceholderStrings to {}
-	repeat with colNum from 1 to countOfColumns
-		set nextButtonName to "Next"
-		if colNum is equal to countOfColumns then set nextButtonName to "Replicate"
-		set mergePlaceholderDialog to (display dialog "Please strip away the code until you have only the 'merge placeholder string' for column " & colNum & ", where the 1st value that will take its place is '" & item colNum of firstRowParsed & "'." with title dialogTitle default answer templateObjectXML buttons {"Cancel", nextButtonName} default button nextButtonName)
-		set oneMergePlaceholderString to text returned of mergePlaceholderDialog
+	tell application "System Events"
+		set xmlData to make new XML data with data pfXML
+		set scriptStepElement to XML element "Step" of XML element "fmxmlsnippet" of xmlData
 		
-		copy oneMergePlaceholderString to end of mergePlaceholderStrings
+		if (value of XML attribute "name" of scriptStepElement) is not "Perform Find" then return false
 		
-	end repeat
-	
-	
-	
-	set newXML to ""
-	-- Loop over the 'replicate' list rows:
-	repeat with oneRowData in mergeSourceRows
-		set oneRowData to contents of oneRowData
-		set oneRowParsed to objTrans's parseChars({oneRowData, colSep})
-		set oneNewObjectXML to templateObjectXML
-		-- Need to find and replace each merge placeholder with this row's matching column string:
-		repeat with colNum from 1 to countOfColumns
-			set oneNewObjectXML to replaceSimple({oneNewObjectXML, item colNum of mergePlaceholderStrings, item colNum of oneRowParsed}) of objTrans
+		set queryElement to XML element "Query" of scriptStepElement
+		
+		
+		set requestRowElements to (every XML element of queryElement whose name is "RequestRow")
+		
+		repeat with oneRequestRowElement in requestRowElements
+			
+			if not onFirstRequest then
+				set detailedFindXML to detailedFindXML & return & my getXmlNewRequest()
+			else
+				set onFirstRequest to false
+			end if
+			
+			if (value of XML attribute "operation" of oneRequestRowElement) is "Exclude" then
+				set detailedFindXML to detailedFindXML & return & my getXmlOmit()
+			end if
+			
+			set criteriaElements to (every XML element of oneRequestRowElement whose name is "Criteria")
+			
+			repeat with oneCriteriaElement in criteriaElements
+				
+				set fieldElement to XML element "Field" of oneCriteriaElement
+				set tableName to value of XML attribute "table" of fieldElement
+				set fieldName to value of XML attribute "name" of fieldElement
+				
+				set textElement to XML element "Text" of oneCriteriaElement
+				set textValue to value of textElement
+				
+				if "><²³=" contains (text 1 thru 1 of textValue) or textValue contains "É" or textValue contains "..." then
+					-- some operator, so WARN: 
+					set textValue to textValue & "  // DOUBLE-CHECK THIS!!!!"
+					set needsDataTypeWarning to true
+					
+				end if
+				
+				set oneSetFieldXML to my getXmlSetField(tableName, fieldName, textValue)
+				set detailedFindXML to detailedFindXML & return & oneSetFieldXML
+				
+			end repeat
+			
+			
+			
 		end repeat
-		-- add this new object to the final XML:
-		set newXML to newXML & return & oneNewObjectXML
-	end repeat
+		
+		
+		
+		
+		set detailedFindXML to my xmlFindStart() & return & detailedFindXML & return & my xmlFindEnd()
+		
+		
+		set currentCode of objTrans to "XMSS"
+		set scriptStepsObjects to convertXmlToObjects(detailedFindXML) of objTrans
+		
+		set newClip to {Çclass XMSSÈ:scriptStepsObjects}
+		
+		set the clipboard to newClip
+		
+	end tell
 	
-	-- Put the header/footer back on the list of XML objects:
-	set newXML to objTrans's addHeaderFooter(newXML)
 	
-	set the clipboard to newXML
 	
-	clipboardConvertToFMObjects({}) of objTrans
+	tell application "System Events"
+		keystroke "v" using command down
+	end tell
 	
-	return newXML
+	
+	
+	return true
+	
+	
+	
 	
 	
 end run
+
+
+
+on getXmlNewRequest()
+	return "<Step enable=\"True\" id=\"7\" name=\"New Record/Request\"></Step>"
+end getXmlNewRequest
+
+
+on getXmlOmit()
+	return "<Step enable=\"True\" id=\"25\" name=\"Omit Record\"></Step>"
+end getXmlOmit
+
+
+
+on getXmlSetField(tocName, fieldName, cdataString)
+	
+	set templateXML to "<Step enable=\"True\" id=\"76\" name=\"Set Field\">
+<Calculation>
+<![CDATA[\"###CDATA###\"]]>
+</Calculation>
+<Field table=\"###TOCNAME###\" id=\"999\" name=\"###FIELDNAME###\">
+</Field>
+</Step>"
+	
+	
+	set xmlSetField to templateXML
+	set xmlSetField to replaceSimple({xmlSetField, "###TOCNAME###", tocName})
+	set xmlSetField to replaceSimple({xmlSetField, "###FIELDNAME###", fieldName})
+	set xmlSetField to replaceSimple({xmlSetField, "###CDATA###", cdataString})
+	
+	return xmlSetField
+	
+	
+end getXmlSetField
+
+
+
+on xmlFindStart()
+	
+	set xmlHeader to "<fmxmlsnippet type=\"FMObjectList\">"
+	
+	set warningCommentXML to "<Step enable=\"True\" id=\"89\" name=\"comment\">
+<Text>WARNING! The script step was converted, but the data-type of some search values may not working properly without adjustment to an operator (ellipsis, ineqaulity operators, etc), as the single-step Perform Find uses raw text strings as opposed to valid FileMaker calculations.</Text>
+</Step>"
+	
+	
+	set enterFindModeXML to "<Step enable=\"True\" id=\"22\" name=\"Enter Find Mode\">
+<Pause state=\"False\">
+</Pause>
+<Restore state=\"False\">
+</Restore>
+</Step>
+"
+	
+	set outputXML to xmlHeader
+	
+	if needsDataTypeWarning then
+		set outputXML to outputXML & return & warningCommentXML
+	end if
+	
+	set outputXML to outputXML & return & enterFindModeXML
+	
+	return outputXML
+	
+	
+end xmlFindStart
+
+
+
+on xmlFindEnd()
+	return "<Step enable=\"True\" id=\"28\" name=\"Perform Find\">
+<Restore state=\"False\">
+</Restore>
+</Step>
+</fmxmlsnippet>"
+	
+end xmlFindEnd
+
+
+
+
+
+
+
+
+
+on somePerformFindScriptStepXML()
+	-- used when testing, as an example canned Perform Find. 
+	
+	return "<fmxmlsnippet type=\"FMObjectList\"><Step enable=\"True\" id=\"28\" name=\"Perform Find\"><Restore state=\"True\"></Restore><Query><RequestRow operation=\"Include\"><Criteria><Field table=\"C_WORKER\" id=\"37\" name=\"a16C_DriveID\"></Field><Text>dv316</Text></Criteria><Criteria><Field table=\"C_WORKER\" id=\"84\" name=\"b16C_AdrApt\"></Field><Text>2F</Text></Criteria></RequestRow><RequestRow operation=\"Exclude\"><Criteria><Field table=\"C_WORKER\" id=\"92\" name=\"b16C_BargainingUnit\"></Field><Text>YES</Text></Criteria><Criteria><Field table=\"C_WORKER\" id=\"32956\" name=\"b16C_Active__b\"></Field><Text>1</Text></Criteria></RequestRow></Query></Step></fmxmlsnippet>"
+	
+	(*
+	return "<fmxmlsnippet type=\"FMObjectList\">
+<Step enable=\"True\" id=\"28\" name=\"Perform Find\"><Restore state=\"True\"></Restore><Query><RequestRow operation=\"Include\"><Criteria><Field table=\"C_WORKER\" id=\"37\" name=\"a16C_DriveID\"></Field><Text>dv316</Text></Criteria><Criteria><Field table=\"C_WORKER\" id=\"92\" name=\"b16C_BargainingUnit\"></Field><Text>YES</Text></Criteria><Criteria><Field table=\"C_WORKER\" id=\"32956\" name=\"b16C_Active__b\"></Field><Text>1</Text></Criteria></RequestRow></Query></Step>
+</fmxmlsnippet>"
+	*)
+end somePerformFindScriptStepXML
+
+
+
+
+
+on replaceSimple(prefs)
+	-- version 1.4, Daniel A. Shockley http://www.danshockley.com
+	
+	-- 1.4 - Convert sourceText to string, since the previous version failed on numbers. 
+	-- 1.3 - The class record is specified into a variable to avoid a namespace conflict when run within FileMaker. 
+	-- 1.2 - changes parameters to a record to add option to CONSIDER CASE, since the default changed to ignoring case with Snow Leopard. This handler defaults to CONSIDER CASE = true, since that was what older code expected. 
+	-- 1.1 - coerces the newChars to a STRING, since other data types do not always coerce
+	--     (example, replacing "nine" with 9 as number replaces with "")
+	
+	set defaultPrefs to {considerCase:true}
+	
+	if class of prefs is list then
+		if (count of prefs) is greater than 3 then
+			-- get any parameters after the initial 3
+			set prefs to {sourceText:item 1 of prefs, oldChars:item 2 of prefs, newChars:item 3 of prefs, considerCase:item 4 of prefs}
+		else
+			set prefs to {sourceText:item 1 of prefs, oldChars:item 2 of prefs, newChars:item 3 of prefs}
+		end if
+		
+	else if class of prefs is not equal to (class of {someKey:3}) then
+		-- Test by matching class to something that IS a record to avoid FileMaker namespace conflict with the term "record"
+		
+		error "The parameter for 'replaceSimple()' should be a record or at least a list. Wrap the parameter(s) in curly brackets for easy upgrade to 'replaceSimple() version 1.3. " number 1024
+		
+	end if
+	
+	
+	set prefs to prefs & defaultPrefs
+	
+	
+	set considerCase to considerCase of prefs
+	set sourceText to sourceText of prefs
+	set oldChars to oldChars of prefs
+	set newChars to newChars of prefs
+	
+	set sourceText to sourceText as string
+	
+	set oldDelims to AppleScript's text item delimiters
+	set AppleScript's text item delimiters to the oldChars
+	if considerCase then
+		considering case
+			set the parsedList to every text item of sourceText
+			set AppleScript's text item delimiters to the {(newChars as string)}
+			set the newText to the parsedList as string
+		end considering
+	else
+		ignoring case
+			set the parsedList to every text item of sourceText
+			set AppleScript's text item delimiters to the {(newChars as string)}
+			set the newText to the parsedList as string
+		end ignoring
+	end if
+	set AppleScript's text item delimiters to oldDelims
+	return newText
+	
+	
+end replaceSimple
 
 
 
@@ -99,9 +273,8 @@ end run
 on fmObjectTranslator_Instantiate(prefs)
 	
 	script fmObjectTranslator
-		-- version 3.9.2, Daniel A. Shockley
+		-- version 3.9.1, Daniel A. Shockley
 		
-		-- 3.9.2 - 2017-04-25 ( dshockley/eshagdar ): added removeHeaderFooter, addHeaderFooter. 
 		-- 3.9.1 - 2016-11-02 ( dshockley/eshagdar ): always reset currentCode before reading clipboard; debugMode now logs the tempDataPosix in dataObjectToUTF8; add more error-trapping and error-handling.
 		-- 3.9 - fixed bug where simpleFormatXML would fail on layout objects.
 		-- 3.8 - default for shouldPrettify is now FALSE; added shouldSimpleFormat option for simpleFormatXML() (modifies text XML in minor, but useful, ways) - as of 3.8, adds line-returns inside the fmxmlsnippet tags; 
@@ -137,10 +310,6 @@ on fmObjectTranslator_Instantiate(prefs)
 		-- the "bad" and "good" layout tag start code deals with a bug in FileMaker 10: 
 		property badLayoutCodeStart : "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" & (ASCII character 10) & "<Layout" & (ASCII character 10) & " enclosingRectTop=\""
 		property goodLayoutCodeStart : "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" & (ASCII character 10) & "<Layout enclosingRectTop=\""
-		
-		property xmlHeader : "<fmxmlsnippet type=\"FMObjectList\">"
-		property xmlFooter : "</fmxmlsnippet>"
-		
 		
 		property fmObjCodes : {Â
 			{objName:"Step", objCode:"XMSS"}, Â
@@ -651,20 +820,23 @@ on fmObjectTranslator_Instantiate(prefs)
 		end makeTempDirPosix
 		
 		
-		on removeHeaderFooter(someXML)
-			-- version 1.0
+		on simpleFormatXML(someXML)
+			-- version 1.1
 			
-			-- 1.0 - 2017-04-25 ( dshockley/eshagdar ): first created.
+			set xmlHeader to "<fmxmlsnippet type=\"FMObjectList\">"
+			set xmlFooter to "</fmxmlsnippet>"
 			
-			
-			if debugMode then logConsole(ScriptName, "removeHeaderFooter: START")
+			if debugMode then logConsole(ScriptName, "simpleFormatXML: START")
 			try
+				
+				
 				if someXML begins with xmlHeader and someXML ends with xmlFooter then
 					try
 						set {oldDelims, AppleScript's text item delimiters} to {AppleScript's text item delimiters, xmlHeader}
 						set modifiedXML to (text items 2 thru -1 of someXML) as string
 						set AppleScript's text item delimiters to xmlFooter
 						set modifiedXML to ((text items 1 thru -2 of modifiedXML) as string)
+						set modifiedXML to xmlHeader & return & modifiedXML & return & xmlFooter
 						set AppleScript's text item delimiters to oldDelims
 					on error errMsg number errNum
 						-- trap here so we can restore ASTIDs, then pass out the actual error: 
@@ -678,44 +850,13 @@ on fmObjectTranslator_Instantiate(prefs)
 				end if
 			on error errMsg number errNum
 				-- any error above should fail gracefully and just return the original code
-				if debugMode then logConsole(ScriptName, "removeHeaderFooter: ERROR: " & errMsg & "(" & errNum & ")")
+				if debugMode then logConsole(ScriptName, "simpleFormatXML: ERROR: " & errMsg & "(" & errNum & ")")
 				return someXML
 				
 			end try
-		end removeHeaderFooter
-		
-		on addHeaderFooter(someXML)
-			-- version 1.0
 			
-			-- 1.0 - 2017-04-25 ( dshockley/eshagdar ): first created.
-			
-			if debugMode then logConsole(ScriptName, "removeHeaderFooter: START")
-			try
-				if someXML does not start with xmlHeader and someXML does not end with xmlFooter then
-					return xmlHeader & return & someXML & return & xmlFooter
-				else
-					return someXML
-				end if
-			on error errMsg number errNum
-				-- any error above should fail gracefully and just return the original code
-				if debugMode then logConsole(ScriptName, "removeHeaderFooter: ERROR: " & errMsg & "(" & errNum & ")")
-				return someXML
-			end try
-		end addHeaderFooter
-		
-		
-		
-		on simpleFormatXML(someXML)
-			-- version 1.2
-			
-			-- 1.2 - the variables xmlHeader and xmlFooter are now script object properties; uses removeHeaderFooter and addHeaderFooter. 
-			
-			if debugMode then logConsole(ScriptName, "simpleFormatXML: START")
-			
-			return addHeaderFooter(removeHeaderFooter(someXML))
 			
 		end simpleFormatXML
-		
 		
 		
 		on prettifyXML(someXML)
@@ -1161,10 +1302,6 @@ on fmObjectTranslator_Instantiate(prefs)
 	
 	
 end fmObjectTranslator_Instantiate
-
-
-
-
 
 
 

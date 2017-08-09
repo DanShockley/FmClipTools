@@ -1,66 +1,95 @@
--- Clipboard XML to FileMaker Objects
--- version 3.9.1, Daniel A. Shockley
+-- Clipboard - Replace String in FileMaker Objects
+-- version 1.0, Daniel A. Shockley
+-- Takes a return-delimited list of strings (optionally tab-delimited for multiple columns), then takes a FileMaker object in the clipboard and replicates it for each list item, then converts to multiple objects.
 
 
--- 3.9.1 - updated fmObjectTranslator code
--- 3.9 - updated fmObjectTranslator code
--- 3.8 - updated fmObjectTranslator code
--- 3.4 - updated fmObjectTranslator code
--- 3.1 - updated fmObjectTranslator code
--- 3.0 - updated fmObjectTranslator code
--- 2.2 - updated fmObjectTranslator code
--- 2.1 - updated fmObjectTranslator code
--- 2.0 - updated fmObjectTranslator code
--- 1.9 - updated fmObjectTranslator code
--- 1.8 - "clipboard convert" now ADDs the other data, not replace clipboard
--- 1.7 - handles UTF-8 properly now
--- 1.6 - updated fmObjectTranslator code - fix FM line return char
--- 1.5 - updated fmObjectTranslator code - handles larger data sets
--- 1.4 - updated fmObjectTranslator code
--- 1.3 - put the actual conversion code into a handler with script object
--- 1.2 - cleaned up for use in Script menu
+-- 1.0.1 - 2017-08-09 ( eshagdar ): renamed 'Clipboard - Replace String in FileMaker Objects' to 'fmClip - Replicate FM Objects' to match other handler name pattern
+-- 1.0 - 2017-04-25 ( dshockley ): first created, based off of Replace String in FileMaker Objects.
 
 
 
 property debugMode : false
+property colSep : tab
+property rowSep : return
+
 
 on run
 	
 	set objTrans to fmObjectTranslator_Instantiate({})
 	
+	set shouldPrettify of objTrans to false
 	
-	set debugMode of objTrans to my debugMode
+	set debugMode of objTrans to debugMode
 	
-	if debugMode then log currentCode of objTrans
+	set clipboardType to checkClipboardForObjects({}) of objTrans
 	
-	set clipHasXML to checkClipboardForValidXML({}) of objTrans
-	
-	
-	if clipHasXML is false then
-		--		set the clipboard to ""
-		set dialogMsg to "Could not identify the type of FileMaker data stored in database to send to the clipboard."
-		
-		try
-			-- try to put the first XX characters of the clipboard into the error message
-			set clipboardStartsWith to text 1 thru 20 of (get the clipboard as string) & "É"
-			set dialogMsg to dialogMsg & return & "Clipboard starts with: " & clipboardStartsWith
-		on error
-			try
-				set clipboardStartsWith to text 1 thru 8 of (get the clipboard as string) & "É"
-				set dialogMsg to dialogMsg & return & "Clipboard starts with: " & clipboardStartsWith
-			end try
-		end try
-		display dialog dialogMsg
+	if clipboardType is false then
+		display dialog "The clipboard did not contain any FileMaker objects."
 		return false
 	end if
 	
+	set clipboardObjectStringXML to clipboardGetObjectsAsXML({}) of objTrans
+	
+	
+	set dialogTitle to "Replicate FileMaker Objects"
+	set mergeSourceDataDialog to (display dialog "Enter a return-delimited list of merge source data to replicate (use tabs for multiple columns): " with title dialogTitle default answer "" buttons {"Cancel", "Replicate"} default button "Replicate")
+	set mergeSourceDelimData to text returned of mergeSourceDataDialog
+	
+	set mergeSourceRows to paragraphs of mergeSourceDelimData
+	
+	set countOfRows to count of mergeSourceRows
+	set firstRowData to item 1 of mergeSourceRows
+	set countOfColumns to (objTrans's patternCount({firstRowData, colSep})) + 1
+	
+	set totalColumns to (objTrans's patternCount({mergeSourceDelimData, colSep})) + countOfRows
+	
+	if totalColumns / countOfRows is not equal to countOfColumns then
+		error "Error: Each row has to have the same number of column delimiters." number 1024
+		return false
+	end if
+	
+	set firstRowParsed to objTrans's parseChars({firstRowData, colSep})
+	
+	set templateObjectXML to objTrans's removeHeaderFooter(clipboardObjectStringXML)
+	
+	set mergePlaceholderStrings to {}
+	repeat with colNum from 1 to countOfColumns
+		set nextButtonName to "Next"
+		if colNum is equal to countOfColumns then set nextButtonName to "Replicate"
+		set mergePlaceholderDialog to (display dialog "Please strip away the code until you have only the 'merge placeholder string' for column " & colNum & ", where the 1st value that will take its place is '" & item colNum of firstRowParsed & "'." with title dialogTitle default answer templateObjectXML buttons {"Cancel", nextButtonName} default button nextButtonName)
+		set oneMergePlaceholderString to text returned of mergePlaceholderDialog
+		
+		copy oneMergePlaceholderString to end of mergePlaceholderStrings
+		
+	end repeat
+	
+	
+	
+	set newXML to ""
+	-- Loop over the 'replicate' list rows:
+	repeat with oneRowData in mergeSourceRows
+		set oneRowData to contents of oneRowData
+		set oneRowParsed to objTrans's parseChars({oneRowData, colSep})
+		set oneNewObjectXML to templateObjectXML
+		-- Need to find and replace each merge placeholder with this row's matching column string:
+		repeat with colNum from 1 to countOfColumns
+			set oneNewObjectXML to replaceSimple({oneNewObjectXML, item colNum of mergePlaceholderStrings, item colNum of oneRowParsed}) of objTrans
+		end repeat
+		-- add this new object to the final XML:
+		set newXML to newXML & return & oneNewObjectXML
+	end repeat
+	
+	-- Put the header/footer back on the list of XML objects:
+	set newXML to objTrans's addHeaderFooter(newXML)
+	
+	set the clipboard to newXML
+	
 	clipboardConvertToFMObjects({}) of objTrans
 	
-	return result
+	return newXML
+	
 	
 end run
-
-
 
 
 
@@ -71,8 +100,9 @@ end run
 on fmObjectTranslator_Instantiate(prefs)
 	
 	script fmObjectTranslator
-		-- version 3.9.1, Daniel A. Shockley
+		-- version 3.9.2, Daniel A. Shockley
 		
+		-- 3.9.2 - 2017-04-25 ( dshockley/eshagdar ): added removeHeaderFooter, addHeaderFooter. 
 		-- 3.9.1 - 2016-11-02 ( dshockley/eshagdar ): always reset currentCode before reading clipboard; debugMode now logs the tempDataPosix in dataObjectToUTF8; add more error-trapping and error-handling.
 		-- 3.9 - fixed bug where simpleFormatXML would fail on layout objects.
 		-- 3.8 - default for shouldPrettify is now FALSE; added shouldSimpleFormat option for simpleFormatXML() (modifies text XML in minor, but useful, ways) - as of 3.8, adds line-returns inside the fmxmlsnippet tags; 
@@ -108,6 +138,10 @@ on fmObjectTranslator_Instantiate(prefs)
 		-- the "bad" and "good" layout tag start code deals with a bug in FileMaker 10: 
 		property badLayoutCodeStart : "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" & (ASCII character 10) & "<Layout" & (ASCII character 10) & " enclosingRectTop=\""
 		property goodLayoutCodeStart : "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" & (ASCII character 10) & "<Layout enclosingRectTop=\""
+		
+		property xmlHeader : "<fmxmlsnippet type=\"FMObjectList\">"
+		property xmlFooter : "</fmxmlsnippet>"
+		
 		
 		property fmObjCodes : {Â
 			{objName:"Step", objCode:"XMSS"}, Â
@@ -618,23 +652,20 @@ on fmObjectTranslator_Instantiate(prefs)
 		end makeTempDirPosix
 		
 		
-		on simpleFormatXML(someXML)
-			-- version 1.1
+		on removeHeaderFooter(someXML)
+			-- version 1.0
 			
-			set xmlHeader to "<fmxmlsnippet type=\"FMObjectList\">"
-			set xmlFooter to "</fmxmlsnippet>"
+			-- 1.0 - 2017-04-25 ( dshockley/eshagdar ): first created.
 			
-			if debugMode then logConsole(ScriptName, "simpleFormatXML: START")
+			
+			if debugMode then logConsole(ScriptName, "removeHeaderFooter: START")
 			try
-				
-				
 				if someXML begins with xmlHeader and someXML ends with xmlFooter then
 					try
 						set {oldDelims, AppleScript's text item delimiters} to {AppleScript's text item delimiters, xmlHeader}
 						set modifiedXML to (text items 2 thru -1 of someXML) as string
 						set AppleScript's text item delimiters to xmlFooter
 						set modifiedXML to ((text items 1 thru -2 of modifiedXML) as string)
-						set modifiedXML to xmlHeader & return & modifiedXML & return & xmlFooter
 						set AppleScript's text item delimiters to oldDelims
 					on error errMsg number errNum
 						-- trap here so we can restore ASTIDs, then pass out the actual error: 
@@ -648,13 +679,44 @@ on fmObjectTranslator_Instantiate(prefs)
 				end if
 			on error errMsg number errNum
 				-- any error above should fail gracefully and just return the original code
-				if debugMode then logConsole(ScriptName, "simpleFormatXML: ERROR: " & errMsg & "(" & errNum & ")")
+				if debugMode then logConsole(ScriptName, "removeHeaderFooter: ERROR: " & errMsg & "(" & errNum & ")")
 				return someXML
 				
 			end try
+		end removeHeaderFooter
+		
+		on addHeaderFooter(someXML)
+			-- version 1.0
 			
+			-- 1.0 - 2017-04-25 ( dshockley/eshagdar ): first created.
+			
+			if debugMode then logConsole(ScriptName, "removeHeaderFooter: START")
+			try
+				if someXML does not start with xmlHeader and someXML does not end with xmlFooter then
+					return xmlHeader & return & someXML & return & xmlFooter
+				else
+					return someXML
+				end if
+			on error errMsg number errNum
+				-- any error above should fail gracefully and just return the original code
+				if debugMode then logConsole(ScriptName, "removeHeaderFooter: ERROR: " & errMsg & "(" & errNum & ")")
+				return someXML
+			end try
+		end addHeaderFooter
+		
+		
+		
+		on simpleFormatXML(someXML)
+			-- version 1.2
+			
+			-- 1.2 - the variables xmlHeader and xmlFooter are now script object properties; uses removeHeaderFooter and addHeaderFooter. 
+			
+			if debugMode then logConsole(ScriptName, "simpleFormatXML: START")
+			
+			return addHeaderFooter(removeHeaderFooter(someXML))
 			
 		end simpleFormatXML
+		
 		
 		
 		on prettifyXML(someXML)
@@ -1100,6 +1162,10 @@ on fmObjectTranslator_Instantiate(prefs)
 	
 	
 end fmObjectTranslator_Instantiate
+
+
+
+
 
 
 

@@ -10,4 +10,4 @@ To do that:
 * Activate the checkbox for "Show Script menu in menu bar"
 * Switch to FileMaker
 * Click the Scripts menu, then pick "Open Scripts Folder -> Open FileMaker Pro Advanced Scripts Folder"
-* Put an alias to these scripts into that folder. 
+* Put an alias to each of the Scripts into that folder. 

@@ -1,10 +1,11 @@
 
 set fmObjTrans to fmObjectTranslator_Instantiate({})
+return fmObjTrans
 
 --tell fmObjTrans to clipboardPatternCount({searchString:"// version"})
 --tell fmObjTrans to clipboardPatternCount({searchString:"BLAHBLAHBLAH"})
 --tell fmObjTrans to clipboardPatternCount({searchHex:"2F2F2076657273696F6E20"})
-tell fmObjTrans to (clipboardGetTextBetween({beforeString:"// version ", afterString:","}))
+--tell fmObjTrans to (clipboardGetTextBetween({beforeString:"// version ", afterString:","}))
 
 
 
@@ -13,8 +14,9 @@ tell fmObjTrans to (clipboardGetTextBetween({beforeString:"// version ", afterSt
 on fmObjectTranslator_Instantiate(prefs)
 	
 	script fmObjectTranslator
-		-- version 3.9.2, Daniel A. Shockley
+		-- version 3.9.3, Daniel A. Shockley
 		
+		-- 3.9.3 - 2017-11-03 ( eshagdar ): when running this file directly, return the script object ( don't run a sample ).
 		-- 3.9.2 - 2017-04-25 ( dshockley/eshagdar ): added removeHeaderFooter, addHeaderFooter. 
 		-- 3.9.1 - 2016-11-02 ( dshockley/eshagdar ): always reset currentCode before reading clipboard; debugMode now logs the tempDataPosix in dataObjectToUTF8; add more error-trapping and error-handling.
 		-- 3.9 - fixed bug where simpleFormatXML would fail on layout objects.
@@ -626,7 +628,7 @@ on fmObjectTranslator_Instantiate(prefs)
 			
 			if debugMode then logConsole(ScriptName, "simpleFormatXML: START")
 			
-			return addHeaderFooter(removeHeaderFooter(someXML))			
+			return addHeaderFooter(removeHeaderFooter(someXML))
 			
 		end simpleFormatXML
 		

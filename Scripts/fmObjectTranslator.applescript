@@ -16,7 +16,7 @@ on fmObjectTranslator_Instantiate(prefs)
 	
 	script fmObjectTranslator
 		-- version 3.9.4, Daniel A. Shockley
-		-- 3.9.4 - 2017-12-18 ( dshockley ): added support for LayoutObjects to addHeaderFooter and removeHeaderFooter. 
+		-- 3.9.4 - 2017-12-18 ( dshockley ): added support for LayoutObjects to addHeaderFooter and removeHeaderFooter. Updated getTextBetween. 
 		-- 3.9.3 - 2017-11-03 ( eshagdar ): when running this file directly, return the script object ( don't run a sample ).
 		-- 3.9.2 - 2017-04-25 ( dshockley/eshagdar ): added removeHeaderFooter, addHeaderFooter. 
 		-- 3.9.1 - 2016-11-02 ( dshockley/eshagdar ): always reset currentCode before reading clipboard; debugMode now logs the tempDataPosix in dataObjectToUTF8; add more error-trapping and error-handling.
@@ -1051,19 +1051,9 @@ on fmObjectTranslator_Instantiate(prefs)
 		
 		
 		on getTextBetween(prefs)
-			-- version 1.6, Daniel A. Shockley <http://www.danshockley.com>
+			-- version 1.7.1
 			
-			-- gets the text between specified occurrence of beforeText and afterText in sourceText
-			-- the default textItemNum should be 2
-			
-			-- 1.6 - option to INCLUDE the before and after strings. Default is FALSE. Must use record parameter to use this feature. 
-			-- 1.5 - use 'class of prefs as string' to test, since FileMaker wrecks the term record
-			
-			-- USAGE1: getTextBetween({sourceTEXT, beforeTEXT, afterTEXT})
-			-- USAGE2: getTextBetween({sourceText: sourceTEXT, beforeText: beforeTEXT, afterText: afterTEXT})
-			
-			
-			set defaultPrefs to {textItemNum:2, includeMarkers:false}
+			set defaultPrefs to {sourceText:null, beforeText:null, afterText:null, textItemNum:2, includeMarkers:false}
 			
 			if (class of prefs is not list) and ((class of prefs) as string is not "record") then
 				error "getTextBetween FAILED: parameter should be a record or list. If it is multiple items, just make it into a list to upgrade to this handler." number 1024
@@ -1074,6 +1064,8 @@ on fmObjectTranslator_Instantiate(prefs)
 				end if
 				set prefs to {sourceText:item 1 of prefs, beforeText:item 2 of prefs, afterText:item 3 of prefs}
 			end if
+			
+			
 			set prefs to prefs & defaultPrefs -- add on default preferences, if needed
 			set sourceText to sourceText of prefs
 			set beforeText to beforeText of prefs
@@ -1081,24 +1073,28 @@ on fmObjectTranslator_Instantiate(prefs)
 			set textItemNum to textItemNum of prefs
 			set includeMarkers to includeMarkers of prefs
 			
+			
 			try
 				set {oldDelims, AppleScript's text item delimiters} to {AppleScript's text item delimiters, beforeText}
-				set the prefixRemoved to text item textItemNum of sourceText
+				
+				-- there may be multiple instances of beforeTEXT, so get everything after the first instance
+				set prefixRemoved to text items textItemNum thru -1 of sourceText
+				set prefixRemoved to prefixRemoved as string
+				
+				-- get everything up to the afterTEXT
 				set AppleScript's text item delimiters to afterText
 				set the finalResult to text item 1 of prefixRemoved
+				
+				-- reset item delim
 				set AppleScript's text item delimiters to oldDelims
 				
 				if includeMarkers then set finalResult to beforeText & finalResult & afterText
-				
 			on error errMsg number errNum
 				set AppleScript's text item delimiters to oldDelims
-				-- 	tell me to log "Error in getTextBetween() : " & errMsg
 				set the finalResult to "" -- return nothing if the surrounding text is not found
 			end try
 			
-			
 			return finalResult
-			
 		end getTextBetween
 		
 		

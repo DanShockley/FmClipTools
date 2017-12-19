@@ -2,7 +2,7 @@
 -- version 1.1, Daniel A. Shockley
 -- Takes a return-delimited list of strings (optionally tab-delimited for multiple columns), then takes a FileMaker object in the clipboard and replicates it for each list item, then converts to multiple objects.
 
--- 1.1 - 2017-12-18 ( dshockley ): updated fmObjTrans to 3.9.4 to support layout objects. Started work on ButtonBarObj. 
+-- 1.1 - 2017-12-18 ( dshockley ): updated fmObjTrans to 3.9.4 to support layout objects. Can now replicate ButtonBar segments. 
 -- 1.0.1 - 2017-08-09 ( eshagdar ): renamed 'Clipboard - Replace String in FileMaker Objects' to 'fmClip - Replicate FM Objects' to match other handler name pattern
 -- 1.0 - 2017-04-25 ( dshockley ): first created, based off of Replace String in FileMaker Objects.
 
@@ -35,7 +35,7 @@ on run
 	set doButtonBarSegments to false
 	if clipboardObjectStringXML contains xmlButtonbarObj_Start and clipboardObjectStringXML contains xmlButtonbarObj_End then
 		set buttonbarSegmentsDialog to (display dialog "Your clipboard appears to contain a ButtonBar Object - replicate Segments, or run as Normal?" with title "ButtonBar Replicator?" buttons {"Cancel", "Normal", "Segments"} default button "Segments")
-		if text returned of buttonbarSegmentsDialog is "Segments" then set doButtonBarSegments to true
+		if button returned of buttonbarSegmentsDialog is "Segments" then set doButtonBarSegments to true
 	end if
 	
 	
@@ -58,7 +58,20 @@ on run
 	
 	set firstRowParsed to objTrans's parseChars({firstRowData, colSep})
 	
-	set templateObjectXML to objTrans's removeHeaderFooter(clipboardObjectStringXML)
+	if doButtonBarSegments then
+		set beforeButtonBarXML to getTextBefore(clipboardObjectStringXML, xmlButtonbarObj_Start)
+		set afterButtonBarXML to getTextAfter(clipboardObjectStringXML, xmlButtonbarObj_End)
+		set templateObjectXML to xmlButtonbarObj_Start & objTrans's getTextBetween({clipboardObjectStringXML, xmlButtonbarObj_Start, xmlButtonbarObj_End}) & xmlButtonbarObj_End
+		
+	else -- ANY other (non-layout) objects:
+		set templateObjectXML to objTrans's removeHeaderFooter(clipboardObjectStringXML)
+	end if
+	
+	
+	
+	
+	
+	
 	
 	set mergePlaceholderStrings to {}
 	repeat with colNum from 1 to countOfColumns
@@ -87,8 +100,12 @@ on run
 		set newXML to newXML & return & oneNewObjectXML
 	end repeat
 	
-	-- Put the header/footer back on the list of XML objects:
-	set newXML to objTrans's addHeaderFooter(newXML)
+	if doButtonBarSegments then
+		set newXML to beforeButtonBarXML & newXML & afterButtonBarXML
+	else
+		-- Put the header/footer back on the list of XML objects:
+		set newXML to objTrans's addHeaderFooter(newXML)
+	end if
 	
 	set the clipboard to newXML
 	
@@ -102,6 +119,53 @@ end run
 
 
 
+on getTextBefore(sourceTEXT, stopHere)
+	-- version 1.1
+	
+	try
+		set {oldDelims, AppleScript's text item delimiters} to {AppleScript's text item delimiters, stopHere}
+		if (count of text items of sourceTEXT) is 1 then
+			set AppleScript's text item delimiters to oldDelims
+			return ""
+		else
+			set the finalResult to text item 1 of sourceTEXT
+		end if
+		set AppleScript's text item delimiters to oldDelims
+		return finalResult
+	on error errMsg number errNum
+		set AppleScript's text item delimiters to oldDelims
+		return "" -- return nothing if the stop text is not found
+	end try
+end getTextBefore
+
+
+
+
+on getTextAfter(sourceTEXT, afterThis)
+	-- version 1.2
+	
+	try
+		set {oldDelims, AppleScript's text item delimiters} to {AppleScript's text item delimiters, {afterThis}}
+		
+		if (count of text items of sourceTEXT) is 1 then
+			-- the split-string didn't appear at all
+			set AppleScript's text item delimiters to oldDelims
+			return ""
+		else
+			set the resultAsList to text items 2 thru -1 of sourceTEXT
+		end if
+		set AppleScript's text item delimiters to {afterThis}
+		set finalResult to resultAsList as string
+		set AppleScript's text item delimiters to oldDelims
+		return finalResult
+	on error errMsg number errNum
+		set AppleScript's text item delimiters to oldDelims
+		return "" -- return nothing if the stop text is not found
+	end try
+end getTextAfter
+
+
+
 
 
 
@@ -109,7 +173,7 @@ on fmObjectTranslator_Instantiate(prefs)
 	
 	script fmObjectTranslator
 		-- version 3.9.4, Daniel A. Shockley
-		-- 3.9.4 - 2017-12-18 ( dshockley ): added support for LayoutObjects to addHeaderFooter and removeHeaderFooter. 
+		-- 3.9.4 - 2017-12-18 ( dshockley ): added support for LayoutObjects to addHeaderFooter and removeHeaderFooter. Updated getTextBetween. 
 		-- 3.9.3 - 2017-11-03 ( eshagdar ): when running this file directly, return the script object ( don't run a sample ).
 		-- 3.9.2 - 2017-04-25 ( dshockley/eshagdar ): added removeHeaderFooter, addHeaderFooter. 
 		-- 3.9.1 - 2016-11-02 ( dshockley/eshagdar ): always reset currentCode before reading clipboard; debugMode now logs the tempDataPosix in dataObjectToUTF8; add more error-trapping and error-handling.
@@ -218,7 +282,7 @@ on fmObjectTranslator_Instantiate(prefs)
 			if beforeString of prefs is not null then
 				set clipboardObject to get the clipboard
 				set rawText to dataObjectToUTF8({someObject:clipboardObject})
-				return getTextBetween({sourceText:rawText, beforeText:beforeString of prefs, afterText:afterString of prefs})
+				return getTextBetween({sourceTEXT:rawText, beforeText:beforeString of prefs, afterText:afterString of prefs})
 			end if
 			
 		end clipboardGetTextBetween
@@ -899,9 +963,9 @@ on fmObjectTranslator_Instantiate(prefs)
 			if class of prefs is list then
 				if (count of prefs) is greater than 2 then
 					-- get any parameters after the initial 3
-					set prefs to {sourceText:item 1 of prefs, parseString:item 2 of prefs, considerCase:item 3 of prefs}
+					set prefs to {sourceTEXT:item 1 of prefs, parseString:item 2 of prefs, considerCase:item 3 of prefs}
 				else
-					set prefs to {sourceText:item 1 of prefs, parseString:item 2 of prefs}
+					set prefs to {sourceTEXT:item 1 of prefs, parseString:item 2 of prefs}
 				end if
 				
 			else if class of prefs is not equal to (class of {someKey:3}) then
@@ -913,7 +977,7 @@ on fmObjectTranslator_Instantiate(prefs)
 			
 			set prefs to prefs & defaultPrefs
 			
-			set sourceText to sourceText of prefs
+			set sourceTEXT to sourceTEXT of prefs
 			set parseString to parseString of prefs
 			set considerCase to considerCase of prefs
 			
@@ -923,11 +987,11 @@ on fmObjectTranslator_Instantiate(prefs)
 				
 				if considerCase then
 					considering case
-						set the parsedList to every text item of sourceText
+						set the parsedList to every text item of sourceTEXT
 					end considering
 				else
 					ignoring case
-						set the parsedList to every text item of sourceText
+						set the parsedList to every text item of sourceTEXT
 					end ignoring
 				end if
 				
@@ -957,9 +1021,9 @@ on fmObjectTranslator_Instantiate(prefs)
 			if class of prefs is list then
 				if (count of prefs) is greater than 3 then
 					-- get any parameters after the initial 3
-					set prefs to {sourceText:item 1 of prefs, oldChars:item 2 of prefs, newChars:item 3 of prefs, considerCase:item 4 of prefs}
+					set prefs to {sourceTEXT:item 1 of prefs, oldChars:item 2 of prefs, newChars:item 3 of prefs, considerCase:item 4 of prefs}
 				else
-					set prefs to {sourceText:item 1 of prefs, oldChars:item 2 of prefs, newChars:item 3 of prefs}
+					set prefs to {sourceTEXT:item 1 of prefs, oldChars:item 2 of prefs, newChars:item 3 of prefs}
 				end if
 				
 			else if class of prefs is not equal to (class of {someKey:3}) then
@@ -972,23 +1036,23 @@ on fmObjectTranslator_Instantiate(prefs)
 			set prefs to prefs & defaultPrefs
 			
 			set considerCase to considerCase of prefs
-			set sourceText to sourceText of prefs
+			set sourceTEXT to sourceTEXT of prefs
 			set oldChars to oldChars of prefs
 			set newChars to newChars of prefs
 			
-			set sourceText to sourceText as string
+			set sourceTEXT to sourceTEXT as string
 			
 			set oldDelims to AppleScript's text item delimiters
 			set AppleScript's text item delimiters to the oldChars
 			if considerCase then
 				considering case
-					set the parsedList to every text item of sourceText
+					set the parsedList to every text item of sourceTEXT
 					set AppleScript's text item delimiters to the {(newChars as string)}
 					set the newText to the parsedList as string
 				end considering
 			else
 				ignoring case
-					set the parsedList to every text item of sourceText
+					set the parsedList to every text item of sourceTEXT
 					set AppleScript's text item delimiters to the {(newChars as string)}
 					set the newText to the parsedList as string
 				end ignoring
@@ -1009,9 +1073,9 @@ on fmObjectTranslator_Instantiate(prefs)
 			if class of prefs is list then
 				if (count of prefs) is greater than 2 then
 					-- get any parameters after the initial 3
-					set prefs to {sourceText:item 1 of prefs, searchString:item 2 of prefs, considerCase:item 3 of prefs}
+					set prefs to {sourceTEXT:item 1 of prefs, searchString:item 2 of prefs, considerCase:item 3 of prefs}
 				else
-					set prefs to {sourceText:item 1 of prefs, searchString:item 2 of prefs}
+					set prefs to {sourceTEXT:item 1 of prefs, searchString:item 2 of prefs}
 				end if
 				
 			else if class of prefs is not equal to (class of {someKey:3}) then
@@ -1025,18 +1089,18 @@ on fmObjectTranslator_Instantiate(prefs)
 			set prefs to prefs & defaultPrefs
 			
 			set searchString to searchString of prefs
-			set sourceText to sourceText of prefs
+			set sourceTEXT to sourceTEXT of prefs
 			set considerCase to considerCase of prefs
 			
 			set {oldDelims, AppleScript's text item delimiters} to {AppleScript's text item delimiters, searchString as string}
 			try
 				if considerCase then
 					considering case
-						set patternCountResult to (count of (text items of sourceText)) - 1
+						set patternCountResult to (count of (text items of sourceTEXT)) - 1
 					end considering
 				else
 					ignoring case
-						set patternCountResult to (count of (text items of sourceText)) - 1
+						set patternCountResult to (count of (text items of sourceTEXT)) - 1
 					end ignoring
 				end if
 				
@@ -1144,19 +1208,9 @@ on fmObjectTranslator_Instantiate(prefs)
 		
 		
 		on getTextBetween(prefs)
-			-- version 1.6, Daniel A. Shockley <http://www.danshockley.com>
+			-- version 1.7.1
 			
-			-- gets the text between specified occurrence of beforeText and afterText in sourceText
-			-- the default textItemNum should be 2
-			
-			-- 1.6 - option to INCLUDE the before and after strings. Default is FALSE. Must use record parameter to use this feature. 
-			-- 1.5 - use 'class of prefs as string' to test, since FileMaker wrecks the term record
-			
-			-- USAGE1: getTextBetween({sourceTEXT, beforeTEXT, afterTEXT})
-			-- USAGE2: getTextBetween({sourceText: sourceTEXT, beforeText: beforeTEXT, afterText: afterTEXT})
-			
-			
-			set defaultPrefs to {textItemNum:2, includeMarkers:false}
+			set defaultPrefs to {sourceTEXT:null, beforeText:null, afterText:null, textItemNum:2, includeMarkers:false}
 			
 			if (class of prefs is not list) and ((class of prefs) as string is not "record") then
 				error "getTextBetween FAILED: parameter should be a record or list. If it is multiple items, just make it into a list to upgrade to this handler." number 1024
@@ -1165,33 +1219,39 @@ on fmObjectTranslator_Instantiate(prefs)
 				if (count of prefs) is 4 then
 					set textItemNum of defaultPrefs to item 4 of prefs
 				end if
-				set prefs to {sourceText:item 1 of prefs, beforeText:item 2 of prefs, afterText:item 3 of prefs}
+				set prefs to {sourceTEXT:item 1 of prefs, beforeText:item 2 of prefs, afterText:item 3 of prefs}
 			end if
+			
+			
 			set prefs to prefs & defaultPrefs -- add on default preferences, if needed
-			set sourceText to sourceText of prefs
+			set sourceTEXT to sourceTEXT of prefs
 			set beforeText to beforeText of prefs
 			set afterText to afterText of prefs
 			set textItemNum to textItemNum of prefs
 			set includeMarkers to includeMarkers of prefs
 			
+			
 			try
 				set {oldDelims, AppleScript's text item delimiters} to {AppleScript's text item delimiters, beforeText}
-				set the prefixRemoved to text item textItemNum of sourceText
+				
+				-- there may be multiple instances of beforeTEXT, so get everything after the first instance
+				set prefixRemoved to text items textItemNum thru -1 of sourceTEXT
+				set prefixRemoved to prefixRemoved as string
+				
+				-- get everything up to the afterTEXT
 				set AppleScript's text item delimiters to afterText
 				set the finalResult to text item 1 of prefixRemoved
+				
+				-- reset item delim
 				set AppleScript's text item delimiters to oldDelims
 				
 				if includeMarkers then set finalResult to beforeText & finalResult & afterText
-				
 			on error errMsg number errNum
 				set AppleScript's text item delimiters to oldDelims
-				-- 	tell me to log "Error in getTextBetween() : " & errMsg
 				set the finalResult to "" -- return nothing if the surrounding text is not found
 			end try
 			
-			
 			return finalResult
-			
 		end getTextBetween
 		
 		

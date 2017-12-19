@@ -1,6 +1,7 @@
 
 set fmObjTrans to fmObjectTranslator_Instantiate({})
-return fmObjTrans
+fmObjTrans's clipboardGetObjectsasXML({})
+return fmObjTrans's removeHeaderFooter(result)
 
 --tell fmObjTrans to clipboardPatternCount({searchString:"// version"})
 --tell fmObjTrans to clipboardPatternCount({searchString:"BLAHBLAHBLAH"})
@@ -14,8 +15,8 @@ return fmObjTrans
 on fmObjectTranslator_Instantiate(prefs)
 	
 	script fmObjectTranslator
-		-- version 3.9.3, Daniel A. Shockley
-		
+		-- version 3.9.4, Daniel A. Shockley
+		-- 3.9.4 - 2017-12-18 ( dshockley ): added support for LayoutObjects to addHeaderFooter and removeHeaderFooter. 
 		-- 3.9.3 - 2017-11-03 ( eshagdar ): when running this file directly, return the script object ( don't run a sample ).
 		-- 3.9.2 - 2017-04-25 ( dshockley/eshagdar ): added removeHeaderFooter, addHeaderFooter. 
 		-- 3.9.1 - 2016-11-02 ( dshockley/eshagdar ): always reset currentCode before reading clipboard; debugMode now logs the tempDataPosix in dataObjectToUTF8; add more error-trapping and error-handling.
@@ -50,12 +51,20 @@ on fmObjectTranslator_Instantiate(prefs)
 		property tempDataName : "temp.data"
 		property tempXMLName : "temp.xml"
 		
+		property charLF : ASCII character 10
+		property charCR : ASCII character 13
 		-- the "bad" and "good" layout tag start code deals with a bug in FileMaker 10: 
-		property badLayoutCodeStart : "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" & (ASCII character 10) & "<Layout" & (ASCII character 10) & " enclosingRectTop=\""
-		property goodLayoutCodeStart : "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" & (ASCII character 10) & "<Layout enclosingRectTop=\""
+		property badLayoutCodeStart : "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" & charLF & "<Layout" & (ASCII character 10) & " enclosingRectTop=\""
+		property goodLayoutCodeStart : "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" & charLF & "<Layout enclosingRectTop=\""
 		
 		property xmlHeader : "<fmxmlsnippet type=\"FMObjectList\">"
 		property xmlFooter : "</fmxmlsnippet>"
+		
+		-- different header for layout objects: 
+		property xmlHeader_LO_Line1 : "<?xml version=\"1.0\" encoding=\"utf-8\"?>"
+		property xmlHeader_LO_Line2 : "<fmxmlsnippet type=\"LayoutObjectList\">"
+		property xmlHeader_LO_LIST : {xmlHeader_LO_Line1 & xmlHeader_LO_Line2, xmlHeader_LO_Line1 & charLF & xmlHeader_LO_Line2, xmlHeader_LO_Line1 & charCR & xmlHeader_LO_Line2, xmlHeader_LO_Line1 & charCR & charLF & xmlHeader_LO_Line2}
+		property xmlHeader_LO_current : ""
 		
 		
 		property fmObjCodes : {Â
@@ -265,7 +274,7 @@ on fmObjectTranslator_Instantiate(prefs)
 			set fmClipboard to get the clipboard -- get it now, so we can ADD XML to it.
 			
 			try
-				set xmlTranslation to clipboardGetObjectsAsXML({}) -- as string
+				set xmlTranslation to clipboardGetObjectsasXML({}) -- as string
 			on error errMsg number errNum
 				if debugMode then logConsole(ScriptName, "clipboardConvertToXML: ERROR: " & errMsg & ".")
 				return false
@@ -291,7 +300,7 @@ on fmObjectTranslator_Instantiate(prefs)
 		
 		
 		
-		on clipboardGetObjectsAsXML(prefs)
+		on clipboardGetObjectsasXML(prefs)
 			-- version 1.1
 			-- returns the XML translation of FM objects in the clipboard
 			
@@ -311,7 +320,7 @@ on fmObjectTranslator_Instantiate(prefs)
 			
 			return convertObjectsToXML(fmObjects)
 			
-		end clipboardGetObjectsAsXML
+		end clipboardGetObjectsasXML
 		
 		
 		on clipboardGetXMLAsObjects(prefs)
@@ -568,8 +577,9 @@ on fmObjectTranslator_Instantiate(prefs)
 		
 		
 		on removeHeaderFooter(someXML)
-			-- version 1.0
+			-- version 1.1
 			
+			-- 1.1 - 2017-12-18 ( dshockley ): handles layout objects special header.
 			-- 1.0 - 2017-04-25 ( dshockley/eshagdar ): first created.
 			
 			
@@ -590,7 +600,37 @@ on fmObjectTranslator_Instantiate(prefs)
 					
 					return modifiedXML
 				else
-					return someXML
+					-- was NOT a simple exact header match, so check for layout objects:
+					set hasHeader to false
+					set hasFooter to someXML ends with xmlFooter
+					
+					repeat with oneHeader in xmlHeader_LO_LIST
+						set oneHeader to contents of oneHeader
+						if someXML begins with oneHeader then
+							set hasHeader to true
+							set xmlHeader_LO_current to oneHeader
+						end if
+						
+					end repeat
+					if hasHeader and hasFooter then
+						try
+							set {oldDelims, AppleScript's text item delimiters} to {AppleScript's text item delimiters, xmlHeader_LO_current}
+							set modifiedXML to (text items 2 thru -1 of someXML) as string
+							set AppleScript's text item delimiters to xmlFooter
+							set modifiedXML to ((text items 1 thru -2 of modifiedXML) as string)
+							set AppleScript's text item delimiters to oldDelims
+						on error errMsg number errNum
+							-- trap here so we can restore ASTIDs, then pass out the actual error: 
+							set AppleScript's text item delimiters to oldDelims
+							error errMsg number errNum
+						end try
+						
+						return modifiedXML
+						
+					else
+						-- was ALSO NOT layout objects, so return unchanged:
+						return someXML
+					end if
 				end if
 			on error errMsg number errNum
 				-- any error above should fail gracefully and just return the original code
@@ -601,14 +641,21 @@ on fmObjectTranslator_Instantiate(prefs)
 		end removeHeaderFooter
 		
 		on addHeaderFooter(someXML)
-			-- version 1.0
+			-- version 1.1
 			
+			-- 1.1 - 2017-12-18 ( dshockley ): support layout objects.
 			-- 1.0 - 2017-04-25 ( dshockley/eshagdar ): first created.
 			
 			if debugMode then logConsole(ScriptName, "removeHeaderFooter: START")
 			try
 				if someXML does not start with xmlHeader and someXML does not end with xmlFooter then
-					return xmlHeader & return & someXML & return & xmlFooter
+					if someXML starts with "<Layout" then
+						-- layout objects get a special header:
+						return xmlHeader_LO_current & return & someXML & return & xmlFooter
+					else
+						-- all other FileMaker objects:
+						return xmlHeader & return & someXML & return & xmlFooter
+					end if
 				else
 					return someXML
 				end if

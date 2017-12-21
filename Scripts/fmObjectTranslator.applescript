@@ -1,7 +1,9 @@
+-- fmObjTrans library
 
+-- 2017-12-21 ( eshagdar ): This script needs to return just the object since there are other libraries that depend on it.
 set fmObjTrans to fmObjectTranslator_Instantiate({})
-fmObjTrans's clipboardGetObjectsasXML({})
-return fmObjTrans's removeHeaderFooter(result)
+return fmObjTrans
+
 
 --tell fmObjTrans to clipboardPatternCount({searchString:"// version"})
 --tell fmObjTrans to clipboardPatternCount({searchString:"BLAHBLAHBLAH"})

@@ -10,7 +10,7 @@ on fmObjectTranslator_Instantiate(prefs)
 	
 	script fmObjectTranslator
 		-- version 3.9.5, Daniel A. Shockley
-		-- 3.9.5 - 2018-04-04 ( dshockley/eshagdar ): improved prettifyXML to also 'preserve-entities' because it otherwise munges whitespace within a value wrapped by tags. Specifically, it was changing "<Type>SVG </Type>" to "<Type>SVG</Type>", which resulted in breaking button icons on FileMaker buttons. 
+		-- 3.9.5 - 2018-04-04 ( dshockley/eshagdar ): improved prettifyXML to also 'preserve-entities' because it otherwise munges whitespace within a value wrapped by tags. Specifically, it was changing "<Type>SVG </Type>" to "<Type>SVG</Type>", which resulted in breaking button icons on FileMaker buttons. ALSO, when editing XML, insert LineFeeds, not Carriage Returns. When stripping XML header for layout objects, also remove possible leading blank line. 
 		-- 3.9.4 - 2017-12-18 ( dshockley ): added support for LayoutObjects to addHeaderFooter and removeHeaderFooter. Updated getTextBetween. 
 		-- 3.9.3 - 2017-11-03 ( eshagdar ): when running this file directly, return the script object ( don't run a sample ).
 		-- 3.9.2 - 2017-04-25 ( dshockley/eshagdar ): added removeHeaderFooter, addHeaderFooter. 
@@ -56,7 +56,7 @@ on fmObjectTranslator_Instantiate(prefs)
 		property xmlFooter : "</fmxmlsnippet>"
 		
 		-- different header for layout objects: 
-		property xmlHeader_LO_Line1 : "<?xml version=\"1.0\" encoding=\"utf-8\"?>"
+		property xmlHeader_LO_Line1 : "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
 		property xmlHeader_LO_Line2 : "<fmxmlsnippet type=\"LayoutObjectList\">"
 		property xmlHeader_LO_LIST : {xmlHeader_LO_Line1 & xmlHeader_LO_Line2, xmlHeader_LO_Line1 & charLF & xmlHeader_LO_Line2, xmlHeader_LO_Line1 & charCR & xmlHeader_LO_Line2, xmlHeader_LO_Line1 & charCR & charLF & xmlHeader_LO_Line2}
 		property xmlHeader_LO_current : ""
@@ -572,8 +572,9 @@ on fmObjectTranslator_Instantiate(prefs)
 		
 		
 		on removeHeaderFooter(someXML)
-			-- version 1.1
+			-- version 1.2
 			
+			-- 1.2 - 2018-04-04 ( dshockley/eshagdar ): remove leading blank line after removing header.
 			-- 1.1 - 2017-12-18 ( dshockley ): handles layout objects special header.
 			-- 1.0 - 2017-04-25 ( dshockley/eshagdar ): first created.
 			
@@ -620,7 +621,13 @@ on fmObjectTranslator_Instantiate(prefs)
 							error errMsg number errNum
 						end try
 						
+						-- the code above may leave the modified XML with a leading blank line. Strip it off:
+						if text 1 thru 1 of modifiedXML is in {charLF, charCR} then
+							set modifiedXML to text 2 thru -1 of modifiedXML
+						end if
+						
 						return modifiedXML
+						
 						
 					else
 						-- was ALSO NOT layout objects, so return unchanged:
@@ -646,10 +653,10 @@ on fmObjectTranslator_Instantiate(prefs)
 				if someXML does not start with xmlHeader and someXML does not end with xmlFooter then
 					if someXML starts with "<Layout" then
 						-- layout objects get a special header:
-						return xmlHeader_LO_current & return & someXML & return & xmlFooter
+						return xmlHeader_LO_current & charLF & someXML & charLF & xmlFooter
 					else
 						-- all other FileMaker objects:
-						return xmlHeader & return & someXML & return & xmlFooter
+						return xmlHeader & charLF & someXML & charLF & xmlFooter
 					end if
 				else
 					return someXML

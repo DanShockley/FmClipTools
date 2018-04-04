@@ -5,19 +5,12 @@ set fmObjTrans to fmObjectTranslator_Instantiate({})
 return fmObjTrans
 
 
---tell fmObjTrans to clipboardPatternCount({searchString:"// version"})
---tell fmObjTrans to clipboardPatternCount({searchString:"BLAHBLAHBLAH"})
---tell fmObjTrans to clipboardPatternCount({searchHex:"2F2F2076657273696F6E20"})
---tell fmObjTrans to (clipboardGetTextBetween({beforeString:"// version ", afterString:","}))
-
-
-
-
 
 on fmObjectTranslator_Instantiate(prefs)
 	
 	script fmObjectTranslator
-		-- version 3.9.4, Daniel A. Shockley
+		-- version 3.9.5, Daniel A. Shockley
+		-- 3.9.5 - 2018-04-04 ( dshockley/eshagdar ): improved prettifyXML to also 'preserve-entities' because it otherwise munges whitespace within a value wrapped by tags. Specifically, it was changing "<Type>SVG </Type>" to "<Type>SVG</Type>", which resulted in breaking button icons on FileMaker buttons. 
 		-- 3.9.4 - 2017-12-18 ( dshockley ): added support for LayoutObjects to addHeaderFooter and removeHeaderFooter. Updated getTextBetween. 
 		-- 3.9.3 - 2017-11-03 ( eshagdar ): when running this file directly, return the script object ( don't run a sample ).
 		-- 3.9.2 - 2017-04-25 ( dshockley/eshagdar ): added removeHeaderFooter, addHeaderFooter. 
@@ -684,11 +677,11 @@ on fmObjectTranslator_Instantiate(prefs)
 		
 		
 		on prettifyXML(someXML)
-			-- version 1.4, Daniel A. Shockley
+			-- version 1.5, Daniel A. Shockley
 			if debugMode then logConsole(ScriptName, "prettifyXML: START")
 			try
 				-- the "other" options turn off tidy defaults that result in unexpected modification of the XML:
-				set otherTidyOptions to " --literal-attributes yes --drop-empty-paras no --fix-backslash no --fix-bad-comments no --fix-uri no --ncr no --quote-ampersand no --quote-nbsp no "
+				set otherTidyOptions to " --literal-attributes yes --preserve-entities yes --drop-empty-paras no --fix-backslash no --fix-bad-comments no --fix-uri no --ncr no --quote-ampersand no --quote-nbsp no "
 				set tidyShellCommand to "echo " & quoted form of someXML & " | tidy -xml -m -raw -wrap 999999999999999" & otherTidyOptions
 				-- NOTE: wrapping of lines needs to NEVER occur, so cover petabyte-long lines 
 				set prettyXML to do shell script tidyShellCommand

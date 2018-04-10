@@ -10,7 +10,7 @@ on fmObjectTranslator_Instantiate(prefs)
 	
 	script fmObjectTranslator
 		-- version 3.9.6, Daniel A. Shockley
-		-- 3.9.6 - 2018-04-10 ( dshockley ): do NOT prettify layout objects even if specified since they are already quasi-formatted. 
+		-- 3.9.6 - 2018-04-10 ( dshockley ): prettify using xmllint instead of tidy. Do NOT prettify layout objects even if specified since they are already quasi-formatted. 
 		-- 3.9.5 - 2018-04-04 ( dshockley/eshagdar ): improved prettifyXML to also 'preserve-entities' because it otherwise munges whitespace within a value wrapped by tags. Specifically, it was changing "<Type>SVG </Type>" to "<Type>SVG</Type>", which resulted in breaking button icons on FileMaker buttons. ALSO, when editing XML, insert LineFeeds, not Carriage Returns. When stripping XML header for layout objects, also remove possible leading blank line. 
 		-- 3.9.4 - 2017-12-18 ( dshockley ): added support for LayoutObjects to addHeaderFooter and removeHeaderFooter. Updated getTextBetween. 
 		-- 3.9.3 - 2017-11-03 ( eshagdar ): when running this file directly, return the script object ( don't run a sample ).

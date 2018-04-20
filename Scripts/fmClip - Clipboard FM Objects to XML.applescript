@@ -28,8 +28,7 @@ on run
 		set shouldSimpleFormat of objTrans to false
 	else
 		-- all other objects:
-		set shouldPrettify of objTrans to false
-		
+		set shouldPrettify of objTrans to true
 	end if
 	set debugMode of objTrans to true
 	

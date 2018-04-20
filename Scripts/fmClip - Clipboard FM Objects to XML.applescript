@@ -22,7 +22,7 @@ on run
 	set clipboardType to checkClipboardForObjects({}) of objTrans
 	
 	
-	if currentCode is (objTrans is "XML2") then
+	if currentCode of objTrans is "XML2" then
 		-- layout objects - do NOT touch! 
 		set shouldPrettify of objTrans to false
 		set shouldSimpleFormat of objTrans to false

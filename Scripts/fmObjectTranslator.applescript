@@ -9,7 +9,8 @@ return fmObjTrans
 on fmObjectTranslator_Instantiate(prefs)
 	
 	script fmObjectTranslator
-		-- version 3.9.7, Daniel A. Shockley
+		-- version 3.9.8, Daniel A. Shockley
+		-- 3.9.8 - 2018-04-20 ( dshockley/eshagdar ): when doing prettify or simpleFormat, convert all ASCII 13 (Carriage Returns) into ASCII 10 (LineFeed) so that there is not a MIX of line endings. If prettify, do NOT also do SimpleFormat. 
 		-- 3.9.7 - 2018-04-20 ( dshockley ): remove "preserve-entities" from tidy, since that was an attempt to deal with layout objects, which we no longer even attempt to prettify, and using it causes problems with other objects. 
 		-- 3.9.6 - 2018-04-10 ( dshockley ): do NOT prettify layout objects even if specified since they are already quasi-formatted. Stick with tidy after all (not xmllint for now). 
 		-- 3.9.5 - 2018-04-04 ( dshockley/eshagdar ): improved prettifyXML to also 'preserve-entities' because it otherwise munges whitespace within a value wrapped by tags. Specifically, it was changing "<Type>SVG </Type>" to "<Type>SVG</Type>", which resulted in breaking button icons on FileMaker buttons. ALSO, when editing XML, insert LineFeeds, not Carriage Returns. When stripping XML header for layout objects, also remove possible leading blank line. 
@@ -418,13 +419,19 @@ on fmObjectTranslator_Instantiate(prefs)
 		
 		
 		on convertObjectsToXML(fmObjects)
+			-- version 1.1
+			
+			-- 1.1 - 2018-04-20 ( dshockley/eshagdar ): if prettify, do NOT also SimpleFormat. If either option, then convert CR to LF. 
 			
 			if debugMode then logConsole(ScriptName, "convertObjectsToXML: START")
 			
 			set objectsAsXML to dataObjectToUTF8({fmObjects:fmObjects})
 			
+			
 			if shouldPrettify then set objectsAsXML to prettifyXML(objectsAsXML)
-			if shouldSimpleFormat then set objectsAsXML to simpleFormatXML(objectsAsXML)
+			if shouldSimpleFormat and not shouldPrettify then set objectsAsXML to simpleFormatXML(objectsAsXML)
+			
+			if shouldPrettify or shouldSimpleFormat then set objectsAsXML to replaceSimple({objectsAsXML, charCR, charLF})
 			
 			return objectsAsXML
 			
@@ -698,10 +705,23 @@ on fmObjectTranslator_Instantiate(prefs)
 					(* prettyprint using tidy *)
 					
 					-- the "other" options turn off tidy defaults that result in unexpected modification of the XML:
+					(* OPTIONS (docs at http://tidy.sourceforge.net/docs/quickref.html):
+						-m = modify the original input files
+						-xml = duh
+						-raw = to output values above 127 without conversion  to  entities
+						-wrap # = to wrap text at the specified <column> (default is 68)
+						--literal-attributes = ensure whitespace characters within attribute values are passed through unchanged
+						--drop-empty-paras = should discard empty paragraphs
+						--fix-backslash = should replace backslash characters "\" in URLs by forward slashes "/"
+						--fix-bad-comments = should replace unexpected hyphens with "=" characters when it comes across adjacent hyphens
+						--fix-uri = should check attribute values that carry URIs for illegal characters and if such are found, escape them as HTML 4 recommends
+						--quote-ampersand = should output unadorned & characters as &amp;
+						--quote-nbsp = output non-breaking space characters as entities, rather than as the Unicode character value 160 (decimal)
+						*)
+					
 					set otherTidyOptions to " --literal-attributes yes --drop-empty-paras no --fix-backslash no --fix-bad-comments no --fix-uri no --ncr no --quote-ampersand no --quote-nbsp no "
 					set prettyPrint_ShellCommand to "echo " & quoted form of someXML & " | tidy -xml -m -raw -wrap 999999999999999" & otherTidyOptions
 					-- NOTE: wrapping of lines needs to NEVER occur, so cover petabyte-long lines 
-					
 					
 					set prettyXML to do shell script prettyPrint_ShellCommand
 					

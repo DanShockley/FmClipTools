@@ -1,6 +1,7 @@
 -- fmClip - Clipboard FM Objects to XML
--- version 4.0, Daniel A. Shockley, Erik Shagdar
+-- version 4.0.1, Daniel A. Shockley, Erik Shagdar
 
+-- 4.0.1 - 2018-04-20 ( dshockley/eshagdar ): if layout objects, no modification. Others default to prettify. 
 -- 4.0 - 2018-04-04 ( dshockley/eshagdar ): load fmObjectTranslator code by reference instead of embedded.
 -- 3.9.2 - 2017-08-09 ( eshagdar ): renamed 'Clipboard FileMaker Objects to XML' to 'fmClip - Clipboard FM Objects to XML' to match other handler name pattern
 -- 1.8 - "clipboard convert" now ADDs the other data, not replace clipboard
@@ -18,11 +19,20 @@ on run
 			set objTrans to fmObjectTranslator_Instantiate({})
 	*)
 	
-	set shouldPrettify of objTrans to true
-	set shouldSimpleFormat of objTrans to true
+	set clipboardType to checkClipboardForObjects({}) of objTrans
+	
+	
+	if currentCode is (objTrans is "XML2") then
+		-- layout objects - do NOT touch! 
+		set shouldPrettify of objTrans to false
+		set shouldSimpleFormat of objTrans to false
+	else
+		-- all other objects:
+		set shouldPrettify of objTrans to false
+		
+	end if
 	set debugMode of objTrans to true
 	
-	set clipboardType to checkClipboardForObjects({}) of objTrans
 	
 	if clipboardType is false then
 		display dialog "The clipboard did not contain any FileMaker objects."

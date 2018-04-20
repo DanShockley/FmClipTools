@@ -698,7 +698,7 @@ on fmObjectTranslator_Instantiate(prefs)
 					(* prettyprint using tidy *)
 					
 					-- the "other" options turn off tidy defaults that result in unexpected modification of the XML:
-					set otherTidyOptions to " --literal-attributes yes --preserve-entities yes --drop-empty-paras no --fix-backslash no --fix-bad-comments no --fix-uri no --ncr no --quote-ampersand no --quote-nbsp no "
+					set otherTidyOptions to " --literal-attributes yes --drop-empty-paras no --fix-backslash no --fix-bad-comments no --fix-uri no --ncr no --quote-ampersand no --quote-nbsp no "
 					set prettyPrint_ShellCommand to "echo " & quoted form of someXML & " | tidy -xml -m -raw -wrap 999999999999999" & otherTidyOptions
 					-- NOTE: wrapping of lines needs to NEVER occur, so cover petabyte-long lines 
 					

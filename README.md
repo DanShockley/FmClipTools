@@ -1,7 +1,7 @@
-# FmClipTools
+o# FmClipTools
 Tools for converting, modifying, and saving FileMaker Pro clipboard objects. Coded in AppleScript. 
 
-To put these to good use, you can execute them from some keyboard-shortcut tool like Quicksilver, Alfred, etc. 
+To put these to good use, you can execute them from some keyboard-shortcut or macro tool like Keyboard Maestro, Quicksilver, etc. 
 If you do that, you could add a step that performs a copy (on the currently-selected FileMaker script steps), and perhaps even a delete-and-paste afterwards, if you'd like. 
 
 To use them without any third-party software, you can also call them from the macOS menu-bar by activating the "Scripts" menu. 

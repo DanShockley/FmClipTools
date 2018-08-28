@@ -1,4 +1,5 @@
-o# FmClipTools
+# FmClipTools
+
 Tools for converting, modifying, and saving FileMaker Pro clipboard objects. Coded in AppleScript. 
 
 To put these to good use, you can execute them from some keyboard-shortcut or macro tool like Keyboard Maestro, Quicksilver, etc. 

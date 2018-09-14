@@ -60,18 +60,17 @@ on run
 		if countReplace is not equal to countSearch then error "Your search list had " & countSearch & " items while your replace list had " & countReplace & " items. They need to match!" number -1024
 		
 		
-		-- DEBUGGING		
 		
 		set newXML to clipboardObjectStringXML
 		repeat with indexSearch from 1 to countSearch
-			log indexSearch
+			if debugMode then log indexSearch
 			set searchFor to contents of (item indexSearch of searchList)
-			log searchFor
+			if debugMode then log searchFor
 			set replaceWith to contents of (item indexSearch of replaceList)
-			log replaceWith
+			if debugMode then log replaceWith
 			
 			set foundCount to patternCount({clipboardObjectStringXML, searchFor}) of objTrans
-			log foundCount
+			if debugMode then log foundCount
 			
 			set newXML to replaceSimple({newXML, searchFor, replaceWith}) of objTrans
 			

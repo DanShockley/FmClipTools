@@ -9,7 +9,8 @@ return fmObjTrans
 on fmObjectTranslator_Instantiate(prefs)
 	
 	script fmObjectTranslator
-		-- version 3.9.8, Daniel A. Shockley
+		-- version 3.9.9, Daniel A. Shockley
+		-- 3.9.9 - 2018-10-25 ( dshockley/eshagdar ): added tab-size 4 to the tidy prettify options. Tidy CANNOT output tabs.  
 		-- 3.9.8 - 2018-04-20 ( dshockley/eshagdar ): when doing prettify or simpleFormat, convert all ASCII 13 (Carriage Returns) into ASCII 10 (LineFeed) so that there is not a MIX of line endings. If prettify, do NOT also do SimpleFormat. 
 		-- 3.9.7 - 2018-04-20 ( dshockley ): remove "preserve-entities" from tidy, since that was an attempt to deal with layout objects, which we no longer even attempt to prettify, and using it causes problems with other objects. 
 		-- 3.9.6 - 2018-04-10 ( dshockley ): do NOT prettify layout objects even if specified since they are already quasi-formatted. Stick with tidy after all (not xmllint for now). 
@@ -77,7 +78,7 @@ on fmObjectTranslator_Instantiate(prefs)
 				}
 		
 		property currentCode : ""
-		property debugMode : false
+		property debugMode : true
 		property codeAsXML : ""
 		property codeAsObjects : ""
 		
@@ -273,6 +274,7 @@ on fmObjectTranslator_Instantiate(prefs)
 			
 			try
 				set xmlTranslation to clipboardGetObjectsasXML({}) -- as string
+				if debugMode then logConsole(ScriptName, "clipboardConvertToXML: obtained XML")
 			on error errMsg number errNum
 				if debugMode then logConsole(ScriptName, "clipboardConvertToXML: ERROR: " & errMsg & ".")
 				return false
@@ -291,6 +293,8 @@ on fmObjectTranslator_Instantiate(prefs)
 			set newClip to {string:xmlTranslation} & fmClipboard
 			
 			set the clipboard to newClip
+			
+			if debugMode then logConsole(ScriptName, "clipboardConvertToXML: added XML to clipboard")
 			
 			return true
 			
@@ -428,8 +432,11 @@ on fmObjectTranslator_Instantiate(prefs)
 			set objectsAsXML to dataObjectToUTF8({fmObjects:fmObjects})
 			
 			
-			if shouldPrettify then set objectsAsXML to prettifyXML(objectsAsXML)
-			if shouldSimpleFormat and not shouldPrettify then set objectsAsXML to simpleFormatXML(objectsAsXML)
+			if shouldPrettify then
+				set objectsAsXML to prettifyXML(objectsAsXML)
+			else if shouldSimpleFormat then
+				set objectsAsXML to simpleFormatXML(objectsAsXML)
+			end if
 			
 			if shouldPrettify or shouldSimpleFormat then set objectsAsXML to replaceSimple({objectsAsXML, charCR, charLF})
 			
@@ -693,13 +700,14 @@ on fmObjectTranslator_Instantiate(prefs)
 		
 		
 		on prettifyXML(someXML)
-			-- version 1.6, Daniel A. Shockley
+			-- version 1.7, Daniel A. Shockley
 			if debugMode then logConsole(ScriptName, "prettifyXML: START")
 			try
 				
 				if currentCode is "XML2" then
 					-- do NOT try to prettify, even if specified, since XML2 is already quasi-formatted.
 					set prettyXML to someXML
+					if debugMode then logConsole(ScriptName, "prettifyXML: Skipped Layout Objects")
 				else
 					
 					(* prettyprint using tidy *)
@@ -717,9 +725,11 @@ on fmObjectTranslator_Instantiate(prefs)
 						--fix-uri = should check attribute values that carry URIs for illegal characters and if such are found, escape them as HTML 4 recommends
 						--quote-ampersand = should output unadorned & characters as &amp;
 						--quote-nbsp = output non-breaking space characters as entities, rather than as the Unicode character value 160 (decimal)
+						-i is indentation
+						--indent-spaces = This option specifies the number of spaces Tidy uses to indent content, when indentation is enabled. Default is 2. 
 						*)
-					
-					set otherTidyOptions to " --literal-attributes yes --drop-empty-paras no --fix-backslash no --fix-bad-comments no --fix-uri no --ncr no --quote-ampersand no --quote-nbsp no "
+										
+					set otherTidyOptions to " -i --indent-spaces 4 --literal-attributes yes --drop-empty-paras no --fix-backslash no --fix-bad-comments no --fix-uri no --ncr no --quote-ampersand no --quote-nbsp no "
 					set prettyPrint_ShellCommand to "echo " & quoted form of someXML & " | tidy -xml -m -raw -wrap 999999999999999" & otherTidyOptions
 					-- NOTE: wrapping of lines needs to NEVER occur, so cover petabyte-long lines 
 					

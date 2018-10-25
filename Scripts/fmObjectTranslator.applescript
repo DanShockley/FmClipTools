@@ -728,12 +728,28 @@ on fmObjectTranslator_Instantiate(prefs)
 						-i is indentation
 						--indent-spaces = This option specifies the number of spaces Tidy uses to indent content, when indentation is enabled. Default is 2. 
 						*)
-										
+					
+					(*
+					Try to convert 4-spaces into tabs AFTER tidy modifies data. To do that, must preserve any initial runs of 4-spaces.
+					*)
+					
+					set spaces4String to "    "
+					set spacePlaceholder to "|3784831346446981709931393949506519634432034195210262251535space|"
+					set someXML to replaceSimple({someXML, spaces4String, spacePlaceholder})
+					
+					(* Also, Tidy refueses to output tabs, so preserve and restore them, too! *)
+					set tabPlaceholder to "|3784831346446981709931393949506519634432034195210262251535tab|"
+					set someXML to replaceSimple({someXML, tab, tabPlaceholder})
+					
 					set otherTidyOptions to " -i --indent-spaces 4 --literal-attributes yes --drop-empty-paras no --fix-backslash no --fix-bad-comments no --fix-uri no --ncr no --quote-ampersand no --quote-nbsp no "
 					set prettyPrint_ShellCommand to "echo " & quoted form of someXML & " | tidy -xml -m -raw -wrap 999999999999999" & otherTidyOptions
 					-- NOTE: wrapping of lines needs to NEVER occur, so cover petabyte-long lines 
 					
 					set prettyXML to do shell script prettyPrint_ShellCommand
+					
+					set prettyXML to replaceSimple({prettyXML, spaces4String, tab})
+					set prettyXML to replaceSimple({prettyXML, spacePlaceholder, spaces4String})
+					set prettyXML to replaceSimple({prettyXML, tabPlaceholder, tab})
 					
 				end if
 				

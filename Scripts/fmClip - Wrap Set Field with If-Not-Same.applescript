@@ -21,7 +21,8 @@ property stepSetFieldStart : "<Step enable=\"True\" id=\"76\" name=\"Set Field\"
 property cdataThruTable : "]]></Calculation><Field table=\""
 property tableThruId : "\" id=\""
 property idThruName : "\" name=\""
-property nameThruEndStep : "\"></Field></Step>"
+-- property nameThruEndStep : "\"></Field></Step>"
+property nameThruEndStep : "\">"
 
 property finalXML : "</fmxmlsnippet>"
 

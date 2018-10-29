@@ -9,8 +9,9 @@ return fmObjTrans
 on fmObjectTranslator_Instantiate(prefs)
 	
 	script fmObjectTranslator
-		-- version 4.0, Daniel A. Shockley
+		-- version 4.0.2, Daniel A. Shockley
 		
+		-- 4.0.2 - 2018-10-29 ( dshockley ): prettify used to fail (and just get raw XML) when 'too large'. Use temp file to avoid fail. Bug-fix in dataObjectToUTF8. 
 		-- 4.0.1 - 2018-10-29 ( dshockley ): BUG-FIX - using wrong variable in prettify resulted in placeholders not be replaced. Neatened up code. 
 		-- 4.0 - 2018-10-25 ( dshockley/eshagdar ): Addded indentation to prettify. Tidy CANNOT output tabs, so preserve tabs 1st.
 		-- 3.9.8 - 2018-04-20 ( dshockley/eshagdar ): when doing prettify or simpleFormat, convert all ASCII 13 (Carriage Returns) into ASCII 10 (LineFeed) so that there is not a MIX of line endings. If prettify, do NOT also do SimpleFormat. 
@@ -51,6 +52,8 @@ on fmObjectTranslator_Instantiate(prefs)
 		property fmObjectList : {}
 		property tempDataName : "temp.data"
 		property tempXMLName : "temp.xml"
+		
+		property prettyTempName : "pretty-temp.xml"
 		
 		property charLF : ASCII character 10
 		property charCR : ASCII character 13
@@ -733,11 +736,12 @@ on fmObjectTranslator_Instantiate(prefs)
 						--indent-spaces = This option specifies the number of spaces Tidy uses to indent content, when indentation is enabled. Default is 2. 
 						*)
 					
+					set maxEchoSize to 200000 (* not sure exact point of failure, but was between 224317 and 227811 when tested on 2018-10-29, so playing it safe. *)
 					set spacePlaceholder to "|3784831346446981709931393949506519634432034195210262251535space|"
 					set tabPlaceholder to "|3784831346446981709931393949506519634432034195210262251535tab|"
 					set spaces4String to "    "
 					set otherTidyOptions to " -i --indent-spaces 4 --literal-attributes yes --drop-empty-paras no --fix-backslash no --fix-bad-comments no --fix-uri no --lower-literals no --ncr no --quote-ampersand no --quote-nbsp no "
-					set tidyCommand to " | tidy -xml -m -raw -wrap 999999999999999" & otherTidyOptions
+					set tidyCommand to "tidy -xml -raw -wrap 999999999999999" & otherTidyOptions
 					-- NOTE: wrapping of lines needs to NEVER occur, so cover petabyte-long lines 
 					
 					
@@ -750,9 +754,68 @@ on fmObjectTranslator_Instantiate(prefs)
 					set prettyXML to replaceSimple({prettyXML, spaces4String, spacePlaceholder})
 					set prettyXML to replaceSimple({prettyXML, tab, tabPlaceholder})
 					
+					
+					if debugMode then my logConsole(ScriptName, "prettifyXML: DEBUG: length of prettyXML: " & length of prettyXML)
+					
+					
 					-- prettify command:
-					set prettyPrint_ShellCommand to "echo " & quoted form of prettyXML & tidyCommand
-					set prettyXML to do shell script prettyPrint_ShellCommand
+					if length of prettyXML is greater than maxEchoSize then
+						
+						try
+							
+							set tempFolderPosix to my makeTempDirPosix()
+							set tempFolderPath to (POSIX file tempFolderPosix) as string
+							
+							set tempPath to tempFolderPath & prettyTempName
+							
+							try
+								close access file tempPath
+							end try
+							
+							set someHandle to open for access file tempPath with write permission
+							
+							tell application "System Events"
+								write prettyXML to someHandle
+							end tell
+							
+							try
+								close access file tempPath
+							end try
+							
+							
+							if debugMode then my logConsole(ScriptName, "prettifyXML: DEBUG: posix of tempPath: " & POSIX path of tempPath)
+							
+							
+							-- modify the temp file using tidy command:
+							set prettyPrint_ShellCommand to tidyCommand & space & " -m " & quoted form of POSIX path of tempPath
+							
+							if debugMode then my logConsole(ScriptName, "prettifyXML: DEBUG: prettyPrint_ShellCommand: " & prettyPrint_ShellCommand)
+							
+							do shell script prettyPrint_ShellCommand
+							
+							if debugMode then my logConsole(ScriptName, "prettifyXML: DEBUG: shell command result: " & result)
+							
+							-- read the modified temp file:
+							set prettyXML to read file tempPath
+							
+							
+							if debugMode then my logConsole(ScriptName, "prettifyXML: DEBUG: 1st chars of temp file: " & text 1 thru 200 of prettyXML)
+							
+							
+						on error errMsg number errNum
+							if debugMode then my logConsole(ScriptName, "prettifyXML: ERROR: " & errMsg & "(" & errNum & ")")
+							try
+								close access file tempPath
+							end try
+							error errMsg number errNum
+						end try
+						
+						
+					else
+						-- just use echo:
+						set prettyPrint_ShellCommand to "echo " & quoted form of prettyXML & " | " & tidyCommand
+						set prettyXML to do shell script prettyPrint_ShellCommand
+					end if
 					
 					-- restore original characters where placeholders exist:
 					set prettyXML to replaceSimple({prettyXML, spaces4String, tab})
@@ -775,8 +838,9 @@ on fmObjectTranslator_Instantiate(prefs)
 		
 		
 		on dataObjectToUTF8(prefs)
-			-- version 2.7
+			-- version 2.9
 			
+			-- 2.9 - 2018-10-29 ( dshockley ): BUG-FIX: the error handler closed a non-existent variable. 
 			-- 2.8 - 2016-11-02 ( dshockley/eshagdar ): debugMode now logs the tempDataPosix
 			-- 2.7 - by default, look for someObject instead of 'fmObjects' (but allow calling code to specify 'fmObjects' for backwards compatibility).
 			-- 2.6 - can return the UTF8 ITSELF, or instead a path to the temp file this creates.
@@ -828,7 +892,7 @@ on fmObjectTranslator_Instantiate(prefs)
 			on error errMsg number errNum
 				if debugMode then my logConsole(ScriptName, "dataObjectToUTF8: ERROR: " & errMsg & "(" & errNum & ")")
 				try
-					close access tempDataFile
+					close access file tempDataPath
 				end try
 				error errMsg number errNum
 			end try

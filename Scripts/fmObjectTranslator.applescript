@@ -11,6 +11,7 @@ on fmObjectTranslator_Instantiate(prefs)
 	script fmObjectTranslator
 		-- version 4.0, Daniel A. Shockley
 		
+		-- 4.0.1 - 2018-10-29 ( dshockley ): BUG-FIX - using wrong variable in prettify resulted in placeholders not be replaced. Neatened up code. 
 		-- 4.0 - 2018-10-25 ( dshockley/eshagdar ): Addded indentation to prettify. Tidy CANNOT output tabs, so preserve tabs 1st.
 		-- 3.9.8 - 2018-04-20 ( dshockley/eshagdar ): when doing prettify or simpleFormat, convert all ASCII 13 (Carriage Returns) into ASCII 10 (LineFeed) so that there is not a MIX of line endings. If prettify, do NOT also do SimpleFormat. 
 		-- 3.9.7 - 2018-04-20 ( dshockley ): remove "preserve-entities" from tidy, since that was an attempt to deal with layout objects, which we no longer even attempt to prettify, and using it causes problems with other objects. 
@@ -724,30 +725,36 @@ on fmObjectTranslator_Instantiate(prefs)
 						--fix-backslash = should replace backslash characters "\" in URLs by forward slashes "/"
 						--fix-bad-comments = should replace unexpected hyphens with "=" characters when it comes across adjacent hyphens
 						--fix-uri = should check attribute values that carry URIs for illegal characters and if such are found, escape them as HTML 4 recommends
+						--lower-literals = This option specifies if Tidy should convert the value of an attribute that takes a list of predefined values to lower case. (disabling, since default is Yes)
+						--ncr = This option specifies if Tidy should allow numeric character references (disabling, since default is Yes)
 						--quote-ampersand = should output unadorned & characters as &amp;
 						--quote-nbsp = output non-breaking space characters as entities, rather than as the Unicode character value 160 (decimal)
 						-i is indentation
 						--indent-spaces = This option specifies the number of spaces Tidy uses to indent content, when indentation is enabled. Default is 2. 
 						*)
 					
-					(*
-					Try to convert 4-spaces into tabs AFTER tidy modifies data. To do that, must preserve any initial runs of 4-spaces.
-					*)
-					
-					set spaces4String to "    "
 					set spacePlaceholder to "|3784831346446981709931393949506519634432034195210262251535space|"
-					set someXML to replaceSimple({someXML, spaces4String, spacePlaceholder})
-					
-					(* Also, Tidy refueses to output tabs, so preserve and restore them, too! *)
 					set tabPlaceholder to "|3784831346446981709931393949506519634432034195210262251535tab|"
-					set someXML to replaceSimple({someXML, tab, tabPlaceholder})
-					
-					set otherTidyOptions to " -i --indent-spaces 4 --literal-attributes yes --drop-empty-paras no --fix-backslash no --fix-bad-comments no --fix-uri no --ncr no --quote-ampersand no --quote-nbsp no "
-					set prettyPrint_ShellCommand to "echo " & quoted form of someXML & " | tidy -xml -m -raw -wrap 999999999999999" & otherTidyOptions
+					set spaces4String to "    "
+					set otherTidyOptions to " -i --indent-spaces 4 --literal-attributes yes --drop-empty-paras no --fix-backslash no --fix-bad-comments no --fix-uri no --lower-literals no --ncr no --quote-ampersand no --quote-nbsp no "
+					set tidyCommand to " | tidy -xml -m -raw -wrap 999999999999999" & otherTidyOptions
 					-- NOTE: wrapping of lines needs to NEVER occur, so cover petabyte-long lines 
 					
+					
+					set prettyXML to someXML
+					(*
+					Preserve certain whitespace:
+					Try to convert 4-spaces into tabs AFTER tidy modifies data. To do that, must preserve any initial runs of 4-spaces.
+					Also, Tidy refueses to output tabs, so preserve and restore them, too!
+					*)
+					set prettyXML to replaceSimple({prettyXML, spaces4String, spacePlaceholder})
+					set prettyXML to replaceSimple({prettyXML, tab, tabPlaceholder})
+					
+					-- prettify command:
+					set prettyPrint_ShellCommand to "echo " & quoted form of prettyXML & tidyCommand
 					set prettyXML to do shell script prettyPrint_ShellCommand
 					
+					-- restore original characters where placeholders exist:
 					set prettyXML to replaceSimple({prettyXML, spaces4String, tab})
 					set prettyXML to replaceSimple({prettyXML, spacePlaceholder, spaces4String})
 					set prettyXML to replaceSimple({prettyXML, tabPlaceholder, tab})

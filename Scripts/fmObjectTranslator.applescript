@@ -11,6 +11,7 @@ on fmObjectTranslator_Instantiate(prefs)
 	script fmObjectTranslator
 		-- version 4.0.2, Daniel A. Shockley
 		
+		-- 4.0.3 - 2018-12-04 ( dshockley, eshagdar ): remove unneeded whitespace around CDATA inside Calculation tags. 
 		-- 4.0.2 - 2018-10-29 ( dshockley ): prettify used to fail (and just get raw XML) when 'too large'. Use temp file to avoid fail. Bug-fix in dataObjectToUTF8. 
 		-- 4.0.1 - 2018-10-29 ( dshockley ): BUG-FIX - using wrong variable in prettify resulted in placeholders not be replaced. Neatened up code. 
 		-- 4.0 - 2018-10-25 ( dshockley/eshagdar ): Addded indentation to prettify. Tidy CANNOT output tabs, so preserve tabs 1st.
@@ -741,15 +742,16 @@ on fmObjectTranslator_Instantiate(prefs)
 					set tabPlaceholder to "|3784831346446981709931393949506519634432034195210262251535tab|"
 					set spaces4String to "    "
 					set otherTidyOptions to " -i --indent-spaces 4 --literal-attributes yes --drop-empty-paras no --fix-backslash no --fix-bad-comments no --fix-uri no --lower-literals no --ncr no --quote-ampersand no --quote-nbsp no "
-					set tidyCommand to "tidy -xml -raw -wrap 999999999999999" & otherTidyOptions
+					set tidyCommand to "tidy -xml -raw -wrap 999999999999999 " & otherTidyOptions
 					-- NOTE: wrapping of lines needs to NEVER occur, so cover petabyte-long lines 
 					
 					
 					set prettyXML to someXML
+					
 					(*
 					Preserve certain whitespace:
 					Try to convert 4-spaces into tabs AFTER tidy modifies data. To do that, must preserve any initial runs of 4-spaces.
-					Also, Tidy refueses to output tabs, so preserve and restore them, too!
+					Also, Tidy refuses to output tabs, so preserve and restore them, too!
 					*)
 					set prettyXML to replaceSimple({prettyXML, spaces4String, spacePlaceholder})
 					set prettyXML to replaceSimple({prettyXML, tab, tabPlaceholder})
@@ -817,10 +819,38 @@ on fmObjectTranslator_Instantiate(prefs)
 						set prettyXML to do shell script prettyPrint_ShellCommand
 					end if
 					
+					
 					-- restore original characters where placeholders exist:
 					set prettyXML to replaceSimple({prettyXML, spaces4String, tab})
 					set prettyXML to replaceSimple({prettyXML, spacePlaceholder, spaces4String})
 					set prettyXML to replaceSimple({prettyXML, tabPlaceholder, tab})
+					
+					
+					
+					-- After restoring whitespace, get rid of line returns and indentation around the CDATA inside a Calculation tag, since tidy adds that:
+					-- Cleanup between Calc open tag and CDATA:
+					set maxTabs to 12
+					set stringCalcTagOpen to "<Calculation>"
+					set stringStartCdata to "<![CDATA["
+					
+					if debugMode then my logConsole(ScriptName, "prettifyXML: DEBUG: sample chunk: " & (ASCII number (text 1926 thru 1926 of prettyXML)))
+					
+					repeat with numTabs from 1 to maxTabs
+						set stringBeforeCdata to (stringCalcTagOpen & charCR & repeatString({someString:tab, repeatCount:numTabs}) & stringStartCdata)
+						if debugMode then my logConsole(ScriptName, "prettifyXML: DEBUG: numTabs: " & numTabs)
+						if debugMode then my logConsole(ScriptName, "prettifyXML: DEBUG: stringBeforeCdata: " & stringBeforeCdata)
+						if debugMode then my logConsole(ScriptName, "prettifyXML: DEBUG: offset of stringBeforeCdata in prettyXML: " & (offset of stringBeforeCdata in prettyXML))
+						if prettyXML contains stringBeforeCdata then
+							if debugMode then my logConsole(ScriptName, "prettifyXML: DEBUG: found stringBeforeCdata with " & numTabs & " tabs.")
+							set prettyXML to replaceSimple({prettyXML, stringBeforeCdata, stringCalcTagOpen & stringStartCdata})
+						end if
+					end repeat
+					-- Cleanup between CDATA and Calc close tag:
+					set stringEndCData to "]]>"
+					set stringCalcTagClose to "</Calculation>"
+					set prettyXML to replaceSimple({prettyXML, stringEndCData & charCR & stringCalcTagClose, stringEndCData & stringCalcTagClose})
+					
+					
 					
 				end if
 				
@@ -1231,6 +1261,40 @@ on fmObjectTranslator_Instantiate(prefs)
 			
 			return finalResult
 		end getTextBetween
+		
+		
+		on repeatString(prefs)
+			-- version 1.0, Daniel A. Shockley
+			
+			set defaultPrefs to {someString:null, repeatCount:1, separator:""}
+			set prefs to prefs & defaultPrefs
+			
+			set outputList to {}
+			repeat with i from 1 to repeatCount of prefs
+				copy someString of prefs to end of outputList
+			end repeat
+			
+			
+			return unParseChars(outputList, separator of prefs)
+			
+		end repeatString
+		
+		
+		on unParseChars(thisList, newDelim)
+			-- version 1.2, Daniel A. Shockley, http://www.danshockley.com
+			set oldDelims to AppleScript's text item delimiters
+			try
+				set AppleScript's text item delimiters to the {newDelim as string}
+				set the unparsedText to thisList as string
+				set AppleScript's text item delimiters to oldDelims
+				return unparsedText
+			on error errMsg number errNum
+				try
+					set AppleScript's text item delimiters to oldDelims
+				end try
+				error "ERROR: unParseChars() handler: " & errMsg number errNum
+			end try
+		end unParseChars
 		
 		
 		on recordFromList(assocList)

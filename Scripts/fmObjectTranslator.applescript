@@ -9,8 +9,9 @@ return fmObjTrans
 on fmObjectTranslator_Instantiate(prefs)
 	
 	script fmObjectTranslator
-		-- version 4.0.2, Daniel A. Shockley
+		-- version 4.0.4, Daniel A. Shockley
 		
+		-- 4.0.4 - 2019-01-18 ( eshagdar ): remove EndOfText character ( ascii 3 ).
 		-- 4.0.3 - 2018-12-04 ( dshockley, eshagdar ): remove unneeded whitespace around CDATA inside Calculation tags. 
 		-- 4.0.2 - 2018-10-29 ( dshockley ): prettify used to fail (and just get raw XML) when 'too large'. Use temp file to avoid fail. Bug-fix in dataObjectToUTF8. 
 		-- 4.0.1 - 2018-10-29 ( dshockley ): BUG-FIX - using wrong variable in prettify resulted in placeholders not be replaced. Neatened up code. 
@@ -56,6 +57,7 @@ on fmObjectTranslator_Instantiate(prefs)
 		
 		property prettyTempName : "pretty-temp.xml"
 		
+		property charEOT : ASCII character 3
 		property charLF : ASCII character 10
 		property charCR : ASCII character 13
 		-- the "bad" and "good" layout tag start code deals with a bug in FileMaker 10: 
@@ -371,8 +373,6 @@ on fmObjectTranslator_Instantiate(prefs)
 			set xmlConverted to dataObjectToUTF8({fmObjects:fmObjects, resultType:resultType of prefs, outputFilePath:outputFilePath of prefs})
 			
 			return xmlConverted
-			
-			
 		end clipboardGetObjectsToXmlFilePath
 		
 		
@@ -387,7 +387,6 @@ on fmObjectTranslator_Instantiate(prefs)
 			set testClipboard to get the clipboard
 			
 			return checkStringForValidXML(testClipboard)
-			
 		end checkClipboardForValidXML
 		
 		
@@ -429,8 +428,9 @@ on fmObjectTranslator_Instantiate(prefs)
 		
 		
 		on convertObjectsToXML(fmObjects)
-			-- version 1.1
+			-- version 1.1.1
 			
+			-- 1.1.1 - 2019-01-18 ( eshagdar ): remove all EOT characters.
 			-- 1.1 - 2018-04-20 ( dshockley/eshagdar ): if prettify, do NOT also SimpleFormat. If either option, then convert CR to LF. 
 			
 			if debugMode then logConsole(ScriptName, "convertObjectsToXML: START")
@@ -444,10 +444,12 @@ on fmObjectTranslator_Instantiate(prefs)
 				set objectsAsXML to simpleFormatXML(objectsAsXML)
 			end if
 			
+			
+			set objectsAsXML to replaceSimple({objectsAsXML, charEOT, ""})
 			if shouldPrettify or shouldSimpleFormat then set objectsAsXML to replaceSimple({objectsAsXML, charCR, charLF})
 			
-			return objectsAsXML
 			
+			return objectsAsXML
 		end convertObjectsToXML
 		
 		

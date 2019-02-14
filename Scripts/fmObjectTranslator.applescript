@@ -67,15 +67,15 @@ on fmObjectTranslator_Instantiate(prefs)
 		property xmlHeader_LO_current : ""
 		
 		
-		property fmObjCodes : {Â
-			{objName:"Step", objCode:"XMSS"}, Â
-			{objName:"Layout", objCode:"XML2", secondaryNode:"NOT ObjectStyle"}, Â
-			{objName:"Layout", objCode:"XMLO", secondaryNode:"HAS ObjectStyle"}, Â
-			{objName:"Group", objCode:"XMSC"}, Â
-			{objName:"Script", objCode:"XMSC"}, Â
-			{objName:"Field", objCode:"XMFD"}, Â
-			{objName:"CustomFunction", objCode:"XMFN"}, Â
-			{objName:"BaseTable", objCode:"XMTB"} Â
+		property fmObjCodes : {ï¿½
+			{objName:"Step", objCode:"XMSS"}, ï¿½
+			{objName:"Layout", objCode:"XML2", secondaryNode:"NOT ObjectStyle"}, ï¿½
+			{objName:"Layout", objCode:"XMLO", secondaryNode:"HAS ObjectStyle"}, ï¿½
+			{objName:"Group", objCode:"XMSC"}, ï¿½
+			{objName:"Script", objCode:"XMSC"}, ï¿½
+			{objName:"Field", objCode:"XMFD"}, ï¿½
+			{objName:"CustomFunction", objCode:"XMFN"}, ï¿½
+			{objName:"BaseTable", objCode:"XMTB"} ï¿½
 				}
 		
 		property currentCode : ""
@@ -452,7 +452,7 @@ on fmObjectTranslator_Instantiate(prefs)
 			
 			-- 3.7 - 2016-11-02 ( dshockley/eshagdar ): separate test into a variable; renamed variables.
 			-- 3.6 - need to SET currentCode for this object - always.
-			-- 3.5 - no need for file writeÊto be in tell System Events block
+			-- 3.5 - no need for file writeï¿½to be in tell System Events block
 			-- converts some string of XML into fmObjects as FM data type
 			
 			if debugMode then logConsole(ScriptName, "convertXmlToObjects: START")
@@ -474,7 +474,7 @@ on fmObjectTranslator_Instantiate(prefs)
 			set xmlFilePath to (POSIX file tempXMLPosix) as string
 			if debugMode then logConsole(ScriptName, "convertXmlToObjects: xmlFilePath: " & xmlFilePath)
 			set xmlHandle to open for access file xmlFilePath with write permission
-			write stringFmXML to xmlHandle as Çclass utf8È
+			write stringFmXML to xmlHandle as ï¿½class utf8ï¿½
 			close access xmlHandle
 			set fmObjects to read alias xmlFilePath as fmClass
 			
@@ -578,7 +578,7 @@ on fmObjectTranslator_Instantiate(prefs)
 		
 		
 		on classFromCode(objCode)
-			return run script "Çclass " & objCode & "È"
+			return run script "ï¿½class " & objCode & "ï¿½"
 		end classFromCode
 		
 		
@@ -743,7 +743,8 @@ on fmObjectTranslator_Instantiate(prefs)
 					set someXML to replaceSimple({someXML, tab, tabPlaceholder})
 					
 					set otherTidyOptions to " -i --indent-spaces 4 --literal-attributes yes --drop-empty-paras no --fix-backslash no --fix-bad-comments no --fix-uri no --ncr no --quote-ampersand no --quote-nbsp no "
-					set prettyPrint_ShellCommand to "echo " & quoted form of someXML & " | tidy -xml -m -raw -wrap 999999999999999" & otherTidyOptions
+					-- use "shopt -u xpg_echo; echo " instead of "echo" to handle backslashes properly: https://stackoverflow.com/questions/8138167/how-can-i-escape-shell-arguments-in-applescript/8145515
+					set prettyPrint_ShellCommand to "shopt -u xpg_echo; echo " & quoted form of someXML & " | tidy -xml -m -raw -wrap 999999999999999" & otherTidyOptions
 					-- NOTE: wrapping of lines needs to NEVER occur, so cover petabyte-long lines 
 					
 					set prettyXML to do shell script prettyPrint_ShellCommand
@@ -831,7 +832,7 @@ on fmObjectTranslator_Instantiate(prefs)
 			if resultType is "utf8" then
 				
 				tell application "System Events"
-					read file tempDataPath as Çclass utf8È
+					read file tempDataPath as ï¿½class utf8ï¿½
 				end tell
 				
 				return result
@@ -1050,7 +1051,7 @@ on fmObjectTranslator_Instantiate(prefs)
 			--             while 10.4 uses " into type number.")
 			-- 1.5 -  added Unicode Text
 			
-			set errMsgLeadList to {"Can't make ", "CanÕt make "}
+			set errMsgLeadList to {"Can't make ", "Canï¿½t make "}
 			set errMsgTrailList to {" into a number.", " into type number."}
 			
 			if class of incomingObject is string then
@@ -1165,7 +1166,7 @@ on fmObjectTranslator_Instantiate(prefs)
 		on recordFromList(assocList)
 			-- version 2003-11-06, Nigel Garvey, AppleScript-Users mailing list
 			try
-				{Çclass usrfÈ:assocList}'s x
+				{ï¿½class usrfï¿½:assocList}'s x
 			on error msg
 				return msg
 				run script text 16 thru -2 of msg

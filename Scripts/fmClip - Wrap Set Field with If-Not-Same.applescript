@@ -1,8 +1,9 @@
 -- Set Fields IF not same
--- version 4.0, Daniel A. Shockley, Erik Shagdar
+-- version 4.0.1, Daniel A. Shockley, Erik Shagdar
 -- Takes Set Field script step objects in clipboard and puts in those same steps wrapped in IF step that sees if they aren't already the same.
 
 
+-- 4.0.1 - 2018-10-29 ( dshockley ): Made change recommended by https://github.com/jwillinghalpern - modified nameThruEndStep to by less specific so that any alternate XML tags between Step and /Field tags will not interrupt parsing. TODO: A better fix would be to re-work the whole thing to parse XML properly, but that is a longer-term project. 
 -- 4.0 - 2018-04-04 ( dshockley/eshagdar ): load fmObjectTranslator code by reference instead of embedded.
 -- 3.9.3 - 2017-08-09 ( eshagdar ): renamed 'Set Fields IF not same' to 'fmClip - Wrap Set Field with If-Not-Same' to match other handler name pattern
 -- 3.9.2 - use 'Not Exact' comparison instead of the inequality operator.
@@ -21,7 +22,6 @@ property stepSetFieldStart : "<Step enable=\"True\" id=\"76\" name=\"Set Field\"
 property cdataThruTable : "]]></Calculation><Field table=\""
 property tableThruId : "\" id=\""
 property idThruName : "\" name=\""
--- property nameThruEndStep : "\"></Field></Step>"
 property nameThruEndStep : "\">"
 
 property finalXML : "</fmxmlsnippet>"

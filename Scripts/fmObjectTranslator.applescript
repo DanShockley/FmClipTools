@@ -9,8 +9,12 @@ return fmObjTrans
 on fmObjectTranslator_Instantiate(prefs)
 	
 	script fmObjectTranslator
-		-- version 4.0, Daniel A. Shockley
+		-- version 4.0.4, Daniel A. Shockley
 		
+		-- 4.0.4 - 2019-01-18 ( eshagdar ): remove EndOfText character ( ascii 3 ).
+		-- 4.0.3 - 2018-12-04 ( dshockley, eshagdar ): remove unneeded whitespace around CDATA inside Calculation tags. 
+		-- 4.0.2 - 2018-10-29 ( dshockley ): prettify used to fail (and just get raw XML) when 'too large'. Use temp file to avoid fail. Bug-fix in dataObjectToUTF8. 
+		-- 4.0.1 - 2018-10-29 ( dshockley ): BUG-FIX - using wrong variable in prettify resulted in placeholders not be replaced. Neatened up code. 
 		-- 4.0 - 2018-10-25 ( dshockley/eshagdar ): Addded indentation to prettify. Tidy CANNOT output tabs, so preserve tabs 1st.
 		-- 3.9.8 - 2018-04-20 ( dshockley/eshagdar ): when doing prettify or simpleFormat, convert all ASCII 13 (Carriage Returns) into ASCII 10 (LineFeed) so that there is not a MIX of line endings. If prettify, do NOT also do SimpleFormat. 
 		-- 3.9.7 - 2018-04-20 ( dshockley ): remove "preserve-entities" from tidy, since that was an attempt to deal with layout objects, which we no longer even attempt to prettify, and using it causes problems with other objects. 
@@ -51,6 +55,9 @@ on fmObjectTranslator_Instantiate(prefs)
 		property tempDataName : "temp.data"
 		property tempXMLName : "temp.xml"
 		
+		property prettyTempName : "pretty-temp.xml"
+		
+		property charEOT : ASCII character 3
 		property charLF : ASCII character 10
 		property charCR : ASCII character 13
 		-- the "bad" and "good" layout tag start code deals with a bug in FileMaker 10: 
@@ -366,8 +373,6 @@ on fmObjectTranslator_Instantiate(prefs)
 			set xmlConverted to dataObjectToUTF8({fmObjects:fmObjects, resultType:resultType of prefs, outputFilePath:outputFilePath of prefs})
 			
 			return xmlConverted
-			
-			
 		end clipboardGetObjectsToXmlFilePath
 		
 		
@@ -382,7 +387,6 @@ on fmObjectTranslator_Instantiate(prefs)
 			set testClipboard to get the clipboard
 			
 			return checkStringForValidXML(testClipboard)
-			
 		end checkClipboardForValidXML
 		
 		
@@ -424,8 +428,9 @@ on fmObjectTranslator_Instantiate(prefs)
 		
 		
 		on convertObjectsToXML(fmObjects)
-			-- version 1.1
+			-- version 1.1.1
 			
+			-- 1.1.1 - 2019-01-18 ( eshagdar ): remove all EOT characters.
 			-- 1.1 - 2018-04-20 ( dshockley/eshagdar ): if prettify, do NOT also SimpleFormat. If either option, then convert CR to LF. 
 			
 			if debugMode then logConsole(ScriptName, "convertObjectsToXML: START")
@@ -439,10 +444,12 @@ on fmObjectTranslator_Instantiate(prefs)
 				set objectsAsXML to simpleFormatXML(objectsAsXML)
 			end if
 			
+			
+			set objectsAsXML to replaceSimple({objectsAsXML, charEOT, ""})
 			if shouldPrettify or shouldSimpleFormat then set objectsAsXML to replaceSimple({objectsAsXML, charCR, charLF})
 			
-			return objectsAsXML
 			
+			return objectsAsXML
 		end convertObjectsToXML
 		
 		
@@ -724,34 +731,128 @@ on fmObjectTranslator_Instantiate(prefs)
 						--fix-backslash = should replace backslash characters "\" in URLs by forward slashes "/"
 						--fix-bad-comments = should replace unexpected hyphens with "=" characters when it comes across adjacent hyphens
 						--fix-uri = should check attribute values that carry URIs for illegal characters and if such are found, escape them as HTML 4 recommends
+						--lower-literals = This option specifies if Tidy should convert the value of an attribute that takes a list of predefined values to lower case. (disabling, since default is Yes)
+						--ncr = This option specifies if Tidy should allow numeric character references (disabling, since default is Yes)
 						--quote-ampersand = should output unadorned & characters as &amp;
 						--quote-nbsp = output non-breaking space characters as entities, rather than as the Unicode character value 160 (decimal)
 						-i is indentation
 						--indent-spaces = This option specifies the number of spaces Tidy uses to indent content, when indentation is enabled. Default is 2. 
 						*)
 					
-					(*
-					Try to convert 4-spaces into tabs AFTER tidy modifies data. To do that, must preserve any initial runs of 4-spaces.
-					*)
-					
-					set spaces4String to "    "
+					set maxEchoSize to 200000 (* not sure exact point of failure, but was between 224317 and 227811 when tested on 2018-10-29, so playing it safe. *)
 					set spacePlaceholder to "|3784831346446981709931393949506519634432034195210262251535space|"
-					set someXML to replaceSimple({someXML, spaces4String, spacePlaceholder})
-					
-					(* Also, Tidy refueses to output tabs, so preserve and restore them, too! *)
 					set tabPlaceholder to "|3784831346446981709931393949506519634432034195210262251535tab|"
-					set someXML to replaceSimple({someXML, tab, tabPlaceholder})
-					
-					set otherTidyOptions to " -i --indent-spaces 4 --literal-attributes yes --drop-empty-paras no --fix-backslash no --fix-bad-comments no --fix-uri no --ncr no --quote-ampersand no --quote-nbsp no "
-					-- use "shopt -u xpg_echo; echo " instead of "echo" to handle backslashes properly: https://stackoverflow.com/questions/8138167/how-can-i-escape-shell-arguments-in-applescript/8145515
-					set prettyPrint_ShellCommand to "shopt -u xpg_echo; echo " & quoted form of someXML & " | tidy -xml -m -raw -wrap 999999999999999" & otherTidyOptions
+					set spaces4String to "    "
+					set otherTidyOptions to " -i --indent-spaces 4 --literal-attributes yes --drop-empty-paras no --fix-backslash no --fix-bad-comments no --fix-uri no --lower-literals no --ncr no --quote-ampersand no --quote-nbsp no "
+					set tidyCommand to "tidy -xml -raw -wrap 999999999999999 " & otherTidyOptions
 					-- NOTE: wrapping of lines needs to NEVER occur, so cover petabyte-long lines 
 					
-					set prettyXML to do shell script prettyPrint_ShellCommand
 					
+					set prettyXML to someXML
+					
+					(*
+					Preserve certain whitespace:
+					Try to convert 4-spaces into tabs AFTER tidy modifies data. To do that, must preserve any initial runs of 4-spaces.
+					Also, Tidy refuses to output tabs, so preserve and restore them, too!
+					*)
+					set prettyXML to replaceSimple({prettyXML, spaces4String, spacePlaceholder})
+					set prettyXML to replaceSimple({prettyXML, tab, tabPlaceholder})
+					
+					
+					if debugMode then my logConsole(ScriptName, "prettifyXML: DEBUG: length of prettyXML: " & length of prettyXML)
+					
+					
+					-- prettify command:
+					if length of prettyXML is greater than maxEchoSize then
+						
+						try
+							
+							set tempFolderPosix to my makeTempDirPosix()
+							set tempFolderPath to (POSIX file tempFolderPosix) as string
+							
+							set tempPath to tempFolderPath & prettyTempName
+							
+							try
+								close access file tempPath
+							end try
+							
+							set someHandle to open for access file tempPath with write permission
+							
+							tell application "System Events"
+								write prettyXML to someHandle
+							end tell
+							
+							try
+								close access file tempPath
+							end try
+							
+							
+							if debugMode then my logConsole(ScriptName, "prettifyXML: DEBUG: posix of tempPath: " & POSIX path of tempPath)
+							
+							
+							-- modify the temp file using tidy command:
+							set prettyPrint_ShellCommand to tidyCommand & space & " -m " & quoted form of POSIX path of tempPath
+							
+							if debugMode then my logConsole(ScriptName, "prettifyXML: DEBUG: prettyPrint_ShellCommand: " & prettyPrint_ShellCommand)
+							
+							do shell script prettyPrint_ShellCommand
+							
+							if debugMode then my logConsole(ScriptName, "prettifyXML: DEBUG: shell command result: " & result)
+							
+							-- read the modified temp file:
+							set prettyXML to read file tempPath
+							
+							
+							if debugMode then my logConsole(ScriptName, "prettifyXML: DEBUG: 1st chars of temp file: " & text 1 thru 200 of prettyXML)
+							
+							
+						on error errMsg number errNum
+							if debugMode then my logConsole(ScriptName, "prettifyXML: ERROR: " & errMsg & "(" & errNum & ")")
+							try
+								close access file tempPath
+							end try
+							error errMsg number errNum
+						end try
+						
+						
+					else
+						-- just use echo:
+						set prettyPrint_ShellCommand to "echo " & quoted form of prettyXML & " | " & tidyCommand
+						set prettyXML to do shell script prettyPrint_ShellCommand
+					end if
+					
+					
+					-- restore original characters where placeholders exist:
 					set prettyXML to replaceSimple({prettyXML, spaces4String, tab})
 					set prettyXML to replaceSimple({prettyXML, spacePlaceholder, spaces4String})
 					set prettyXML to replaceSimple({prettyXML, tabPlaceholder, tab})
+					
+					
+					
+					-- After restoring whitespace, get rid of line returns and indentation around the CDATA inside a Calculation tag, since tidy adds that:
+					-- Cleanup between Calc open tag and CDATA:
+					set maxTabs to 12
+					set stringCalcTagOpen to "<Calculation>"
+					set stringStartCdata to "<![CDATA["
+					
+					if debugMode then my logConsole(ScriptName, "prettifyXML: DEBUG: sample chunk: " & (ASCII number (text 1926 thru 1926 of prettyXML)))
+					
+					repeat with numTabs from 1 to maxTabs
+						set stringBeforeCdata to (stringCalcTagOpen & charCR & repeatString({someString:tab, repeatCount:numTabs}) & stringStartCdata)
+						if debugMode then my logConsole(ScriptName, "prettifyXML: DEBUG: numTabs: " & numTabs)
+						if debugMode then my logConsole(ScriptName, "prettifyXML: DEBUG: stringBeforeCdata: " & stringBeforeCdata)
+						if debugMode then my logConsole(ScriptName, "prettifyXML: DEBUG: offset of stringBeforeCdata in prettyXML: " & (offset of stringBeforeCdata in prettyXML))
+						if prettyXML contains stringBeforeCdata then
+							if debugMode then my logConsole(ScriptName, "prettifyXML: DEBUG: found stringBeforeCdata with " & numTabs & " tabs.")
+							set prettyXML to replaceSimple({prettyXML, stringBeforeCdata, stringCalcTagOpen & stringStartCdata})
+						end if
+					end repeat
+					-- Cleanup between CDATA and Calc close tag:
+					set stringEndCData to "]]>"
+					set stringCalcTagClose to "</Calculation>"
+					set prettyXML to replaceSimple({prettyXML, stringEndCData & charCR & stringCalcTagClose, stringEndCData & stringCalcTagClose})
+					
+					
 					
 				end if
 				
@@ -769,8 +870,9 @@ on fmObjectTranslator_Instantiate(prefs)
 		
 		
 		on dataObjectToUTF8(prefs)
-			-- version 2.7
+			-- version 2.9
 			
+			-- 2.9 - 2018-10-29 ( dshockley ): BUG-FIX: the error handler closed a non-existent variable. 
 			-- 2.8 - 2016-11-02 ( dshockley/eshagdar ): debugMode now logs the tempDataPosix
 			-- 2.7 - by default, look for someObject instead of 'fmObjects' (but allow calling code to specify 'fmObjects' for backwards compatibility).
 			-- 2.6 - can return the UTF8 ITSELF, or instead a path to the temp file this creates.
@@ -822,7 +924,7 @@ on fmObjectTranslator_Instantiate(prefs)
 			on error errMsg number errNum
 				if debugMode then my logConsole(ScriptName, "dataObjectToUTF8: ERROR: " & errMsg & "(" & errNum & ")")
 				try
-					close access tempDataFile
+					close access file tempDataPath
 				end try
 				error errMsg number errNum
 			end try
@@ -1161,6 +1263,40 @@ on fmObjectTranslator_Instantiate(prefs)
 			
 			return finalResult
 		end getTextBetween
+		
+		
+		on repeatString(prefs)
+			-- version 1.0, Daniel A. Shockley
+			
+			set defaultPrefs to {someString:null, repeatCount:1, separator:""}
+			set prefs to prefs & defaultPrefs
+			
+			set outputList to {}
+			repeat with i from 1 to repeatCount of prefs
+				copy someString of prefs to end of outputList
+			end repeat
+			
+			
+			return unParseChars(outputList, separator of prefs)
+			
+		end repeatString
+		
+		
+		on unParseChars(thisList, newDelim)
+			-- version 1.2, Daniel A. Shockley, http://www.danshockley.com
+			set oldDelims to AppleScript's text item delimiters
+			try
+				set AppleScript's text item delimiters to the {newDelim as string}
+				set the unparsedText to thisList as string
+				set AppleScript's text item delimiters to oldDelims
+				return unparsedText
+			on error errMsg number errNum
+				try
+					set AppleScript's text item delimiters to oldDelims
+				end try
+				error "ERROR: unParseChars() handler: " & errMsg number errNum
+			end try
+		end unParseChars
 		
 		
 		on recordFromList(assocList)

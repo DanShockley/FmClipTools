@@ -74,15 +74,15 @@ on fmObjectTranslator_Instantiate(prefs)
 		property xmlHeader_LO_current : ""
 		
 		
-		property fmObjCodes : {�
-			{objName:"Step", objCode:"XMSS"}, �
-			{objName:"Layout", objCode:"XML2", secondaryNode:"NOT ObjectStyle"}, �
-			{objName:"Layout", objCode:"XMLO", secondaryNode:"HAS ObjectStyle"}, �
-			{objName:"Group", objCode:"XMSC"}, �
-			{objName:"Script", objCode:"XMSC"}, �
-			{objName:"Field", objCode:"XMFD"}, �
-			{objName:"CustomFunction", objCode:"XMFN"}, �
-			{objName:"BaseTable", objCode:"XMTB"} �
+		property fmObjCodes : { ¬
+			{objName:"Step", objCode:"XMSS"}, ¬
+			{objName:"Layout", objCode:"XML2", secondaryNode:"NOT ObjectStyle"}, ¬
+			{objName:"Layout", objCode:"XMLO", secondaryNode:"HAS ObjectStyle"}, ¬
+			{objName:"Group", objCode:"XMSC"}, ¬
+			{objName:"Script", objCode:"XMSC"}, ¬
+			{objName:"Field", objCode:"XMFD"}, ¬
+			{objName:"CustomFunction", objCode:"XMFN"}, ¬
+			{objName:"BaseTable", objCode:"XMTB"} ¬
 				}
 		
 		property currentCode : ""
@@ -459,7 +459,7 @@ on fmObjectTranslator_Instantiate(prefs)
 			
 			-- 3.7 - 2016-11-02 ( dshockley/eshagdar ): separate test into a variable; renamed variables.
 			-- 3.6 - need to SET currentCode for this object - always.
-			-- 3.5 - no need for file write�to be in tell System Events block
+			-- 3.5 - no need for file write to be in tell System Events block
 			-- converts some string of XML into fmObjects as FM data type
 			
 			if debugMode then logConsole(ScriptName, "convertXmlToObjects: START")
@@ -481,7 +481,7 @@ on fmObjectTranslator_Instantiate(prefs)
 			set xmlFilePath to (POSIX file tempXMLPosix) as string
 			if debugMode then logConsole(ScriptName, "convertXmlToObjects: xmlFilePath: " & xmlFilePath)
 			set xmlHandle to open for access file xmlFilePath with write permission
-			write stringFmXML to xmlHandle as �class utf8�
+			write stringFmXML to xmlHandle as «class utf8»
 			close access xmlHandle
 			set fmObjects to read alias xmlFilePath as fmClass
 			
@@ -585,7 +585,7 @@ on fmObjectTranslator_Instantiate(prefs)
 		
 		
 		on classFromCode(objCode)
-			return run script "�class " & objCode & "�"
+			return run script "«class " & objCode & "»"
 		end classFromCode
 		
 		
@@ -817,7 +817,8 @@ on fmObjectTranslator_Instantiate(prefs)
 						
 					else
 						-- just use echo:
-						set prettyPrint_ShellCommand to "echo " & quoted form of prettyXML & " | " & tidyCommand
+						-- use "shopt -u xpg_echo; echo " instead of "echo" to handle backslashes properly: https://stackoverflow.com/questions/8138167/how-can-i-escape-shell-arguments-in-applescript/8145515
+						set prettyPrint_ShellCommand to "shopt -u xpg_echo; echo " & quoted form of prettyXML & " | " & tidyCommand
 						set prettyXML to do shell script prettyPrint_ShellCommand
 					end if
 					
@@ -934,7 +935,7 @@ on fmObjectTranslator_Instantiate(prefs)
 			if resultType is "utf8" then
 				
 				tell application "System Events"
-					read file tempDataPath as �class utf8�
+					read file tempDataPath as «class utf8»
 				end tell
 				
 				return result
@@ -1153,7 +1154,7 @@ on fmObjectTranslator_Instantiate(prefs)
 			--             while 10.4 uses " into type number.")
 			-- 1.5 -  added Unicode Text
 			
-			set errMsgLeadList to {"Can't make ", "Can�t make "}
+			set errMsgLeadList to {"Can't make ", "Can't make "}
 			set errMsgTrailList to {" into a number.", " into type number."}
 			
 			if class of incomingObject is string then
@@ -1302,7 +1303,7 @@ on fmObjectTranslator_Instantiate(prefs)
 		on recordFromList(assocList)
 			-- version 2003-11-06, Nigel Garvey, AppleScript-Users mailing list
 			try
-				{�class usrf�:assocList}'s x
+				{«class usrf»:assocList}'s x
 			on error msg
 				return msg
 				run script text 16 thru -2 of msg

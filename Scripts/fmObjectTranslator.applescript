@@ -11,6 +11,7 @@ on fmObjectTranslator_Instantiate(prefs)
 	script fmObjectTranslator
 		-- version 4.0.4, Daniel A. Shockley
 		
+		-- 4.0.5 - 2019-02-15 ( jwillinghalpern ): preserve backslashes when prettifying xml with shell script.
 		-- 4.0.4 - 2019-01-18 ( eshagdar ): remove EndOfText character ( ascii 3 ).
 		-- 4.0.3 - 2018-12-04 ( dshockley, eshagdar ): remove unneeded whitespace around CDATA inside Calculation tags. 
 		-- 4.0.2 - 2018-10-29 ( dshockley ): prettify used to fail (and just get raw XML) when 'too large'. Use temp file to avoid fail. Bug-fix in dataObjectToUTF8. 
@@ -836,7 +837,6 @@ on fmObjectTranslator_Instantiate(prefs)
 					set stringCalcTagOpen to "<Calculation>"
 					set stringStartCdata to "<![CDATA["
 					
-					if debugMode then my logConsole(ScriptName, "prettifyXML: DEBUG: sample chunk: " & (ASCII number (text 1926 thru 1926 of prettyXML)))
 					
 					repeat with numTabs from 1 to maxTabs
 						set stringBeforeCdata to (stringCalcTagOpen & charCR & repeatString({someString:tab, repeatCount:numTabs}) & stringStartCdata)

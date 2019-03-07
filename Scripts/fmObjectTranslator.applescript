@@ -11,6 +11,7 @@ on fmObjectTranslator_Instantiate(prefs)
 	script fmObjectTranslator
 		-- version 4.0.4, Daniel A. Shockley
 		
+		-- 4.0.5 - 2019-02-15 ( jwillinghalpern ): preserve backslashes when prettifying xml with shell script.
 		-- 4.0.4 - 2019-01-18 ( eshagdar ): remove EndOfText character ( ascii 3 ).
 		-- 4.0.3 - 2018-12-04 ( dshockley, eshagdar ): remove unneeded whitespace around CDATA inside Calculation tags. 
 		-- 4.0.2 - 2018-10-29 ( dshockley ): prettify used to fail (and just get raw XML) when 'too large'. Use temp file to avoid fail. Bug-fix in dataObjectToUTF8. 
@@ -74,15 +75,15 @@ on fmObjectTranslator_Instantiate(prefs)
 		property xmlHeader_LO_current : ""
 		
 		
-		property fmObjCodes : {Â
-			{objName:"Step", objCode:"XMSS"}, Â
-			{objName:"Layout", objCode:"XML2", secondaryNode:"NOT ObjectStyle"}, Â
-			{objName:"Layout", objCode:"XMLO", secondaryNode:"HAS ObjectStyle"}, Â
-			{objName:"Group", objCode:"XMSC"}, Â
-			{objName:"Script", objCode:"XMSC"}, Â
-			{objName:"Field", objCode:"XMFD"}, Â
-			{objName:"CustomFunction", objCode:"XMFN"}, Â
-			{objName:"BaseTable", objCode:"XMTB"} Â
+		property fmObjCodes : { Â¬
+			{objName:"Step", objCode:"XMSS"}, Â¬
+			{objName:"Layout", objCode:"XML2", secondaryNode:"NOT ObjectStyle"}, Â¬
+			{objName:"Layout", objCode:"XMLO", secondaryNode:"HAS ObjectStyle"}, Â¬
+			{objName:"Group", objCode:"XMSC"}, Â¬
+			{objName:"Script", objCode:"XMSC"}, Â¬
+			{objName:"Field", objCode:"XMFD"}, Â¬
+			{objName:"CustomFunction", objCode:"XMFN"}, Â¬
+			{objName:"BaseTable", objCode:"XMTB"} Â¬
 				}
 		
 		property currentCode : ""
@@ -459,7 +460,7 @@ on fmObjectTranslator_Instantiate(prefs)
 			
 			-- 3.7 - 2016-11-02 ( dshockley/eshagdar ): separate test into a variable; renamed variables.
 			-- 3.6 - need to SET currentCode for this object - always.
-			-- 3.5 - no need for file writeÊto be in tell System Events block
+			-- 3.5 - no need for file write to be in tell System Events block
 			-- converts some string of XML into fmObjects as FM data type
 			
 			if debugMode then logConsole(ScriptName, "convertXmlToObjects: START")
@@ -481,7 +482,7 @@ on fmObjectTranslator_Instantiate(prefs)
 			set xmlFilePath to (POSIX file tempXMLPosix) as string
 			if debugMode then logConsole(ScriptName, "convertXmlToObjects: xmlFilePath: " & xmlFilePath)
 			set xmlHandle to open for access file xmlFilePath with write permission
-			write stringFmXML to xmlHandle as Çclass utf8È
+			write stringFmXML to xmlHandle as Â«class utf8Â»
 			close access xmlHandle
 			set fmObjects to read alias xmlFilePath as fmClass
 			
@@ -585,7 +586,7 @@ on fmObjectTranslator_Instantiate(prefs)
 		
 		
 		on classFromCode(objCode)
-			return run script "Çclass " & objCode & "È"
+			return run script "Â«class " & objCode & "Â»"
 		end classFromCode
 		
 		
@@ -817,7 +818,8 @@ on fmObjectTranslator_Instantiate(prefs)
 						
 					else
 						-- just use echo:
-						set prettyPrint_ShellCommand to "echo " & quoted form of prettyXML & " | " & tidyCommand
+						-- use "shopt -u xpg_echo; echo " instead of "echo" to handle backslashes properly: https://stackoverflow.com/questions/8138167/how-can-i-escape-shell-arguments-in-applescript/8145515
+						set prettyPrint_ShellCommand to "shopt -u xpg_echo; echo " & quoted form of prettyXML & " | " & tidyCommand
 						set prettyXML to do shell script prettyPrint_ShellCommand
 					end if
 					
@@ -835,7 +837,6 @@ on fmObjectTranslator_Instantiate(prefs)
 					set stringCalcTagOpen to "<Calculation>"
 					set stringStartCdata to "<![CDATA["
 					
-					if debugMode then my logConsole(ScriptName, "prettifyXML: DEBUG: sample chunk: " & (ASCII number (text 1926 thru 1926 of prettyXML)))
 					
 					repeat with numTabs from 1 to maxTabs
 						set stringBeforeCdata to (stringCalcTagOpen & charCR & repeatString({someString:tab, repeatCount:numTabs}) & stringStartCdata)
@@ -934,7 +935,7 @@ on fmObjectTranslator_Instantiate(prefs)
 			if resultType is "utf8" then
 				
 				tell application "System Events"
-					read file tempDataPath as Çclass utf8È
+					read file tempDataPath as Â«class utf8Â»
 				end tell
 				
 				return result
@@ -1153,7 +1154,7 @@ on fmObjectTranslator_Instantiate(prefs)
 			--             while 10.4 uses " into type number.")
 			-- 1.5 -  added Unicode Text
 			
-			set errMsgLeadList to {"Can't make ", "CanÕt make "}
+			set errMsgLeadList to {"Can't make ", "Can't make "}
 			set errMsgTrailList to {" into a number.", " into type number."}
 			
 			if class of incomingObject is string then
@@ -1302,7 +1303,7 @@ on fmObjectTranslator_Instantiate(prefs)
 		on recordFromList(assocList)
 			-- version 2003-11-06, Nigel Garvey, AppleScript-Users mailing list
 			try
-				{Çclass usrfÈ:assocList}'s x
+				{Â«class usrfÂ»:assocList}'s x
 			on error msg
 				return msg
 				run script text 16 thru -2 of msg

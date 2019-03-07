@@ -1,16 +1,21 @@
 -- fmObjTrans library
 
+-- 2019-03-07 ( dshockley ): Added explicit 'on run'. 
 -- 2017-12-21 ( eshagdar ): This script needs to return just the object since there are other libraries that depend on it.
-set fmObjTrans to fmObjectTranslator_Instantiate({})
-return fmObjTrans
 
+
+on run
+	set fmObjTrans to fmObjectTranslator_Instantiate({})
+	return fmObjTrans
+end run
 
 
 on fmObjectTranslator_Instantiate(prefs)
 	
 	script fmObjectTranslator
-		-- version 4.0.5, Daniel A. Shockley
+		-- version 4.0.6, Daniel A. Shockley
 		
+		-- 4.0.6 - 2019-03-07 ( dshockley ): Updated checkStringForValidXML to 1.2. 
 		-- 4.0.5 - 2019-02-15 ( jwillinghalpern ): preserve backslashes when prettifying xml with shell script.
 		-- 4.0.4 - 2019-01-18 ( eshagdar ): remove EndOfText character ( ascii 3 ).
 		-- 4.0.3 - 2018-12-04 ( dshockley, eshagdar ): remove unneeded whitespace around CDATA inside Calculation tags. 
@@ -493,9 +498,10 @@ on fmObjectTranslator_Instantiate(prefs)
 		
 		
 		on checkStringForValidXML(someString)
-			-- version 1.1
+			-- version 1.2
 			-- Checks someString for XML that represents FM objects. Returns true if it does, false if not. 
 			
+			-- 1.2 - 2019-03-07 ( dshockley ): Added capture of error -1700. 
 			-- 1.1 - 2016-11-02 ( dshockley/eshagdar ): added comment, changed test to length of instead of empty string.
 			
 			if debugMode then logConsole(ScriptName, "checkStringForValidXML: START")
@@ -507,7 +513,10 @@ on fmObjectTranslator_Instantiate(prefs)
 				end tell
 			on error errMsg number errNum
 				if debugMode then logConsole(ScriptName, "checkStringForValidXML: ERROR: " & errMsg & "(" & errNum & ")")
-				if errNum is -1719 then
+				if errNum is -1700 then
+					-- is not something that can be treated as text, so does not have XML:
+					return false
+				else if errNum is -1719 then
 					-- couldn't find an XML element, so NOT valid XML
 					return false
 				else if errNum is -2753 then

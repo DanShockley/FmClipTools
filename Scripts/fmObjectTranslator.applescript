@@ -9,7 +9,7 @@ return fmObjTrans
 on fmObjectTranslator_Instantiate(prefs)
 	
 	script fmObjectTranslator
-		-- version 4.0.4, Daniel A. Shockley
+		-- version 4.0.5, Daniel A. Shockley
 		
 		-- 4.0.5 - 2019-02-15 ( jwillinghalpern ): preserve backslashes when prettifying xml with shell script.
 		-- 4.0.4 - 2019-01-18 ( eshagdar ): remove EndOfText character ( ascii 3 ).
@@ -75,15 +75,15 @@ on fmObjectTranslator_Instantiate(prefs)
 		property xmlHeader_LO_current : ""
 		
 		
-		property fmObjCodes : { Â¬
-			{objName:"Step", objCode:"XMSS"}, Â¬
-			{objName:"Layout", objCode:"XML2", secondaryNode:"NOT ObjectStyle"}, Â¬
-			{objName:"Layout", objCode:"XMLO", secondaryNode:"HAS ObjectStyle"}, Â¬
-			{objName:"Group", objCode:"XMSC"}, Â¬
-			{objName:"Script", objCode:"XMSC"}, Â¬
-			{objName:"Field", objCode:"XMFD"}, Â¬
-			{objName:"CustomFunction", objCode:"XMFN"}, Â¬
-			{objName:"BaseTable", objCode:"XMTB"} Â¬
+		property fmObjCodes : {Â
+			{objName:"Step", objCode:"XMSS"}, Â
+			{objName:"Layout", objCode:"XML2", secondaryNode:"NOT ObjectStyle"}, Â
+			{objName:"Layout", objCode:"XMLO", secondaryNode:"HAS ObjectStyle"}, Â
+			{objName:"Group", objCode:"XMSC"}, Â
+			{objName:"Script", objCode:"XMSC"}, Â
+			{objName:"Field", objCode:"XMFD"}, Â
+			{objName:"CustomFunction", objCode:"XMFN"}, Â
+			{objName:"BaseTable", objCode:"XMTB"} Â
 				}
 		
 		property currentCode : ""
@@ -482,7 +482,7 @@ on fmObjectTranslator_Instantiate(prefs)
 			set xmlFilePath to (POSIX file tempXMLPosix) as string
 			if debugMode then logConsole(ScriptName, "convertXmlToObjects: xmlFilePath: " & xmlFilePath)
 			set xmlHandle to open for access file xmlFilePath with write permission
-			write stringFmXML to xmlHandle as Â«class utf8Â»
+			write stringFmXML to xmlHandle as Çclass utf8È
 			close access xmlHandle
 			set fmObjects to read alias xmlFilePath as fmClass
 			
@@ -586,7 +586,7 @@ on fmObjectTranslator_Instantiate(prefs)
 		
 		
 		on classFromCode(objCode)
-			return run script "Â«class " & objCode & "Â»"
+			return run script "Çclass " & objCode & "È"
 		end classFromCode
 		
 		
@@ -935,7 +935,7 @@ on fmObjectTranslator_Instantiate(prefs)
 			if resultType is "utf8" then
 				
 				tell application "System Events"
-					read file tempDataPath as Â«class utf8Â»
+					read file tempDataPath as Çclass utf8È
 				end tell
 				
 				return result
@@ -1303,7 +1303,7 @@ on fmObjectTranslator_Instantiate(prefs)
 		on recordFromList(assocList)
 			-- version 2003-11-06, Nigel Garvey, AppleScript-Users mailing list
 			try
-				{Â«class usrfÂ»:assocList}'s x
+				{Çclass usrfÈ:assocList}'s x
 			on error msg
 				return msg
 				run script text 16 thru -2 of msg

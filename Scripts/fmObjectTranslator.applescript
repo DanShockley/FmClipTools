@@ -3,6 +3,12 @@
 -- 2019-03-07 ( dshockley ): Added explicit 'on run'. 
 -- 2017-12-21 ( eshagdar ): This script needs to return just the object since there are other libraries that depend on it.
 
+(*
+NOTE: if you want to call the app version of this library, use the following: 
+    tell application "FmObjectTranslator" to set objTrans to fmObjectTranslator_Instantiate({})
+Then, you can use all the methods and properties below via your locally-instantiated objTrans script object. 
+*)
+
 
 on run
 	set fmObjTrans to fmObjectTranslator_Instantiate({})

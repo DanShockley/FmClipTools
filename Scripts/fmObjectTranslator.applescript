@@ -19,8 +19,9 @@ end run
 on fmObjectTranslator_Instantiate(prefs)
 	
 	script fmObjectTranslator
-		-- version 4.0.6, Daniel A. Shockley
+		-- version 4.0.7, Daniel A. Shockley
 		
+		-- 4.0.7 - 2019-03-12 ( eshagdar ): debugMode should be set to false by false. Users can overwrite it if they need to turn it on.
 		-- 4.0.6 - 2019-03-07 ( dshockley ): Updated checkStringForValidXML to 1.2. 
 		-- 4.0.5 - 2019-02-15 ( jwillinghalpern ): preserve backslashes when prettifying xml with shell script.
 		-- 4.0.4 - 2019-01-18 ( eshagdar ): remove EndOfText character ( ascii 3 ).
@@ -98,7 +99,7 @@ on fmObjectTranslator_Instantiate(prefs)
 				}
 		
 		property currentCode : ""
-		property debugMode : true
+		property debugMode : false
 		property codeAsXML : ""
 		property codeAsObjects : ""
 		

@@ -1,4 +1,4 @@
--- Paste Loop Script Steps
+-- Loop Script Steps
 -- version 2020-04-16, Daniel A. Shockley
 
 (* 
@@ -10,7 +10,7 @@ HISTORY:
 
 *)
 
-property ScriptName : "PasteLoopScriptSteps"
+property ScriptName : "LoopScriptSteps"
 property debugMode : false
 
 on run

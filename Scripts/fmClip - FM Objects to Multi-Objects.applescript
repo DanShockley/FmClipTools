@@ -2,7 +2,7 @@
 -- version 4.0, Daniel A. Shockley, Erik Shagdar
 -- Takes objects in the clipboard and adds multiple types of FileMaker objects into clipboard (plus return-delimited text). 
 
-
+-- 4.1 - 2019-09-11 ( dshockley ): If clipboard was Script Steps (XMSS) and not ALL were 'Set Field' or 'Set Variable', try to get useful info about all the different script steps, rather than ignoring. 
 -- 4.0 - 2018-04-04 ( dshockley/eshagdar ): load fmObjectTranslator code by reference instead of embedded. Made fmObjTrans into a global so that sub-script objects can use the already-instantiated library object. 
 -- 3.9.3 - 2017-08-09 ( eshagdar ): renamed 'FM-XML Objects to Multi-Objects' to 'fmClip - FM Objects to Multi-Objects' to match other handler name pattern
 -- 3.9.2 - if the clipboard is text without double-colons then assume those aren't fields, but rather Variable names; Also, if the clipboard contains Set Variable script steps, extract the variable Name and Value into tab-separated columns. 
@@ -32,6 +32,11 @@ global objTrans
 
 on run
 	
+	(* Init Var *)
+	set otherTextBlock to ""
+	set otherTextItems to {}
+	set fieldNames to {}
+	set newClip to ""
 	
 	set objTrans to run script alias (((((path to me as text) & "::") as alias) as string) & "fmObjectTranslator.applescript")
 	(* If you need a self-contained script, copy the code from fmObjectTranslator into this script and use the following instead of the run script step above:
@@ -116,55 +121,155 @@ on run
 		
 	else if originalClipboardFormat is "XMSS" then
 		-- SCRIPT STEPS: 
+		
+		-- 2019-09-11 ( dshockley ): Changed logic so that it only extracts simple-text-list for 'Set Field' or 'Set Variable' if ALL of the copied script steps are for one of those. Otherwise, it tries to turn the script steps into a human-readable block of text.
+		
+		
 		tell application "System Events"
-			set fieldDefXmlData to make new XML data with data someXML
+			set scriptStepsXmlData to make new XML data with data someXML
 			
-			set fieldShortNames to value of XML attribute "name" of (every XML element of (every XML element of XML element 1 of fieldDefXmlData whose name is "Step") whose name is "Field")
-			set fieldTableNames to value of XML attribute "table" of (every XML element of (every XML element of XML element 1 of fieldDefXmlData whose name is "Step") whose name is "Field")
+			set countStepNodes to count of (every XML element of (XML element 1 of scriptStepsXmlData) whose name is "Step")
 			
-			set fieldShortNames to my flattenList(fieldShortNames)
-			set fieldTableNames to my flattenList(fieldTableNames)
+			set fieldShortNames to value of XML attribute "name" of (every XML element of (every XML element of XML element 1 of scriptStepsXmlData whose name is "Step") whose name is "Field")
 			
-			
-			set fieldNames to {}
-			repeat with i from 1 to count of fieldShortNames
+			if (count of my flattenList(fieldShortNames)) is equal to countStepNodes then
+				set fieldTableNames to value of XML attribute "table" of (every XML element of (every XML element of XML element 1 of scriptStepsXmlData whose name is "Step") whose name is "Field")
 				
-				set oneFieldShortName to item i of fieldShortNames
-				set oneTableName to item i of fieldTableNames
-				
-				copy (oneTableName & "::" & oneFieldShortName) as string to end of fieldNames
-				
-			end repeat
-			
-			
-			if (count of fieldShortNames) is 0 then
-				
-				-- Look for Set Variable script steps, then put their names and values into text for the clipboard. 
-				
-				set varXmlData to make new XML data with data someXML
-				
-				set varNames to value of every XML element of (every XML element of (every XML element of (XML element 1 of varXmlData) whose name is "Step") whose name is "Name")
-				set varValues to value of XML element "Calculation" of (every XML element of (every XML element of (every XML element of (XML element 1 of varXmlData) whose name is "Step") whose name is "Value"))
-				
-				set varNames to my flattenList(varNames)
-				set varValues to my flattenList(varValues)
+				set fieldShortNames to my flattenList(fieldShortNames)
+				set fieldTableNames to my flattenList(fieldTableNames)
 				
 				
-				set varNamesOptionalValues to {}
-				repeat with i from 1 to count of varNames
+				set fieldNames to {}
+				repeat with i from 1 to count of fieldShortNames
 					
-					set oneVarName to item i of varNames
-					set oneVarValue to item i of varValues
+					set oneFieldShortName to item i of fieldShortNames
+					set oneTableName to item i of fieldTableNames
 					
-					
-					copy (oneVarName & targetValueSep & oneVarValue) as string to end of varNamesOptionalValues
+					copy (oneTableName & "::" & oneFieldShortName) as string to end of fieldNames
 					
 				end repeat
 				
+				-- END OF: ALL are 'Set Field' steps. 
+				
+			else
+				-- NOT ALL are 'Set Field' steps, so try 'Set Variable'
+				set varNames to value of every XML element of (every XML element of (every XML element of (XML element 1 of scriptStepsXmlData) whose name is "Step") whose name is "Name")
 				
 				
+				if (count of my flattenList(varNames)) is equal to countStepNodes then
+					-- BEGIN: ALL are 'Set Variable' steps. 
+					
+					-- So, SIMPLY put their names and values into text for the clipboard. 
+					set varValues to value of XML element "Calculation" of (every XML element of (every XML element of (every XML element of (XML element 1 of scriptStepsXmlData) whose name is "Step") whose name is "Value"))
+					
+					set varNames to my flattenList(varNames)
+					set varValues to my flattenList(varValues)
+					
+					
+					set varNamesOptionalValues to {}
+					repeat with i from 1 to count of varNames
+						
+						set oneVarName to item i of varNames
+						set oneVarValue to item i of varValues
+						
+						
+						copy (oneVarName & targetValueSep & oneVarValue) as string to end of varNamesOptionalValues
+						
+					end repeat
+					
+					-- END OF: ALL are 'Set Variable' steps. 
+					
+				else
+					-- BEGIN: script steps are NOT ALL "Set Field" or "Set Variable" steps, so convert what we can: 
+					
+					set stepNodes to every XML element of (XML element 1 of scriptStepsXmlData) whose name is "Step"
+					
+					repeat with oneStepNode in stepNodes
+						set oneStepName to value of XML attribute "name" of oneStepNode
+						if oneStepName is "# (comment)" then
+							set oneStepName to "#"
+							if exists XML element "Text" of oneStepNode then
+								set stepSub_comment_Text to value of XML element "Text" of oneStepNode
+							else
+								set stepSub_comment_Text to ""
+							end if
+							set oneStepTEXT to oneStepName & space & stepSub_comment_Text
+							
+						else if oneStepName is "Commit Records/Requests" then
+							if exists XML element "NoInteract" of oneStepNode then
+								set stepSub_Commit_NoInteract to value of XML attribute "state" of XML element "NoInteract" of oneStepNode
+							else
+								set stepSub_Commit_NoInteract to ""
+							end if
+							
+							if stepSub_Commit_NoInteract is "True" then
+								set stepSub_Commit_WithDialog to "Off"
+							else
+								set stepSub_Commit_WithDialog to "On"
+							end if
+							
+							set oneStepTEXT to oneStepName & space & " [ With dialog: " & stepSub_Commit_WithDialog & " ]"
+							
+						else if oneStepName is "Go to Layout" then
+							if exists XML element "Layout" of oneStepNode then
+								set stepSub_GoToLayout_LayoutName to value of XML attribute "name" of XML element "Layout" of oneStepNode
+							else
+								set stepSub_GoToLayout_LayoutName to ""
+							end if
+							set oneStepTEXT to oneStepName & space & " [ \"" & stepSub_GoToLayout_LayoutName & "\" ]"
+							
+						else if oneStepName is "If" or oneStepName is "Else If" then
+							if exists XML element "Calculation" of oneStepNode then
+								set stepSub_If_Calc to value of XML element "Calculation" of oneStepNode
+							else
+								set stepSub_If_Calc to ""
+							end if
+							set oneStepTEXT to oneStepName & space & " [ " & stepSub_If_Calc & " ]"
+							
+							
+						else if oneStepName is "Perform Script" then
+							if exists XML element "Script" of oneStepNode then
+								set stepSub_PS_ScriptName to value of XML attribute "name" of XML element "Script" of oneStepNode
+							else
+								set stepSub_PS_ScriptName to ""
+							end if
+							if exists XML element "Calculation" of oneStepNode then
+								set stepSub_PS_Param to value of XML element "Calculation" of oneStepNode
+							else
+								set stepSub_PS_Param to ""
+							end if
+							set oneStepTEXT to oneStepName & space & " [ Specified: From List ; \"" & stepSub_PS_ScriptName & "\" ; Parameter: " & stepSub_PS_Param & " ]"
+							
+						else if oneStepName is "Set Field" then
+							if exists XML element "Field" of oneStepNode then
+								set stepSub_SetField_Name to value of XML attribute "name" of XML element "Field" of oneStepNode
+								set stepSub_SetField_Table to value of XML attribute "table" of XML element "Field" of oneStepNode
+							else
+								set stepSub_SetField_Name to ""
+								set stepSub_SetField_Table to ""
+							end if
+							if exists XML element "Calculation" of oneStepNode then
+								set stepSub_SetField_Calc to value of XML element "Calculation" of oneStepNode
+							else
+								set stepSub_SetField_Calc to ""
+							end if
+							set oneStepTEXT to oneStepName & space & " [ " & stepSub_SetField_Table & "::" & stepSub_SetField_Name & " ; " & stepSub_SetField_Calc & " ]"
+							
+						else
+							-- some not-really-supported script step, so just get the step name:
+							set oneStepTEXT to oneStepName
+						end if
+						
+						
+						copy oneStepTEXT to end of otherTextItems
+					end repeat
+					
+					set otherTextBlock to my flattenList(otherTextItems)
+					set otherTextBlock to my unParseChars(otherTextBlock, return)
+					
+					-- END OF: script steps are NOT ALL "Set Field" or "Set Variable" steps, so convert what we can: 
+				end if
 				
-				-- END OF: didn't find Set Field, so tried Set Variable. 
 			end if
 			
 			
@@ -266,6 +371,9 @@ on run
 	end if
 	
 	
+	
+	
+	
 	if originalClipboardFormat is not "XMFD" and originalClipboardFormat is not "XMTB" then
 		-- treat Table like Fields (so don't add fields if it was either). 
 		
@@ -282,15 +390,29 @@ on run
 	if originalClipboardFormat is "TEXT" then
 		-- RESTORE what was saved above: 
 		set newClip to textClipboard & fmClipboard
-	else if (count of fieldNames) is not 0 then
 		
+	else if length of otherTextBlock is greater than 0 then
+		-- do this INSTEAD of trying to handle a list of field or variable names:
+		set newClip to {string:otherTextBlock} & fmClipboard
+		
+	else if (count of fieldNames) is not 0 then
 		set fieldNamesListAsText to unParseChars(fieldNames, return)
 		set newClip to {string:fieldNamesListAsText} & fmClipboard
+		
 	else if (count of varNamesOptionalValues) is not 0 then
 		set varNamesValuesListAsText to unParseChars(varNamesOptionalValues, return)
 		set newClip to {string:varNamesValuesListAsText} & fmClipboard
+		
 	end if
-	set the clipboard to newClip
+	
+	if length of newClip is greater than 0 then
+		set the clipboard to newClip
+	end if
+	
+	
+	
+	return otherTextBlock
+	
 	
 	return originalClipboardFormat
 	

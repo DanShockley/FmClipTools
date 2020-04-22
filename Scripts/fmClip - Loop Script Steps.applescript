@@ -6,6 +6,7 @@
 	Puts FileMaker script steps into clipboard that loop over a return-delimited value list or the found set of records.
 
 HISTORY:
+	2020-04-22 ( dshockley ): BUG-FIX - XML had extra $ character before ListName placeholder. 
 	2020-04-16 ( dshockley ): First created, but replacing code used in an old macro. 
 
 *)
@@ -144,7 +145,7 @@ on stringXML_ValueLoop()
 	</Step>
 	<Step enable=\"True\" id=\"141\" name=\"Set Variable\">
 		<Value>
-			<Calculation><![CDATA[GetValue ( $###ListName### ; $iter_###Obj###_num )]]></Calculation>
+			<Calculation><![CDATA[GetValue ( ###ListName### ; $iter_###Obj###_num )]]></Calculation>
 		</Value>
 		<Repetition>
 			<Calculation><![CDATA[1]]></Calculation>

@@ -1,11 +1,12 @@
 -- Loop Script Steps
--- version 2020-04-16, Daniel A. Shockley
+-- version 2020-07-29, Daniel A. Shockley
 
 (* 
 
 	Puts FileMaker script steps into clipboard that loop over a return-delimited value list or the found set of records.
 
 HISTORY:
+	2020-07-29 ( dshockley ): Improved the dialog messages. 
 	2020-04-22 ( dshockley ): BUG-FIX - XML had extra $ character before ListName placeholder. 
 	2020-04-16 ( dshockley ): First created, but replacing code used in an old macro. 
 
@@ -31,7 +32,7 @@ on run
 	-- IMPORTANT!!!  	-- IMPORTANT!!!  	-- IMPORTANT!!!  
 	-- IMPORTANT!!!  	-- IMPORTANT!!!  	-- IMPORTANT!!!  
 	
-	set objPrompt to (display dialog "Enter the singular name of the thing being iterated through (if applicable):" buttons {"Cancel", "Records", "List"} default button "List" default answer "")
+	set objPrompt to (display dialog "If you want to loop over a return-delimited list of values, enter a name for a single item (e.g. ID for a list of IDs, so this script will make that into $oneID variable). Or, just choose Records instead:" buttons {"Cancel", "Records", "List"} default button "List" default answer "")
 	set objName to text returned of objPrompt
 	set objType to button returned of objPrompt
 	
@@ -51,7 +52,7 @@ on run
 		if length of objName is 0 then set objName to "Value"
 		set stepsXML to objTrans's replaceSimple({stepsXML, "###Obj###", objName})
 		
-		set ListPrompt to (display dialog "Enter the name of the variable that is being looped over (e.g. $myList):" buttons {"Cancel", "OK"} default button "OK" default answer ("$list_" & objName & "s") as string)
+		set ListPrompt to (display dialog "Enter the name of the variable that is being looped over (e.g. $myIDs_list):" buttons {"Cancel", "OK"} default button "OK" default answer ("$my" & objName & "s_list") as string)
 		set ListName to text returned of ListPrompt
 		if length of ListName is 0 then
 			set ListName to "$someValueList"

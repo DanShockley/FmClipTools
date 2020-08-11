@@ -1,5 +1,5 @@
 -- Clipboard - Replicate FileMaker Objects
--- version 1.2, Daniel A. Shockley
+-- version 1.3, Daniel A. Shockley
 
 (*
 	Takes a return-delimited list of strings (optionally tab-delimited for multiple columns), then takes a FileMaker object in the clipboard and replicates it for each list item, then converts to multiple objects.

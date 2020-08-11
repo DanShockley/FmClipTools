@@ -5,7 +5,7 @@
 	Takes a return-delimited list of strings (optionally tab-delimited for multiple columns), then takes a FileMaker object in the clipboard and replicates it for each list item, then converts to multiple objects.
 	
 HISTORY:
-	1.3 - 2020-08-11 ( dshockley ): Fix to at least be ABLE to replicate layout objects generally (they will be srtacked on top of each other in the same location), since simplistic replication failed to work. Improved comments, dialog message. 
+	1.3 - 2020-08-11 ( dshockley ): Fix to at least be ABLE to replicate layout objects generally (they will be stacked on top of each other in the same location), since simplistic replication failed to work. Improved comments, dialog message. 
 	1.2 - 2018-04-04 ( dshockley/eshagdar ): load fmObjectTranslator code by reference instead of embedded.
 	1.1 - 2017-12-18 ( dshockley ): updated fmObjTrans to 3.9.4 to support layout objects. Can now replicate ButtonBar segments. 
 	1.0.1 - 2017-08-09 ( eshagdar ): renamed 'Clipboard - Replace String in FileMaker Objects' to 'fmClip - Replicate FM Objects' to match other handler name pattern

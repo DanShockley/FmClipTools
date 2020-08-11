@@ -1,12 +1,14 @@
 -- fmObjTrans library
 
--- 2019-03-07 ( dshockley ): Added explicit 'on run'. 
--- 2017-12-21 ( eshagdar ): This script needs to return just the object since there are other libraries that depend on it.
-
 (*
 NOTE: if you want to call the app version of this library, use the following: 
     tell application "FmObjectTranslator" to set objTrans to fmObjectTranslator_Instantiate({})
 Then, you can use all the methods and properties below via your locally-instantiated objTrans script object. 
+
+CHANGES (to this overall script file - handler changes should be documented WITHIN handler's comnmens):
+	-- 2019-03-07 ( dshockley ): Added explicit 'on run'. 
+	-- 2017-12-21 ( eshagdar ): This script needs to return just the object since there are other libraries that depend on it.
+
 *)
 
 
@@ -19,8 +21,9 @@ end run
 on fmObjectTranslator_Instantiate(prefs)
 	
 	script fmObjectTranslator
-		-- version 4.0.8, Daniel A. Shockley
+		-- version 4.0.9, Daniel A. Shockley
 		
+		-- 4.0.9 - 2020-08-11 ( dshockley ): Fix to log for addHeaderFooter. 
 		-- 4.0.8 - 2019-07-17 ( dshockley ): Added "ValueList" object support (code "XMVL"), per GitHub Issue #6. 
 		-- 4.0.7 - 2019-03-12 ( eshagdar ): debugMode should be set to false by default. Users can overwrite it if they need to turn it on.
 		-- 4.0.6 - 2019-03-07 ( dshockley ): Updated checkStringForValidXML to 1.2. 
@@ -686,12 +689,13 @@ on fmObjectTranslator_Instantiate(prefs)
 		end removeHeaderFooter
 		
 		on addHeaderFooter(someXML)
-			-- version 1.1
+			-- version 1.2
 			
+			-- 1.2 - 2020-08-11 ( dshockley ): log was using wrong function name. 
 			-- 1.1 - 2017-12-18 ( dshockley ): support layout objects.
 			-- 1.0 - 2017-04-25 ( dshockley/eshagdar ): first created.
 			
-			if debugMode then logConsole(ScriptName, "removeHeaderFooter: START")
+			if debugMode then logConsole(ScriptName, "addHeaderFooter: START")
 			try
 				if someXML does not start with xmlHeader and someXML does not end with xmlFooter then
 					if someXML starts with "<Layout" then
@@ -706,7 +710,7 @@ on fmObjectTranslator_Instantiate(prefs)
 				end if
 			on error errMsg number errNum
 				-- any error above should fail gracefully and just return the original code
-				if debugMode then logConsole(ScriptName, "removeHeaderFooter: ERROR: " & errMsg & "(" & errNum & ")")
+				if debugMode then logConsole(ScriptName, "addHeaderFooter: ERROR: " & errMsg & "(" & errNum & ")")
 				return someXML
 			end try
 		end addHeaderFooter

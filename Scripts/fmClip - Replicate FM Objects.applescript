@@ -1,10 +1,11 @@
 -- Clipboard - Replicate FileMaker Objects
--- version 1.3.1, Daniel A. Shockley
+-- version 1.3.2, Daniel A. Shockley
 
 (*
 	Takes a return-delimited list of strings (optionally tab-delimited for multiple columns), then takes a FileMaker object in the clipboard and replicates it for each list item, then converts to multiple objects.
 	
 HISTORY:
+	1.3.2 - 2020-08-17 ( dshockley ): BUG-FIX: when checking for presence of layout objects, need to not try to scan more characters than are actually IN the XML. 
 	1.3.1 - 2020-08-11 ( dshockley ): Improved layout object replication to offset each replicated object by height of first template object. 
 	1.3 - 2020-08-11 ( dshockley ): Fix to at least be ABLE to replicate layout objects generally (they will be stacked on top of each other in the same location), since simplistic replication failed to work. Improved comments, dialog message. 
 	1.2 - 2018-04-04 ( dshockley/eshagdar ): load fmObjectTranslator code by reference instead of embedded.
@@ -24,6 +25,7 @@ property xmlButtonbarObj_Start : "<ButtonBarObj flags=\""
 property xmlButtonbarObj_End : "</ButtonBarObj>"
 
 -- for generic layout objects:
+property earlyCharScanLengthMax : 400 -- only scan through this number of chars when looking for fmxmlsnippet
 property xmlLayoutObjectList : "<fmxmlsnippet type=\"LayoutObjectList\">"
 property xmlLayoutOpenTag_Start : "<Layout "
 property xmlLayoutOpenTag_After : "<"
@@ -78,7 +80,9 @@ on run
 	end if
 	
 	
-	if ((text 1 thru 400 of clipboardObjectStringXML) contains xmlLayoutObjectList) and not doButtonBarSegments then
+	-- scan early characters of XML to see if it is layout objects: 
+	if length of clipboardObjectStringXML is less than earlyCharScanLengthMax then set earlyCharScanLengthMax to length of clipboardObjectStringXML
+	if ((text 1 thru earlyCharScanLengthMax of clipboardObjectStringXML) contains xmlLayoutObjectList) and not doButtonBarSegments then
 		-- These are Layout Objects (and either are not button bar segments, or user chose to handle segments like normal layout objects), so need special handling:
 		set isLayoutObjects to true
 	end if

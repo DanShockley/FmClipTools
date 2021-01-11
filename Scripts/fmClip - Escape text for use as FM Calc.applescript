@@ -1,11 +1,12 @@
 -- Escape text for use as FM Calc
--- version 1.3, Daniel A. Shockley
+-- version 1.4, Daniel A. Shockley
 
 (*
 	Takes some block of text and escapes it so that, if you paste the result into a FileMaker calculation box and then evaluate that calculation, the original text is returned. Note that this attempts to wrap field references with a  GetFieldName call so that the calculation would survive a field or table being renamed. 
 	
 	
 HISTORY: 
+	1.4 - 2021-01-11 ( danshock ): Instead of the makeEscapedMoreLegible flag (was disabled by default) doing something that breaks fidelity after double-conversion, it instead breaks the output into concatenated FileMaker strings, which improves legibility and yet still, when evaluated back into the original, now retains full fidelity, producing the original text. So, that flag is now the DEFAULT action. Please go to https://github.com/DanShockley/FmClipTools to report any issues with this change. 
 	1.3 - 2019-03-12 ( dshockley ): Renamed as "Escape text for use as FM Calc" instead of "Clipboard TEXT to FM Calc". Moved raw character strings into properties and used the ASCII number instead. 
 	1.2 - ????-??-?? ( dshockley ): First created. Date unknown. 
 
@@ -18,21 +19,13 @@ property escapedBackslash : ("" & backslash & backslash) as string
 property doubleQuote : ASCII character 34
 property escapedDoubleQuote : ("" & backslash & doubleQuote) as string
 
-property makeEscapedMoreLegible : false
-(* If you set this, carriage returns (CR, aka ascii 13) become pilcrow&CR, but this 
-	means you get a leading space when evaluating the calc, so not completely reversible. 
-	The downside of having this FALSE is that the escaped string is not as legible, 
-	since the pilcrows aren't followed by a CR, which makes reading the resulting
-	escaped string more difficult. Then again, fidelity to the original should be 
-	the default, and you can always evaluate to get something legible. 
-	Only change makeEscapedMoreLegible to TRUE is you are willing to get leading space
-	characters on each new line in the evaluated calculation. 
-	*)
+property makeEscapedMoreLegible : true (* Creates concatenated strings on separate lines for the output, greatly improving legibility. *)
 
 on run
 	
 	if makeEscapedMoreLegible then
-		set carriageReturnReplacedBy to pilcrow & (ASCII character 13)
+		set UUID to do shell script "uuidgen"
+		set carriageReturnReplacedBy to UUID
 	else
 		set carriageReturnReplacedBy to pilcrow
 	end if
@@ -51,7 +44,12 @@ on run
 	
 	set fmCalc to ("" & doubleQuote & fmCalc & doubleQuote) as string
 	
+	if makeEscapedMoreLegible then
+		set fmCalc to replaceSimple({sourceTEXT:fmCalc, oldChars:UUID, newChars:"" & pilcrow & doubleQuote & (ASCII character 13) & "& " & doubleQuote})
+	end if
+	
 	set parseForFieldRefs to parseChars({fmCalc, "::"})
+	
 	
 	if (count of parseForFieldRefs) is greater than 1 then
 		-- we have at least one field ref, so we need to wrap with GetFieldName
@@ -97,6 +95,9 @@ on run
 		end repeat
 		
 	end if
+	
+	set the clipboard to fmCalc
+	return "TESTING DEBUGGING"
 	
 	
 	set the clipboard to fmCalc

@@ -1,4 +1,4 @@
--- Paste missing ( and update outdate ) functions from the clipboard into the currenlty open 'Manage Custom Functions' window in FileMaker. 
+-- Paste missing ( and update outdated ) functions from the clipboard into the currently open 'Manage Custom Functions' window in FileMaker. 
 -- Erik Shagdar, NYHTC
 
 

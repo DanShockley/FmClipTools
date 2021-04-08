@@ -4,7 +4,7 @@
 
 (*
 NOTES:
-	- You can have either FilMaker custom function objects or Custom Function XML in your clipboard
+	- You can have either FileMaker custom function objects or Custom Function XML in your clipboard
 	- requires you to have "htcLib" compiled [https://github.com/NYHTC/applescript-fm-helper]
 	- if you want to have HTC's standard functions, it is assumed that the repo exists at '~/code/' [https://github.com/NYHTC/fm-functions]
 	

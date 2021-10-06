@@ -112,7 +112,7 @@ on stringXML_RecordLoop()
 		<Calculation><![CDATA[$iter_###Obj###_num]]></Calculation>
 	</Step>
 	<Step enable=\"True\" id=\"68\" name=\"If\">
-		<Calculation><![CDATA[Mod ( $iter_###Obj###_num ; 20 ) or $iter_###Obj###_num = 1 or $iter_###Obj###_num = $iter_###Obj###_exit]]></Calculation>
+		<Calculation><![CDATA[Mod ( $iter_###Obj###_num ; 20 ) = 0 or $iter_###Obj###_num = 1 or $iter_###Obj###_num = $iter_###Obj###_exit]]></Calculation>
 	</Step>
 	<Step enable=\"True\" id=\"68\" name=\"If\">
 		<Calculation><![CDATA[not PlatformIsServer]]></Calculation>

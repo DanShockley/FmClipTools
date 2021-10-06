@@ -1,11 +1,12 @@
 -- Loop Script Steps
--- version 2020-07-29, Daniel A. Shockley
+-- version 2021-10-06, Daniel A. Shockley
 
 (* 
 
 	Puts FileMaker script steps into clipboard that loop over a return-delimited value list or the found set of records.
 
 HISTORY:
+	2021-10-06 ( dshockley ): Add small pause/refresh to the record loop. 
 	2020-07-29 ( dshockley ): Improved the dialog messages. 
 	2020-04-22 ( dshockley ): BUG-FIX - XML had extra $ character before ListName placeholder. 
 	2020-04-16 ( dshockley ): First created, but replacing code used in an old macro. 
@@ -105,6 +106,23 @@ on stringXML_RecordLoop()
 	<Step enable=\"True\" id=\"72\" name=\"Exit Loop If\">
 		<Calculation><![CDATA[Let ( $iter_###Obj###_num = $iter_###Obj###_num + 1 ; $iter_###Obj###_num > $iter_###Obj###_exit )]]></Calculation>
 	</Step>
+	<Step enable=\"True\" id=\"68\" name=\"If\">
+		<Calculation><![CDATA[Mod ( $iter_###Obj###_num ; 20 ) or $iter_###Obj###_num = 1 or $iter_###Obj###_num = $iter_###Obj###_exit]]></Calculation>
+	</Step>
+	<Step enable=\"True\" id=\"68\" name=\"If\">
+		<Calculation><![CDATA[not PlatformIsServer]]></Calculation>
+	</Step>
+	<Step enable=\"True\" id=\"80\" name=\"Refresh Window\">
+		<Option state=\"False\"></Option>
+		<FlushSQLData state=\"False\"></FlushSQLData>
+	</Step>
+	<Step enable=\"True\" id=\"62\" name=\"Pause/Resume Script\">
+		<PauseTime value=\"ForDuration\"></PauseTime>
+		<Calculation><![CDATA[1/100]]></Calculation>
+	</Step>
+	<Step enable=\"True\" id=\"79\" name=\"Freeze Window\"></Step>
+	<Step enable=\"True\" id=\"70\" name=\"End If\"></Step>
+	<Step enable=\"True\" id=\"70\" name=\"End If\"></Step>
 	<Step enable=\"True\" id=\"16\" name=\"Go to Record/Request/Page\">
 		<NoInteract state=\"True\"></NoInteract>
 		<RowPageLocation value=\"ByCalculation\"></RowPageLocation>

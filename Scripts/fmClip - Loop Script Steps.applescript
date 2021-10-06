@@ -106,6 +106,11 @@ on stringXML_RecordLoop()
 	<Step enable=\"True\" id=\"72\" name=\"Exit Loop If\">
 		<Calculation><![CDATA[Let ( $iter_###Obj###_num = $iter_###Obj###_num + 1 ; $iter_###Obj###_num > $iter_###Obj###_exit )]]></Calculation>
 	</Step>
+	<Step enable=\"True\" id=\"16\" name=\"Go to Record/Request/Page\">
+		<NoInteract state=\"True\"></NoInteract>
+		<RowPageLocation value=\"ByCalculation\"></RowPageLocation>
+		<Calculation><![CDATA[$iter_###Obj###_num]]></Calculation>
+	</Step>
 	<Step enable=\"True\" id=\"68\" name=\"If\">
 		<Calculation><![CDATA[Mod ( $iter_###Obj###_num ; 20 ) or $iter_###Obj###_num = 1 or $iter_###Obj###_num = $iter_###Obj###_exit]]></Calculation>
 	</Step>
@@ -123,11 +128,6 @@ on stringXML_RecordLoop()
 	<Step enable=\"True\" id=\"79\" name=\"Freeze Window\"></Step>
 	<Step enable=\"True\" id=\"70\" name=\"End If\"></Step>
 	<Step enable=\"True\" id=\"70\" name=\"End If\"></Step>
-	<Step enable=\"True\" id=\"16\" name=\"Go to Record/Request/Page\">
-		<NoInteract state=\"True\"></NoInteract>
-		<RowPageLocation value=\"ByCalculation\"></RowPageLocation>
-		<Calculation><![CDATA[$iter_###Obj###_num]]></Calculation>
-	</Step>
 	<Step enable=\"True\" id=\"89\" name=\"Comment\"></Step>
 	<Step enable=\"True\" id=\"89\" name=\"Comment\"></Step>
 	<Step enable=\"True\" id=\"73\" name=\"End Loop\"></Step>

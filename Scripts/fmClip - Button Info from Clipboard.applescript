@@ -2,7 +2,7 @@
 -- version 1.0
 
 (*
-	Takes the button object in the clipboard and extracts the label, the script name, and the parameters as return-delimited list of strings.
+	Takes the button object(s) in the clipboard and extracts the label, the script name, and the parameters as tab-column-delimiter and linefeed-row-delimiter
 	
 HISTORY:
 	1.0 - 2021-10-21 ( dshockley ): first created.
@@ -12,7 +12,8 @@ HISTORY:
 
 property debugMode : false
 property colSep : tab
-property rowSep : return
+property rowSep : ASCII character 10
+property CR : ASCII character 13
 
 -- for generic layout objects:
 property earlyCharScanLengthMax : 400 -- only scan through this number of chars when looking for fmxmlsnippet
@@ -67,37 +68,50 @@ on run
 		
 	else
 		
+		set outputInfo to ""
+		
 		tell application "System Events"
 			set xmlData to make new XML data with data clipboardObjectStringXML
 			set layoutObject to XML element 1 of XML element 1 of xmlData
-			set buttonParentObject to XML element "Object" of layoutObject
-			tell buttonParentObject
-				set labelText to value of XML element "Data" of XML element "Style" of XML element "ParagraphStyleVector" of XML element "TextObj"
-				set scriptName to value of XML attribute "name" of XML element "Script" of XML element "Step" of XML element "ButtonObj"
-				try
-					set scriptParams to value of XML element "Calculation" of XML element "Step" of XML element "ButtonObj"
-				on error
-					set scriptParams to ""
-				end try
-			end tell
+			
+			repeat with oneElement in XML elements of layoutObject
+				if name of oneElement is "Object" and value of XML attribute "type" of oneElement is "Button" then
+					tell oneElement
+						set labelText to value of XML element "Data" of XML element "Style" of XML element "ParagraphStyleVector" of XML element "TextObj"
+						set scriptName to value of XML attribute "name" of XML element "Script" of XML element "Step" of XML element "ButtonObj"
+						try
+							set scriptParams to value of XML element "Calculation" of XML element "Step" of XML element "ButtonObj"
+						on error
+							set scriptParams to ""
+						end try
+						
+					end tell
+					
+					-- for now, convert internal line endings into spaces and put tabs between pieces: 
+					set output_Label to my replaceSimple({my replaceSimple({my replaceSimple({labelText, CR, space}), rowSep, space}), colSep, space})
+					set output_ScriptName to my replaceSimple({my replaceSimple({my replaceSimple({scriptName, CR, space}), rowSep, space}), colSep, space})
+					set output_Params to my replaceSimple({my replaceSimple({my replaceSimple({scriptParams, CR, space}), rowSep, space}), colSep, space})
+					
+					set oneButtonInfo to output_Label & colSep & output_ScriptName & colSep & output_Params
+					
+					if length of outputInfo is greater than 0 then
+						set outputInfo to outputInfo & rowSep & oneButtonInfo
+					else
+						set outputInfo to oneButtonInfo
+					end if
+				end if
+			end repeat
+			
 		end tell
-		
-		
 		
 	end if
 	
 	
-	-- for now, convert internal line endings into spaces and put tabs between pieces: 
-	set output_Label to replaceSimple({replaceSimple({labelText, return, space}), colSep, space})
-	set output_ScriptName to replaceSimple({replaceSimple({scriptName, return, space}), colSep, space})
-	set output_Params to replaceSimple({replaceSimple({scriptParams, return, space}), colSep, space})
-	set outputInfo to output_Label & colSep & output_ScriptName & colSep & output_Params
-	
 	---------------------------------
 	-- ADD the new text into the clipboard:
-		set fmClipboard to get the clipboard
-		set newClip to {string: outputInfo} & fmClipboard
-
+	set fmClipboard to get the clipboard
+	set newClip to {string:outputInfo} & fmClipboard
+	
 	set the clipboard to newClip
 	
 	

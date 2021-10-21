@@ -1,0 +1,238 @@
+-- Button Info from Clipboard
+-- version 1.0
+
+(*
+	Takes the button object in the clipboard and extracts the label, the script name, and the parameters as return-delimited list of strings.
+	
+HISTORY:
+	1.0 - 2021-10-21 ( dshockley ): first created.
+
+*)
+
+
+property debugMode : false
+property colSep : tab
+property rowSep : return
+
+-- for generic layout objects:
+property earlyCharScanLengthMax : 400 -- only scan through this number of chars when looking for fmxmlsnippet
+property xmlLayoutObjectList : "<fmxmlsnippet type=\"LayoutObjectList\">"
+property xmlLayoutOpenTag_Start : "<Layout "
+property xmlLayoutOpenTag_After : "<"
+property xmlLayoutCloseTag : "</Layout>"
+
+
+
+on run
+	
+	-- INITIALIZE VARS:
+	set isLayoutObjects to false
+	set doButtonBarSegments to false
+	
+	
+	set objTrans to run script alias (((((path to me as text) & "::") as alias) as string) & "fmObjectTranslator.applescript")
+	(* If you need a self-contained script, copy the code from fmObjectTranslator into this script and use the following instead of the run script step above:
+			set objTrans to fmObjectTranslator_Instantiate({})
+	*)
+	
+	-- init Translator properties:
+	set shouldPrettify of objTrans to false
+	set debugMode of objTrans to debugMode
+	
+	
+	---------------------------------
+	-- Look at clipboard and ask possible initial questions about it:
+	
+	set clipboardType to checkClipboardForObjects({}) of objTrans
+	
+	if clipboardType is false then
+		display dialog "The clipboard did not contain any FileMaker objects."
+		return false
+	end if
+	
+	set clipboardObjectStringXML to clipboardGetObjectsAsXML({}) of objTrans
+	
+	-- scan early characters of XML to see if it is layout objects: 
+	if length of clipboardObjectStringXML is less than earlyCharScanLengthMax then set earlyCharScanLengthMax to length of clipboardObjectStringXML
+	if ((text 1 thru earlyCharScanLengthMax of clipboardObjectStringXML) contains xmlLayoutObjectList) and not doButtonBarSegments then
+		-- These are Layout Objects (and either are not button bar segments, or user chose to handle segments like normal layout objects), so need special handling:
+		set isLayoutObjects to true
+	end if
+	
+	
+	
+	if not isLayoutObjects then
+		-- THROW AN ERROR
+		display dialog "Not layout objects"
+		
+	else
+		
+		tell application "System Events"
+			set xmlData to make new XML data with data clipboardObjectStringXML
+			set layoutObject to XML element 1 of XML element 1 of xmlData
+			set buttonParentObject to XML element "Object" of layoutObject
+			tell buttonParentObject
+				set labelText to value of XML element "Data" of XML element "Style" of XML element "ParagraphStyleVector" of XML element "TextObj"
+				set scriptName to value of XML attribute "name" of XML element "Script" of XML element "Step" of XML element "ButtonObj"
+				try
+					set scriptParams to value of XML element "Calculation" of XML element "Step" of XML element "ButtonObj"
+				on error
+					set scriptParams to ""
+				end try
+			end tell
+		end tell
+		
+		
+		
+	end if
+	
+	
+	-- for now, convert internal line endings into spaces and put tabs between pieces: 
+	set output_Label to replaceSimple({replaceSimple({labelText, return, space}), colSep, space})
+	set output_ScriptName to replaceSimple({replaceSimple({scriptName, return, space}), colSep, space})
+	set output_Params to replaceSimple({replaceSimple({scriptParams, return, space}), colSep, space})
+	set outputInfo to output_Label & colSep & output_ScriptName & colSep & output_Params
+	
+	---------------------------------
+	-- ADD the new text into the clipboard:
+		set fmClipboard to get the clipboard
+		set newClip to {string: outputInfo} & fmClipboard
+
+	set the clipboard to newClip
+	
+	
+	return outputInfo
+	
+	
+end run
+
+
+
+
+on getTextBefore(sourceTEXT, stopHere)
+	-- version 1.1
+	
+	try
+		set {oldDelims, AppleScript's text item delimiters} to {AppleScript's text item delimiters, stopHere}
+		if (count of text items of sourceTEXT) is 1 then
+			set AppleScript's text item delimiters to oldDelims
+			return ""
+		else
+			set the finalResult to text item 1 of sourceTEXT
+		end if
+		set AppleScript's text item delimiters to oldDelims
+		return finalResult
+	on error errMsg number errNum
+		set AppleScript's text item delimiters to oldDelims
+		return "" -- return nothing if the stop text is not found
+	end try
+end getTextBefore
+
+
+
+
+on getTextAfter(sourceTEXT, afterThis)
+	-- version 1.2
+	
+	try
+		set {oldDelims, AppleScript's text item delimiters} to {AppleScript's text item delimiters, {afterThis}}
+		
+		if (count of text items of sourceTEXT) is 1 then
+			-- the split-string didn't appear at all
+			set AppleScript's text item delimiters to oldDelims
+			return ""
+		else
+			set the resultAsList to text items 2 thru -1 of sourceTEXT
+		end if
+		set AppleScript's text item delimiters to {afterThis}
+		set finalResult to resultAsList as string
+		set AppleScript's text item delimiters to oldDelims
+		return finalResult
+	on error errMsg number errNum
+		set AppleScript's text item delimiters to oldDelims
+		return "" -- return nothing if the stop text is not found
+	end try
+end getTextAfter
+
+
+on getTextUntilLast(sourceTEXT, stopHere)
+	-- version 1.0
+	
+	try
+		set {oldDelims, AppleScript's text item delimiters} to {AppleScript's text item delimiters, stopHere}
+		if (count of text items of sourceTEXT) is 1 then
+			set AppleScript's text item delimiters to oldDelims
+			-- not found, so return nothing:
+			return ""
+		else
+			set the itemsBeforeLast to text items 1 thru -2 of sourceTEXT
+		end if
+		set finalResult to itemsBeforeLast as string
+		set AppleScript's text item delimiters to oldDelims
+		return finalResult
+	on error errMsg number errNum
+		set AppleScript's text item delimiters to oldDelims
+		return "" -- return nothing if the stop text is not found
+	end try
+end getTextUntilLast
+
+
+
+
+on replaceSimple(prefs)
+	-- version 1.4, Daniel A. Shockley http://www.danshockley.com
+	
+	-- 1.4 - Convert sourceText to string, since the previous version failed on numbers. 
+	-- 1.3 - The class record is specified into a variable to avoid a namespace conflict when run within FileMaker. 
+	-- 1.2 - changes parameters to a record to add option to CONSIDER CASE, since the default changed to ignoring case with Snow Leopard. This handler defaults to CONSIDER CASE = true, since that was what older code expected. 
+	-- 1.1 - coerces the newChars to a STRING, since other data types do not always coerce
+	--     (example, replacing "nine" with 9 as number replaces with "")
+	
+	set defaultPrefs to {considerCase:true}
+	
+	if class of prefs is list then
+		if (count of prefs) is greater than 3 then
+			-- get any parameters after the initial 3
+			set prefs to {sourceTEXT:item 1 of prefs, oldChars:item 2 of prefs, newChars:item 3 of prefs, considerCase:item 4 of prefs}
+		else
+			set prefs to {sourceTEXT:item 1 of prefs, oldChars:item 2 of prefs, newChars:item 3 of prefs}
+		end if
+		
+	else if class of prefs is not equal to (class of {someKey:3}) then
+		-- Test by matching class to something that IS a record to avoid FileMaker namespace conflict with the term "record"
+		
+		error "The parameter for 'replaceSimple()' should be a record or at least a list. Wrap the parameter(s) in curly brackets for easy upgrade to 'replaceSimple() version 1.3. " number 1024
+		
+	end if
+	
+	
+	set prefs to prefs & defaultPrefs
+	
+	
+	set considerCase to considerCase of prefs
+	set sourceTEXT to sourceTEXT of prefs
+	set oldChars to oldChars of prefs
+	set newChars to newChars of prefs
+	
+	set sourceTEXT to sourceTEXT as string
+	
+	set oldDelims to AppleScript's text item delimiters
+	set AppleScript's text item delimiters to the oldChars
+	if considerCase then
+		considering case
+			set the parsedList to every text item of sourceTEXT
+			set AppleScript's text item delimiters to the {(newChars as string)}
+			set the newText to the parsedList as string
+		end considering
+	else
+		ignoring case
+			set the parsedList to every text item of sourceTEXT
+			set AppleScript's text item delimiters to the {(newChars as string)}
+			set the newText to the parsedList as string
+		end ignoring
+	end if
+	set AppleScript's text item delimiters to oldDelims
+	return newText
+	
+	
+end replaceSimple

@@ -18,10 +18,6 @@ property CR : ASCII character 13
 -- for generic layout objects:
 property earlyCharScanLengthMax : 400 -- only scan through this number of chars when looking for fmxmlsnippet
 property xmlLayoutObjectList : "<fmxmlsnippet type=\"LayoutObjectList\">"
-property xmlLayoutOpenTag_Start : "<Layout "
-property xmlLayoutOpenTag_After : "<"
-property xmlLayoutCloseTag : "</Layout>"
-
 
 
 on run
@@ -119,77 +115,6 @@ on run
 	
 	
 end run
-
-
-
-
-on getTextBefore(sourceTEXT, stopHere)
-	-- version 1.1
-	
-	try
-		set {oldDelims, AppleScript's text item delimiters} to {AppleScript's text item delimiters, stopHere}
-		if (count of text items of sourceTEXT) is 1 then
-			set AppleScript's text item delimiters to oldDelims
-			return ""
-		else
-			set the finalResult to text item 1 of sourceTEXT
-		end if
-		set AppleScript's text item delimiters to oldDelims
-		return finalResult
-	on error errMsg number errNum
-		set AppleScript's text item delimiters to oldDelims
-		return "" -- return nothing if the stop text is not found
-	end try
-end getTextBefore
-
-
-
-
-on getTextAfter(sourceTEXT, afterThis)
-	-- version 1.2
-	
-	try
-		set {oldDelims, AppleScript's text item delimiters} to {AppleScript's text item delimiters, {afterThis}}
-		
-		if (count of text items of sourceTEXT) is 1 then
-			-- the split-string didn't appear at all
-			set AppleScript's text item delimiters to oldDelims
-			return ""
-		else
-			set the resultAsList to text items 2 thru -1 of sourceTEXT
-		end if
-		set AppleScript's text item delimiters to {afterThis}
-		set finalResult to resultAsList as string
-		set AppleScript's text item delimiters to oldDelims
-		return finalResult
-	on error errMsg number errNum
-		set AppleScript's text item delimiters to oldDelims
-		return "" -- return nothing if the stop text is not found
-	end try
-end getTextAfter
-
-
-on getTextUntilLast(sourceTEXT, stopHere)
-	-- version 1.0
-	
-	try
-		set {oldDelims, AppleScript's text item delimiters} to {AppleScript's text item delimiters, stopHere}
-		if (count of text items of sourceTEXT) is 1 then
-			set AppleScript's text item delimiters to oldDelims
-			-- not found, so return nothing:
-			return ""
-		else
-			set the itemsBeforeLast to text items 1 thru -2 of sourceTEXT
-		end if
-		set finalResult to itemsBeforeLast as string
-		set AppleScript's text item delimiters to oldDelims
-		return finalResult
-	on error errMsg number errNum
-		set AppleScript's text item delimiters to oldDelims
-		return "" -- return nothing if the stop text is not found
-	end try
-end getTextUntilLast
-
 
 
 

@@ -8,23 +8,18 @@
 HISTORY: 
 	2022-08-16 ( dshockley ): first created. 
 
-
 *)
 
 use AppleScript version "2.4" -- Yosemite (10.10) or later
 use framework "Foundation"
 use scripting additions
 
-
 property fmAppBundleID : "com.filemaker.client.pro12"
 property winNameManageCFs : "Manage Custom Functions"
 property snippetHead : "<fmxmlsnippet type=\"FMObjectList\">"
 property snippetFoot : "</fmxmlsnippet>"
 
-
-
 on run
-	
 	
 	try
 		
@@ -41,10 +36,8 @@ on run
 			error "The clipboard does not contain FileMaker custom functions." number -1024
 		end if
 		
-		
 		-- get the source functions:
 		set sourceTextXML to clipboardGetObjectsasXML({}) of objTrans
-		
 		
 		tell application "System Events"
 			-- get the NAMEs of the source functions:
@@ -80,7 +73,6 @@ on run
 		
 		set convertResult to clipboardConvertToFMObjects({}) of objTrans
 		
-		
 		-- PASTE only the needed functions:
 		tell application "System Events"
 			tell fmAppProc
@@ -90,10 +82,8 @@ on run
 			end tell
 		end tell
 		
-		
 		return convertResult
-		
-		
+				
 	on error errMsg number errNum
 		display dialog errMsg
 		return false

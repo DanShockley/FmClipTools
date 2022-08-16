@@ -77,10 +77,21 @@ on run
 		-- get the (possibly) reduced set of functions, then put those in clipboard:
 		set justFunctionsXML to removeFunctions(sourceTextXML, targetFunctionNames)
 		set the clipboard to justFunctionsXML
-
-		clipboardConvertToFMObjects({}) of objTrans
 		
-		return result
+		set convertResult to clipboardConvertToFMObjects({}) of objTrans
+		
+		
+		-- PASTE only the needed functions:
+		tell application "System Events"
+			tell fmAppProc
+				set frontmost to true
+				delay 0.5
+				click menu item "Paste" of menu "Edit" of menu bar 1
+			end tell
+		end tell
+		
+		
+		return convertResult
 		
 		
 	on error errMsg number errNum

@@ -88,8 +88,10 @@ on run
 		
 		-- get the (possibly) reduced set of functions, then put only those desired objects into the clipboard:
 		set justDesiredFunctionsXML to removeFunctions(sourceTextXML, removeFunctionNames)
-		set (the clipboard) to justDesiredFunctionsXML
 		
+		tell application "System Events"
+			set (the clipboard) to justDesiredFunctionsXML
+		end tell
 		set convertResult to clipboardConvertToFMObjects({}) of objTrans
 		
 		return result

@@ -21,8 +21,9 @@ end run
 on fmObjectTranslator_Instantiate(prefs)
 	
 	script fmObjectTranslator
-		-- version 4.0.9, Daniel A. Shockley
+		-- version 4.1, Daniel A. Shockley
 		
+		-- 4.1 - 2023-03-04 ( dshockley ): Update logConsole to 2.0 - prepend ScriptName onto message, since tag option no longer seems to work. Updated prettifyXML to 1.8 - use a HEREDOC when skipping temp file, since the shopt/xpg_echo modification of echo to preserve backslashes no longer seems to work properly. 
 		-- 4.0.9 - 2020-08-11 ( dshockley ): Fix to log for addHeaderFooter. 
 		-- 4.0.8 - 2019-07-17 ( dshockley ): Added "ValueList" object support (code "XMVL"), per GitHub Issue #6. 
 		-- 4.0.7 - 2019-03-12 ( eshagdar ): debugMode should be set to false by default. Users can overwrite it if they need to turn it on.
@@ -731,12 +732,12 @@ on fmObjectTranslator_Instantiate(prefs)
 		
 		
 		on prettifyXML(someXML)
-			-- version 1.7, Daniel A. Shockley
+			-- version 1.8, Daniel A. Shockley
 			if debugMode then logConsole(ScriptName, "prettifyXML: START")
 			try
 				
 				if currentCode is "XML2" then
-					-- do NOT try to prettify, even if specified, since XML2 is already quasi-formatted.
+					-- do NOT try to prettify, even if specified, since XML2 is already quasi-formatted, and will break.
 					set prettyXML to someXML
 					if debugMode then logConsole(ScriptName, "prettifyXML: Skipped Layout Objects")
 				else
@@ -839,10 +840,17 @@ on fmObjectTranslator_Instantiate(prefs)
 						
 						
 					else
-						-- just use echo:
-						-- use "shopt -u xpg_echo; echo " instead of "echo" to handle backslashes properly: https://stackoverflow.com/questions/8138167/how-can-i-escape-shell-arguments-in-applescript/8145515
-						set prettyPrint_ShellCommand to "shopt -u xpg_echo; echo " & quoted form of prettyXML & " | " & tidyCommand
+						-- just redirect into tidy, without needing a temp file:
+						
+						-- use a HEREDOC to redirect the temporarily-modified prettyXML into the tidy command: 
+						--   (instead of echo with modified xpg_echo setting using shopt): 
+						set prettyPrint_ShellCommand to tidyCommand & " << \"EOF84738939393\"" & (ASCII character 10) & prettyXML & (ASCII character 10) & "EOF84738939393"
+						
 						set prettyXML to do shell script prettyPrint_ShellCommand
+						
+						if debugMode then my logConsole(ScriptName, "prettifyXML: DEBUG: used tidy with redirected text, no temp file")
+						
+						
 					end if
 					
 					
@@ -1150,15 +1158,16 @@ on fmObjectTranslator_Instantiate(prefs)
 		
 		
 		on logConsole(processName, consoleMsg)
-			-- version 1.9 - Daniel A. Shockley, http://www.danshockley.com
+			-- version 2.0 - Daniel A. Shockley, http://www.danshockley.com
 			
+			-- 2.0 - seems that the "-t" option for logger no longer DOES anything, so just prepend the ScriptName to the message. 
 			-- 1.9 - REQUIRES coerceToString to enable logging of objects not directly coercible to string.
 			-- 1.8 - coerces to string first (since numbers would not directly convert for 'quoted form'
 			-- 1.7 - now works with Leopard by using the "logger" command instead of just appending to log file
 			-- 1.6 - the 'space' constant instead of literal spaces for readability, removed trailing space from the hostname command
 			-- 1.5 - uses standard date-stamp format	
 			
-			set shellCommand to "logger" & space & "-t" & space & quoted form of processName & space & quoted form of coerceToString(consoleMsg)
+			set shellCommand to "logger" & space & quoted form of (processName & ":" & space & coerceToString(consoleMsg))
 			
 			do shell script shellCommand
 			return shellCommand

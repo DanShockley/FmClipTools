@@ -21,8 +21,9 @@ end run
 on fmObjectTranslator_Instantiate(prefs)
 	
 	script fmObjectTranslator
-		-- version 4.1.1, Daniel A. Shockley
+		-- version 4.1.2, Daniel A. Shockley
 		
+		-- 4.1.2 - 2023-03-10 ( dshockley ): In prettifyXML, no longer try to use tabs instead of tidy's spaces. DO still avoid extra line-breaks around CDATA, which means scanning for leading whitespace for both CR and LF line breaks, since the recently-added HEREDOC method converted CRs to LFs. 
 		-- 4.1.1 - 2023-03-10 ( dshockley ): Renamed function to "isStringValidFMObjectXML" instead of "checkStringForValidXML" to be more specific. Added isStringAnyValidXML. 
 		-- 4.1 - 2023-03-04 ( dshockley ): Update logConsole to 2.0 - prepend ScriptName onto message, since tag option no longer seems to work. Updated prettifyXML to 1.8 - use a HEREDOC when skipping temp file, since the shopt/xpg_echo modification of echo to preserve backslashes no longer seems to work properly. 
 		-- 4.0.9 - 2020-08-11 ( dshockley ): Fix to log for addHeaderFooter. 
@@ -767,7 +768,10 @@ on fmObjectTranslator_Instantiate(prefs)
 		
 		
 		on prettifyXML(someXML)
-			-- version 1.8, Daniel A. Shockley
+			-- version 1.9, Daniel A. Shockley
+			
+			-- 1.9 - ditch the idea of trying to control tidy's handling of tabs/spaces, since that caused problems when attempting to prettify already-pretty XML. 
+			
 			if debugMode then logConsole(ScriptName, "prettifyXML: START")
 			try
 				
@@ -799,8 +803,6 @@ on fmObjectTranslator_Instantiate(prefs)
 						*)
 					
 					set maxEchoSize to 200000 (* not sure exact point of failure, but was between 224317 and 227811 when tested on 2018-10-29, so playing it safe. *)
-					set spacePlaceholder to "|3784831346446981709931393949506519634432034195210262251535space|"
-					set tabPlaceholder to "|3784831346446981709931393949506519634432034195210262251535tab|"
 					set spaces4String to "    "
 					set otherTidyOptions to " -i --indent-spaces 4 --literal-attributes yes --drop-empty-paras no --fix-backslash no --fix-bad-comments no --fix-uri no --lower-literals no --ncr no --quote-ampersand no --quote-nbsp no "
 					set tidyCommand to "tidy -xml -raw -wrap 999999999999999 " & otherTidyOptions
@@ -809,20 +811,12 @@ on fmObjectTranslator_Instantiate(prefs)
 					
 					set prettyXML to someXML
 					
-					(*
-					Preserve certain whitespace:
-					Try to convert 4-spaces into tabs AFTER tidy modifies data. To do that, must preserve any initial runs of 4-spaces.
-					Also, Tidy refuses to output tabs, so preserve and restore them, too!
-					*)
-					set prettyXML to replaceSimple({prettyXML, spaces4String, spacePlaceholder})
-					set prettyXML to replaceSimple({prettyXML, tab, tabPlaceholder})
-					
 					
 					if debugMode then my logConsole(ScriptName, "prettifyXML: DEBUG: length of prettyXML: " & length of prettyXML)
 					
 					
 					-- prettify command:
-					if length of prettyXML is greater than maxEchoSize then
+					if true then --length of prettyXML is greater than maxEchoSize then
 						
 						try
 							
@@ -885,26 +879,22 @@ on fmObjectTranslator_Instantiate(prefs)
 						
 						if debugMode then my logConsole(ScriptName, "prettifyXML: DEBUG: used tidy with redirected text, no temp file")
 						
+						return prettyXML
+						
 						
 					end if
 					
 					
-					-- restore original characters where placeholders exist:
-					set prettyXML to replaceSimple({prettyXML, spaces4String, tab})
-					set prettyXML to replaceSimple({prettyXML, spacePlaceholder, spaces4String})
-					set prettyXML to replaceSimple({prettyXML, tabPlaceholder, tab})
 					
-					
-					
-					-- After restoring whitespace, get rid of line returns and indentation around the CDATA inside a Calculation tag, since tidy adds that:
+					-- Get rid of line returns and indentation around the CDATA inside a Calculation tag, since tidy adds that:
 					-- Cleanup between Calc open tag and CDATA:
 					set maxTabs to 12
 					set stringCalcTagOpen to "<Calculation>"
 					set stringStartCdata to "<![CDATA["
 					
-					
+					-- [CR as line breaks] note: since tidy uses spaces instead of tabs, "tabs" here means 4spaces:
 					repeat with numTabs from 1 to maxTabs
-						set stringBeforeCdata to (stringCalcTagOpen & charCR & repeatString({someString:tab, repeatCount:numTabs}) & stringStartCdata)
+						set stringBeforeCdata to (stringCalcTagOpen & charCR & repeatString({someString:spaces4String, repeatCount:numTabs}) & stringStartCdata)
 						if debugMode then my logConsole(ScriptName, "prettifyXML: DEBUG: numTabs: " & numTabs)
 						if debugMode then my logConsole(ScriptName, "prettifyXML: DEBUG: stringBeforeCdata: " & stringBeforeCdata)
 						if debugMode then my logConsole(ScriptName, "prettifyXML: DEBUG: offset of stringBeforeCdata in prettyXML: " & (offset of stringBeforeCdata in prettyXML))
@@ -917,6 +907,22 @@ on fmObjectTranslator_Instantiate(prefs)
 					set stringEndCData to "]]>"
 					set stringCalcTagClose to "</Calculation>"
 					set prettyXML to replaceSimple({prettyXML, stringEndCData & charCR & stringCalcTagClose, stringEndCData & stringCalcTagClose})
+					
+					-- [LF as line breaks] note: since tidy uses spaces instead of tabs, "tabs" here means 4spaces:
+					repeat with numTabs from 1 to maxTabs
+						set stringBeforeCdata to (stringCalcTagOpen & charLF & repeatString({someString:spaces4String, repeatCount:numTabs}) & stringStartCdata)
+						if debugMode then my logConsole(ScriptName, "prettifyXML: DEBUG: numTabs: " & numTabs)
+						if debugMode then my logConsole(ScriptName, "prettifyXML: DEBUG: stringBeforeCdata: " & stringBeforeCdata)
+						if debugMode then my logConsole(ScriptName, "prettifyXML: DEBUG: offset of stringBeforeCdata in prettyXML: " & (offset of stringBeforeCdata in prettyXML))
+						if prettyXML contains stringBeforeCdata then
+							if debugMode then my logConsole(ScriptName, "prettifyXML: DEBUG: found stringBeforeCdata with " & numTabs & " tabs.")
+							set prettyXML to replaceSimple({prettyXML, stringBeforeCdata, stringCalcTagOpen & stringStartCdata})
+						end if
+					end repeat
+					-- Cleanup between CDATA and Calc close tag:
+					set stringEndCData to "]]>"
+					set stringCalcTagClose to "</Calculation>"
+					set prettyXML to replaceSimple({prettyXML, stringEndCData & charLF & stringCalcTagClose, stringEndCData & stringCalcTagClose})
 					
 					
 					

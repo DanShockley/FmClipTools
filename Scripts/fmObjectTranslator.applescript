@@ -509,7 +509,7 @@ on fmObjectTranslator_Instantiate(prefs)
 			
 		end convertXmlToObjects
 		
-		on isStringValidXML(someString)
+		on isStringAnyValidXML(someString)
 			-- version 1.0
 			-- Checks someString for XML of ANY type (not just FM objects!). Returns true if it does, false if not. 
 			
@@ -543,7 +543,7 @@ on fmObjectTranslator_Instantiate(prefs)
 				end if
 			end try
 			
-		end isStringValidXML
+		end isStringAnyValidXML
 		
 		on isStringValidFMObjectXML(someString)
 			-- version 1.2

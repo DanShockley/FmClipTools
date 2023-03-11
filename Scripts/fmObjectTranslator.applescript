@@ -21,13 +21,14 @@ end run
 on fmObjectTranslator_Instantiate(prefs)
 	
 	script fmObjectTranslator
-		-- version 4.1, Daniel A. Shockley
+		-- version 4.1.1, Daniel A. Shockley
 		
+		-- 4.1.1 - 2023-03-10 ( dshockley ): Renamed function to "isStringValidFMObjectXML" instead of "checkStringForValidXML" to be more specific. Added isStringAnyValidXML. 
 		-- 4.1 - 2023-03-04 ( dshockley ): Update logConsole to 2.0 - prepend ScriptName onto message, since tag option no longer seems to work. Updated prettifyXML to 1.8 - use a HEREDOC when skipping temp file, since the shopt/xpg_echo modification of echo to preserve backslashes no longer seems to work properly. 
 		-- 4.0.9 - 2020-08-11 ( dshockley ): Fix to log for addHeaderFooter. 
 		-- 4.0.8 - 2019-07-17 ( dshockley ): Added "ValueList" object support (code "XMVL"), per GitHub Issue #6. 
 		-- 4.0.7 - 2019-03-12 ( eshagdar ): debugMode should be set to false by default. Users can overwrite it if they need to turn it on.
-		-- 4.0.6 - 2019-03-07 ( dshockley ): Updated checkStringForValidXML to 1.2. 
+		-- 4.0.6 - 2019-03-07 ( dshockley ): Updated isStringValidFMObjectXML to 1.2. 
 		-- 4.0.5 - 2019-02-15 ( jwillinghalpern ): preserve backslashes when prettifying xml with shell script.
 		-- 4.0.4 - 2019-01-18 ( eshagdar ): remove EndOfText character ( ascii 3 ).
 		-- 4.0.3 - 2018-12-04 ( dshockley, eshagdar ): remove unneeded whitespace around CDATA inside Calculation tags. 
@@ -198,7 +199,7 @@ on fmObjectTranslator_Instantiate(prefs)
 			end if
 			
 			if debugMode then logConsole(ScriptName, "clipboardSetObjectsUsingXML: START")
-			if not checkStringForValidXML(stringFmXML) then
+			if not isStringValidFMObjectXML(stringFmXML) then
 				if debugMode then logConsole(ScriptName, "clipboardSetObjectsUsingXML: Specified XML does not validly represent FileMaker objects.")
 				return false
 			end if
@@ -231,7 +232,7 @@ on fmObjectTranslator_Instantiate(prefs)
 			end if
 			
 			if debugMode then logConsole(ScriptName, "clipboardAddObjectsUsingXML: START")
-			if not checkStringForValidXML(stringFmXML) then
+			if not isStringValidFMObjectXML(stringFmXML) then
 				if debugMode then logConsole(ScriptName, "clipboardAddObjectsUsingXML: Specified XML does not validly represent FileMaker objects.")
 				return false
 			end if
@@ -405,7 +406,7 @@ on fmObjectTranslator_Instantiate(prefs)
 			
 			set testClipboard to get the clipboard
 			
-			return checkStringForValidXML(testClipboard)
+			return isStringValidFMObjectXML(testClipboard)
 		end checkClipboardForValidXML
 		
 		
@@ -483,7 +484,7 @@ on fmObjectTranslator_Instantiate(prefs)
 			
 			if debugMode then logConsole(ScriptName, "convertXmlToObjects: START")
 			
-			set stringIsValidXML to checkStringForValidXML(stringFmXML) -- return boolean, also sets currentCode property.			
+			set stringIsValidXML to isStringValidFMObjectXML(stringFmXML) -- return boolean, also sets currentCode property.			
 			if not stringIsValidXML then
 				-- if not valid, give an error.
 				if debugMode then logConsole(ScriptName, "convertXmlToObjects: no valid XML")
@@ -508,24 +509,26 @@ on fmObjectTranslator_Instantiate(prefs)
 			
 		end convertXmlToObjects
 		
-		
-		
-		on checkStringForValidXML(someString)
-			-- version 1.2
-			-- Checks someString for XML that represents FM objects. Returns true if it does, false if not. 
+		on isStringValidXML(someString)
+			-- version 1.0
+			-- Checks someString for XML of ANY type (not just FM objects!). Returns true if it does, false if not. 
 			
-			-- 1.2 - 2019-03-07 ( dshockley ): Added capture of error -1700. 
-			-- 1.1 - 2016-11-02 ( dshockley/eshagdar ): added comment, changed test to length of instead of empty string.
+			-- 1.0 - 2023-03-10 ( danshock ): first created.
 			
-			if debugMode then logConsole(ScriptName, "checkStringForValidXML: START")
-			
+			if debugMode then logConsole(ScriptName, "isStringAnyValidXML: START")
 			try
 				tell application "System Events"
-					set xmlData to make new XML data with data someString
-					set fmObjectName to name of XML element 1 of XML element 1 of xmlData
+					set stringAsXML to make XML data with properties {text:someString}
+					set nameElem1 to name of XML element 1 of stringAsXML
+					if nameElem1 is missing value then
+						return false
+					else
+						return true
+					end if
 				end tell
+				
 			on error errMsg number errNum
-				if debugMode then logConsole(ScriptName, "checkStringForValidXML: ERROR: " & errMsg & "(" & errNum & ")")
+				if debugMode then logConsole(ScriptName, "isStringAnyValidXML: ERROR: " & errMsg & "(" & errNum & ")")
 				if errNum is -1700 then
 					-- is not something that can be treated as text, so does not have XML:
 					return false
@@ -540,7 +543,39 @@ on fmObjectTranslator_Instantiate(prefs)
 				end if
 			end try
 			
-			if debugMode then logConsole(ScriptName, "checkStringForValidXML: fmObjectName: " & fmObjectName)
+		end isStringValidXML
+		
+		on isStringValidFMObjectXML(someString)
+			-- version 1.2
+			-- Checks someString for XML that represents FM objects. Returns true if it does, false if not. 
+			
+			-- 1.2 - 2019-03-07 ( dshockley ): Added capture of error -1700. 
+			-- 1.1 - 2016-11-02 ( dshockley/eshagdar ): added comment, changed test to length of instead of empty string.
+			
+			if debugMode then logConsole(ScriptName, "isStringValidFMObjectXML: START")
+			
+			try
+				tell application "System Events"
+					set xmlData to make new XML data with data someString
+					set fmObjectName to name of XML element 1 of XML element 1 of xmlData
+				end tell
+			on error errMsg number errNum
+				if debugMode then logConsole(ScriptName, "isStringValidFMObjectXML: ERROR: " & errMsg & "(" & errNum & ")")
+				if errNum is -1700 then
+					-- is not something that can be treated as text, so does not have XML:
+					return false
+				else if errNum is -1719 then
+					-- couldn't find an XML element, so NOT valid XML
+					return false
+				else if errNum is -2753 then
+					-- couldn't create XML from someString, so NOT valid XML
+					return false
+				else
+					error errMsg number errNum
+				end if
+			end try
+			
+			if debugMode then logConsole(ScriptName, "isStringValidFMObjectXML: fmObjectName: " & fmObjectName)
 			
 			set currentCode to ""
 			repeat with oneObjectType in fmObjectList
@@ -579,7 +614,7 @@ on fmObjectTranslator_Instantiate(prefs)
 				end if
 			end repeat
 			
-			if debugMode then logConsole(ScriptName, "checkStringForValidXML: currentCode: " & currentCode)
+			if debugMode then logConsole(ScriptName, "isStringValidFMObjectXML: currentCode: " & currentCode)
 			
 			if length of currentCode is 0 then
 				return false
@@ -587,7 +622,7 @@ on fmObjectTranslator_Instantiate(prefs)
 				return true
 			end if
 			
-		end checkStringForValidXML
+		end isStringValidFMObjectXML
 		
 		
 		

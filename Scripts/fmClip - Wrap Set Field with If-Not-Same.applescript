@@ -1,16 +1,19 @@
 -- Set Fields IF not same
--- version 4.0.1, Daniel A. Shockley, Erik Shagdar
--- Takes Set Field script step objects in clipboard and puts in those same steps wrapped in IF step that sees if they aren't already the same.
+-- version 4.1, Daniel A. Shockley, Erik Shagdar
 
+(* 
+	Takes Set Field script step objects in clipboard and puts back into clipboard those same steps wrapped in IF step that compares. USe this to avoid setting a field to a value it already has, so you can avoid making unnecessary modification metadata changes. 
 
--- 4.0.1 - 2018-10-29 ( dshockley ): Made change recommended by https://github.com/jwillinghalpern - modified nameThruEndStep to by less specific so that any alternate XML tags between Step and /Field tags will not interrupt parsing. TODO: A better fix would be to re-work the whole thing to parse XML properly, but that is a longer-term project. 
--- 4.0 - 2018-04-04 ( dshockley/eshagdar ): load fmObjectTranslator code by reference instead of embedded.
--- 3.9.3 - 2017-08-09 ( eshagdar ): renamed 'Set Fields IF not same' to 'fmClip - Wrap Set Field with If-Not-Same' to match other handler name pattern
--- 3.9.2 - use 'Not Exact' comparison instead of the inequality operator.
--- 3.9.1 - updated fmObjectTranslator code
--- 1.1 - if the Set To was empty string (NULL, ""), then check for Not IsEmpty instead of simplistic comparison.
--- 1.0 - initial version
-
+HISTORY:
+	4.1 - 2023-05-24 ( danshockley ): Added getFmAppProc to avoid being tied to one specific "FileMaker" app name. 
+	4.0.1 - 2018-10-29 ( dshockley ): Made change recommended by https://github.com/jwillinghalpern - modified nameThruEndStep to by less specific so that any alternate XML tags between Step and /Field tags will not interrupt parsing. TODO: A better fix would be to re-work the whole thing to parse XML properly, but that is a longer-term project. 
+	4.0 - 2018-04-04 ( dshockley/eshagdar ): load fmObjectTranslator code by reference instead of embedded.
+	3.9.3 - 2017-08-09 ( eshagdar ): renamed 'Set Fields IF not same' to 'fmClip - Wrap Set Field with If-Not-Same' to match other handler name pattern
+	3.9.2 - use 'Not Exact' comparison instead of the inequality operator.
+	3.9.1 - updated fmObjectTranslator code
+	1.1 - if the Set To was empty string (NULL, ""), then check for Not IsEmpty instead of simplistic comparison.
+	1.0 - initial version
+*)
 
 property ScriptName : "SetFieldsIfNotSame"
 property debugMode : false

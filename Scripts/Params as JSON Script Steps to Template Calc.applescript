@@ -28,7 +28,7 @@
 		2023-03-25 ( danshockley ): First created. Based off of "Param Script Steps to Template Calc" (was SFR dictinoary param-passing).
 *)
 
-property debugMode : true
+property debugMode : false
 
 
 on run

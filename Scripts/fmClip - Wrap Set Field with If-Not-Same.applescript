@@ -39,18 +39,13 @@ on run
 	
 	
 	-- IMPORTANT!!!  	-- IMPORTANT!!!  	-- IMPORTANT!!!  
-	-- IMPORTANT!!!  	-- IMPORTANT!!!  	-- IMPORTANT!!!  
 	-- The search/replace needs to be able to assume extra whitespace wasn't added.
-	-- IMPORTANT!!!  	-- IMPORTANT!!!  	-- IMPORTANT!!!  
 	set shouldPrettify of objTrans to false
-	-- IMPORTANT!!!  	-- IMPORTANT!!!  	-- IMPORTANT!!!  
 	-- IMPORTANT!!!  	-- IMPORTANT!!!  	-- IMPORTANT!!!  
 	
 	-- Set Variable Script Step XML:
-	--
 	set startingXML to clipboardGetObjectsAsXML({}) of objTrans
 	-- DEBUG: set startingXML to sampleXML()
-	
 	
 	
 	tell objTrans to set scriptStepsWithoutStart to parseChars({startingXML, stepStart})
@@ -134,13 +129,37 @@ on run
 	
 	clipboardConvertToFMObjects({}) of objTrans
 	
-	tell application "FileMaker Pro Advanced"
-		display dialog "Converted " & countSetFieldSteps & " Set Field steps to be wrapped in IF-not-same test." buttons {"OK"} default button "OK"
+	tell application "System Events"
+		set fmAppProc to my getFmAppProc()
+		set frontmost of fmAppProc to true
+		tell fmAppProc
+			display dialog "Converted " & countSetFieldSteps & " Set Field steps to be wrapped in IF-not-same test." buttons {"OK"} default button "OK"
+		end tell
 	end tell
 	
 	return newXML
 	
 end run
+
+
+on getFmAppProc()
+	-- version 2023-05-24
+	-- Gets the frontmost "FileMaker" app (if any), otherwise the 1st one available.
+	tell application "System Events"
+		set fmAppProc to first application process whose frontmost is true
+		if name of fmAppProc does not contain "FileMaker" then
+			-- frontmost is not FileMaker, so just get the 1st one we can find 
+			-- (if multiple copies running, must make the one you want is frontmost to be sure it is used)
+			try
+				set fmAppProc to get first application process whose name contains "FileMaker"
+			on error errMsg number errNum
+				if errNum is -1719 then return false
+				error errMsg number errNum
+			end try
+		end if
+		return fmAppProc
+	end tell
+end getFmAppProc
 
 
 

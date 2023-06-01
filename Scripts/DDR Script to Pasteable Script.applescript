@@ -23,10 +23,7 @@ on run
 	
 	set ddrXML to get the clipboard as text
 	
-	
-	
-	-- SAMPLE TEST CODE:	
-	set ddrXML to someSetVarXML()
+	-- SAMPLE TEST CODE:	set ddrXML to someSetVarXML()
 	
 	
 	set newXML to ddrXML

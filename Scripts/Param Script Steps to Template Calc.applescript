@@ -1,4 +1,4 @@
--- Extra - Param Script Steps to Template Calc
+-- Param Script Steps to Template Calc
 -- version 2023-03-25, Daniel A. Shockley
 
 (*

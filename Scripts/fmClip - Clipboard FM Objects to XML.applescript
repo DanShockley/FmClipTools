@@ -41,7 +41,8 @@ on run
 	
 	
 	if clipboardType is false then
-		display dialog "The clipboard did not contain any FileMaker objects."
+		display notification "The clipboard did not contain any FileMaker objects." with title "FileMaker Clipboard" sound name "Funk"
+		--display dialog "The clipboard did not contain any FileMaker objects."
 		return false
 	end if
 	

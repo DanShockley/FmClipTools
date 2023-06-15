@@ -1,0 +1,555 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<fmxmlsnippet type="LayoutObjectList">
+  <Layout enclosingRectTop="95.0000000" enclosingRectLeft="375.0000000" enclosingRectBottom="135.0000000" enclosingRectRight="555.0000000">
+    <Object type="ButtonBar" key="87" LabelKey="0" name="bar.toggle" flags="264" rotation="0">
+      <Bounds top="95.0000000" left="375.0000000" bottom="135.0000000" right="555.0000000"/>
+      <Styles>
+        <CustomStyles>
+          <Name>FM-1860BF28-128B-4E15-83BD-02BC4F9E8A24</Name>
+        </CustomStyles>
+        <FullCSS>
+self:normal .self
+{
+	border-top-color: rgba(100%,100%,100%,0);
+	border-right-color: rgba(100%,100%,100%,0);
+	border-bottom-color: rgba(100%,100%,100%,0);
+	border-left-color: rgba(100%,100%,100%,0);
+	border-top-style: none;
+	border-right-style: none;
+	border-bottom-style: none;
+	border-left-style: none;
+	border-top-width: 0pt;
+	border-right-width: 0pt;
+	border-bottom-width: 0pt;
+	border-left-width: 0pt;
+	border-top-right-radius: 0pt 0pt;
+	border-bottom-right-radius: 0pt 0pt;
+	border-bottom-left-radius: 0pt 0pt;
+	border-top-left-radius: 0pt 0pt;
+	box-shadow: none;
+	box-sizing: content-box;
+}
+self:normal .button_bar_divider
+{
+	border-top-color: rgba(90.229%,92.6868%,95.3927%,1);
+	border-right-color: rgba(90.229%,92.6868%,95.3927%,1);
+	border-bottom-color: rgba(90.229%,92.6868%,95.3927%,1);
+	border-left-color: rgba(90.229%,92.6868%,95.3927%,1);
+	border-top-style: solid;
+	border-right-style: solid;
+	border-bottom-style: solid;
+	border-left-style: solid;
+	border-top-width: 0pt;
+	border-right-width: 0pt;
+	border-bottom-width: 0pt;
+	border-left-width: 0pt;
+	border-top-right-radius: 0pt 0pt;
+	border-bottom-right-radius: 0pt 0pt;
+	border-bottom-left-radius: 0pt 0pt;
+	border-top-left-radius: 0pt 0pt;
+	box-shadow: none;
+	box-sizing: content-box;
+}
+</FullCSS>
+        <ThemeName>com.filemaker.theme.custom.0A80DF60_45C3_4BA8_A88D_28ACF54F60F7</ThemeName>
+      </Styles>
+      <ButtonBarObj flags="1" segmentKey="0">
+        <Object type="Button" key="88" LabelKey="0" flags="65796" rotation="0">
+          <Bounds top="0.0000000" left="0.0000000" bottom="20.0000000" right="180.0000000"/>
+          <TextObj flags="2">
+            <ExtendedAttributes fontHeight="10" graphicFormat="0">
+              <NumFormat flags="0" charStyle="0" negativeStyle="0" currencySymbol="" thousandsSep="0" decimalPoint="0" negativeColor="#0" decimalDigits="0" trueString="" falseString=""/>
+              <DateFormat format="0" charStyle="0" monthStyle="0" dayStyle="0" separator="0">
+                <DateElement>0</DateElement>
+                <DateElement>0</DateElement>
+                <DateElement>0</DateElement>
+                <DateElement>0</DateElement>
+                <DateElementSep index="0"/>
+                <DateElementSep index="1"/>
+                <DateElementSep index="2"/>
+                <DateElementSep index="3"/>
+                <DateElementSep index="4"/>
+              </DateFormat>
+              <TimeFormat flags="0" charStyle="0" hourStyle="0" minsecStyle="0" separator="0" amString="" pmString="" ampmString=""/>
+              <CharacterStyle mask="32695">
+                <Font-family codeSet="Roman" fontId="8" postScript="HelveticaNeue">Helvetica Neue</Font-family>
+                <Font-size>16</Font-size>
+                <Face>0</Face>
+                <Color>#343434</Color>
+              </CharacterStyle>
+            </ExtendedAttributes>
+            <Styles>
+              <CustomStyles>
+                <Name>FM-1860BF28-128B-4E15-83BD-02BC4F9E8A24</Name>
+              </CustomStyles>
+              <FullCSS>
+self:normal .self
+{
+	background-image: none;
+	background-position: 0% 0%;
+	background-size: auto;
+	background-repeat: repeat repeat;
+	background-origin: padding-box;
+	background-clip: border-box;
+	background-color: rgba(100%,100%,100%,0);
+	border-top-color: rgba(0%,0%,0%,0);
+	border-right-color: rgba(0%,0%,0%,0);
+	border-bottom-color: rgba(0%,0%,0%,0);
+	border-left-color: rgba(0%,0%,0%,0);
+	border-top-style: none;
+	border-right-style: none;
+	border-bottom-style: none;
+	border-left-style: none;
+	border-top-width: 0pt;
+	border-right-width: 0pt;
+	border-bottom-width: 0pt;
+	border-left-width: 0pt;
+	border-top-right-radius: 0pt 0pt;
+	border-bottom-right-radius: 0pt 0pt;
+	border-bottom-left-radius: 0pt 0pt;
+	border-top-left-radius: 0pt 0pt;
+	border-image-source: none;
+	border-image-slice: 100% 100% 100% 100% fill;
+	border-image-width: 1 1 1 1;
+	border-image-outset: 0 0 0 0;
+	border-image-repeat: stretch stretch;
+	outline-width: 0pt;
+	outline-style: none;
+	outline-color: invert;
+	outline-offset: 0pt;
+	font-family: -fm-font-family(Helvetica Neue,HelveticaNeue);
+	font-weight: normal;
+	font-stretch: normal;
+	font-style: normal;
+	font-variant: normal;
+	font-size: 16pt;
+	color: rgba(20.3922%,20.3922%,20.3922%,1);
+	direction: ltr;
+	line-height: 1line;
+	block-progression: tb;
+	text-align: left;
+	text-transform: none;
+	text-indent: 0pt;
+	box-shadow: none;
+	box-sizing: content-box;
+	vertical-align: baseline;
+	-fm-digit-set: roman;
+	-fm-space-before: 0line;
+	-fm-space-after: 0line;
+	-fm-tab-stops: ;
+	-fm-strikethrough: false;
+	-fm-underline: none;
+	-fm-glyph-variant: ;
+	-fm-paragraph-margin-left: 0pt;
+	-fm-paragraph-margin-right: 0pt;
+	-fm-character-direction: ;
+	-fm-use-default-appearance: false;
+	-fm-override-with-classic: false;
+	-fm-baseline-shift: 0pt;
+	-fm-fill-effect: 0;
+	-fm-highlight-color: rgba(0%,0%,0%,0);
+	-fm-text-vertical-align: center;
+	-fm-tategaki: false;
+	-fm-rotation: 0;
+	-fm-borders-between-reps: false;
+	-fm-borders-baseline: false;
+	-fm-texty-field: false;
+	-fm-box-shadow-persist: none;
+}
+self:hover .self
+{
+	background-color: rgba(100%,100%,100%,0);
+	color: rgba(20.3922%,20.3922%,20.3922%,1);
+}
+self:pressed .self
+{
+	background-color: rgba(100%,100%,100%,0);
+}
+self:checked .self
+{
+	background-image: none;
+	background-color: rgba(100%,100%,100%,0);
+	border-image-source: none;
+	color: rgba(20.3922%,20.3922%,20.3922%,1);
+}
+self:normal .inner_border
+{
+	border-top-color: rgba(0%,0%,0%,0);
+	border-right-color: rgba(0%,0%,0%,0);
+	border-bottom-color: rgba(0%,0%,0%,0);
+	border-left-color: rgba(0%,0%,0%,0);
+	border-top-style: none;
+	border-right-style: none;
+	border-bottom-style: none;
+	border-left-style: none;
+	border-top-width: 0pt;
+	border-right-width: 0pt;
+	border-bottom-width: 0pt;
+	border-left-width: 0pt;
+	border-top-right-radius: 0pt 0pt;
+	border-bottom-right-radius: 0pt 0pt;
+	border-bottom-left-radius: 0pt 0pt;
+	border-top-left-radius: 0pt 0pt;
+	padding-top: 0pt;
+	padding-right: 0pt;
+	padding-bottom: 0pt;
+	padding-left: 0pt;
+	margin-top: 0pt;
+	margin-right: 0pt;
+	margin-bottom: 0pt;
+	margin-left: 0pt;
+	width: auto;
+	height: auto;
+	top: auto;
+	right: auto;
+	bottom: auto;
+	left: auto;
+	position: static;
+	box-shadow: none;
+	box-sizing: content-box;
+}
+self:focus .inner_border
+{
+	box-shadow: none;
+}
+self:normal .text
+{
+	width: 100%;
+	height: 100%;
+	box-sizing: border-box;
+}
+self:normal .icon
+{
+	background-position: left center;
+	-fm-icon-color: rgba(30.1961%,30.1961%,30.1961%,1);
+	-fm-icon-padding: 0.5em;
+}
+self:hover .icon
+{
+	-fm-icon-color: rgba(30.1961%,30.1961%,30.1961%,1);
+}
+self:pressed .icon
+{
+	-fm-icon-color: rgba(30.1961%,30.1961%,30.1961%,1);
+}
+self:checked .icon
+{
+	-fm-icon-color: rgba(30.1961%,30.1961%,30.1961%,1);
+}
+self:normal .baseline
+{
+	border-top-color: rgba(0%,0%,0%,0);
+	border-right-color: rgba(0%,0%,0%,0);
+	border-bottom-color: rgba(0%,0%,0%,0);
+	border-left-color: rgba(0%,0%,0%,0);
+	border-top-style: none;
+	border-right-style: none;
+	border-bottom-style: none;
+	border-left-style: none;
+	border-top-width: 0pt;
+	border-right-width: 0pt;
+	border-bottom-width: 0pt;
+	border-left-width: 0pt;
+}
+</FullCSS>
+              <ThemeName>com.filemaker.theme.custom.0A80DF60_45C3_4BA8_A88D_28ACF54F60F7</ThemeName>
+            </Styles>
+            <CharacterStyleVector>
+              <Style>
+                <Data/>
+                <CharacterStyle mask="32695">
+                  <Font-family codeSet="Roman" fontId="8" postScript="HelveticaNeue">Helvetica Neue</Font-family>
+                  <Font-size>16</Font-size>
+                  <Face>0</Face>
+                  <Color>#343434</Color>
+                </CharacterStyle>
+              </Style>
+            </CharacterStyleVector>
+            <ParagraphStyleVector>
+              <Style>
+                <Data/>
+                <ParagraphStyle mask="0"/>
+              </Style>
+            </ParagraphStyleVector>
+          </TextObj>
+          <ButtonObj buttonFlags="2" iconSize="42" displayType="5">
+            <Step enable="True" id="167" name="Refresh Object">
+              <ObjectName>
+                <Calculation><![CDATA[Let ( $$TOGGLE.VALUE = not $$TOGGLE.VALUE ; "bar.toggle" )]]></Calculation>
+              </ObjectName>
+              <Repetition>
+                <Calculation><![CDATA[1]]></Calculation>
+              </Repetition>
+            </Step>
+            <Stream size="19">
+              <Type>FNAM</Type>
+              <HexData>000000010533373B3D3F0007353C3C74292C3D</HexData>
+            </Stream>
+            <Stream size="1">
+              <Type>GLPH</Type>
+              <HexData>01</HexData>
+            </Stream>
+            <Stream size="1161">
+              <Type>SVG </Type>
+              <HexData>3C3F786D6C2076657273696F6E3D22312E302220656E636F64696E673D227574662D38223F3E0D0A3C212D2D2047656E657261746F723A2041646F626520496C6C7573747261746F722031362E302E342C20535647204578706F727420506C75672D496E202E205356472056657273696F6E3A20362E3030204275696C6420302920202D2D3E0D0A3C21444F435459504520737667205055424C494320222D2F2F5733432F2F4454442053564720312E312F2F454E222022687474703A2F2F7777772E77332E6F72672F47726170686963732F5356472F312E312F4454442F73766731312E647464223E0D0A3C7376672076657273696F6E3D22312E31222069643D224C617965725F312220786D6C6E733D22687474703A2F2F7777772E77332E6F72672F323030302F7376672220786D6C6E733A786C696E6B3D22687474703A2F2F7777772E77332E6F72672F313939392F786C696E6B2220783D223070782220793D22307078220D0A092077696474683D223337707822206865696768743D2232327078222076696577426F783D22302E352031312E352033372032322220656E61626C652D6261636B67726F756E643D226E657720302E352031312E352033372032322220786D6C3A73706163653D227072657365727665223E0D0A3C6720636C6173733D22666D5F66696C6C223E0D0A3C7469746C653E47726F75703C2F7469746C653E0D0A3C646573633E43726561746564207769746820536B657463682E3C2F646573633E0D0A3C673E0D0A093C673E0D0A09093C7061746820636C6173733D22666D5F66696C6C2220643D224D31312E352C31312E35632D362E3037352C302D31312C342E3932352D31312C313173342E3932352C31312C31312C31317331312D342E3932352C31312D31315331372E3537352C31312E352C31312E352C31312E357A204D31312E352C33312E350D0A090909632D342E3937312C302D392D342E3032392D392D3973342E3032392D392C392D3973392C342E3032392C392C395331362E3437312C33312E352C31312E352C33312E357A222F3E0D0A093C2F673E0D0A3C2F673E0D0A3C673E0D0A093C673E0D0A09093C7061746820636C6173733D22666D5F66696C6C2220643D224D32362E3439392C31312E354831312E35303143352E3433332C31312E352C302E352C31362E3432352C302E352C32322E3563302C362E3037362C342E3932362C31312C31312E3030312C31316831342E39393863362E3036382C302C31312E3030312D342E3932352C31312E3030312D31310D0A0909094333372E352C31362E3432332C33322E3537342C31312E352C32362E3439392C31312E357A204D32362E3530342C33312E354831312E343936632D342E3936392C302D382E3939362D342E3032382D382E3939362D3963302D342E3937312C342E3032392D392C382E3939362D396831352E3030380D0A09090963342E3936392C302C382E3939362C342E3032382C382E3939362C394333352E352C32372E3437312C33312E3437312C33312E352C32362E3530342C33312E357A222F3E0D0A093C2F673E0D0A3C2F673E0D0A3C2F673E0D0A3C2F7376673E0D0A</HexData>
+            </Stream>
+          </ButtonObj>
+          <HideCondition findMode="True">
+            <Calculation><![CDATA[$$TOGGLE.VALUE]]></Calculation>
+          </HideCondition>
+          <LabelCalc>
+            <Calculation><![CDATA["Toggle switch"]]></Calculation>
+          </LabelCalc>
+        </Object>
+        <Object type="Button" key="89" LabelKey="0" flags="65796" rotation="0">
+          <Bounds top="20.0000000" left="0.0000000" bottom="40.0000000" right="180.0000000"/>
+          <TextObj flags="2">
+            <ExtendedAttributes fontHeight="22" graphicFormat="0">
+              <NumFormat flags="0" charStyle="0" negativeStyle="0" currencySymbol="" thousandsSep="0" decimalPoint="0" negativeColor="#0" decimalDigits="0" trueString="" falseString=""/>
+              <DateFormat format="0" charStyle="0" monthStyle="0" dayStyle="0" separator="0">
+                <DateElement>0</DateElement>
+                <DateElement>0</DateElement>
+                <DateElement>0</DateElement>
+                <DateElement>0</DateElement>
+                <DateElementSep index="0"/>
+                <DateElementSep index="1"/>
+                <DateElementSep index="2"/>
+                <DateElementSep index="3"/>
+                <DateElementSep index="4"/>
+              </DateFormat>
+              <TimeFormat flags="0" charStyle="0" hourStyle="0" minsecStyle="0" separator="0" amString="" pmString="" ampmString=""/>
+              <CharacterStyle mask="32695">
+                <Font-family codeSet="Roman" fontId="8" postScript="HelveticaNeue">Helvetica Neue</Font-family>
+                <Font-size>16</Font-size>
+                <Face>0</Face>
+                <Color>#343434</Color>
+              </CharacterStyle>
+            </ExtendedAttributes>
+            <Styles>
+              <CustomStyles>
+                <Name>FM-1860BF28-128B-4E15-83BD-02BC4F9E8A24</Name>
+              </CustomStyles>
+              <FullCSS>
+self:normal .self
+{
+	background-image: none;
+	background-position: 0% 0%;
+	background-size: auto;
+	background-repeat: repeat repeat;
+	background-origin: padding-box;
+	background-clip: border-box;
+	background-color: rgba(100%,100%,100%,0);
+	border-top-color: rgba(0%,0%,0%,0);
+	border-right-color: rgba(0%,0%,0%,0);
+	border-bottom-color: rgba(0%,0%,0%,0);
+	border-left-color: rgba(0%,0%,0%,0);
+	border-top-style: none;
+	border-right-style: none;
+	border-bottom-style: none;
+	border-left-style: none;
+	border-top-width: 0pt;
+	border-right-width: 0pt;
+	border-bottom-width: 0pt;
+	border-left-width: 0pt;
+	border-top-right-radius: 0pt 0pt;
+	border-bottom-right-radius: 0pt 0pt;
+	border-bottom-left-radius: 0pt 0pt;
+	border-top-left-radius: 0pt 0pt;
+	border-image-source: none;
+	border-image-slice: 100% 100% 100% 100% fill;
+	border-image-width: 1 1 1 1;
+	border-image-outset: 0 0 0 0;
+	border-image-repeat: stretch stretch;
+	outline-width: 0pt;
+	outline-style: none;
+	outline-color: invert;
+	outline-offset: 0pt;
+	font-family: -fm-font-family(Helvetica Neue,HelveticaNeue);
+	font-weight: normal;
+	font-stretch: normal;
+	font-style: normal;
+	font-variant: normal;
+	font-size: 16pt;
+	color: rgba(20.3922%,20.3922%,20.3922%,1);
+	direction: ltr;
+	line-height: 1line;
+	block-progression: tb;
+	text-align: left;
+	text-transform: none;
+	text-indent: 0pt;
+	box-shadow: none;
+	box-sizing: content-box;
+	vertical-align: baseline;
+	-fm-digit-set: roman;
+	-fm-space-before: 0line;
+	-fm-space-after: 0line;
+	-fm-tab-stops: ;
+	-fm-strikethrough: false;
+	-fm-underline: none;
+	-fm-glyph-variant: ;
+	-fm-paragraph-margin-left: 0pt;
+	-fm-paragraph-margin-right: 0pt;
+	-fm-character-direction: ;
+	-fm-use-default-appearance: false;
+	-fm-override-with-classic: false;
+	-fm-baseline-shift: 0pt;
+	-fm-fill-effect: 0;
+	-fm-highlight-color: rgba(0%,0%,0%,0);
+	-fm-text-vertical-align: center;
+	-fm-tategaki: false;
+	-fm-rotation: 0;
+	-fm-borders-between-reps: false;
+	-fm-borders-baseline: false;
+	-fm-texty-field: false;
+	-fm-box-shadow-persist: none;
+}
+self:hover .self
+{
+	background-color: rgba(100%,100%,100%,0);
+	color: rgba(20.3922%,20.3922%,20.3922%,1);
+}
+self:pressed .self
+{
+	background-color: rgba(100%,100%,100%,0);
+}
+self:checked .self
+{
+	background-image: none;
+	background-color: rgba(100%,100%,100%,0);
+	border-image-source: none;
+	color: rgba(20.3922%,20.3922%,20.3922%,1);
+}
+self:normal .inner_border
+{
+	border-top-color: rgba(0%,0%,0%,0);
+	border-right-color: rgba(0%,0%,0%,0);
+	border-bottom-color: rgba(0%,0%,0%,0);
+	border-left-color: rgba(0%,0%,0%,0);
+	border-top-style: none;
+	border-right-style: none;
+	border-bottom-style: none;
+	border-left-style: none;
+	border-top-width: 0pt;
+	border-right-width: 0pt;
+	border-bottom-width: 0pt;
+	border-left-width: 0pt;
+	border-top-right-radius: 0pt 0pt;
+	border-bottom-right-radius: 0pt 0pt;
+	border-bottom-left-radius: 0pt 0pt;
+	border-top-left-radius: 0pt 0pt;
+	padding-top: 0pt;
+	padding-right: 0pt;
+	padding-bottom: 0pt;
+	padding-left: 0pt;
+	margin-top: 0pt;
+	margin-right: 0pt;
+	margin-bottom: 0pt;
+	margin-left: 0pt;
+	width: auto;
+	height: auto;
+	top: auto;
+	right: auto;
+	bottom: auto;
+	left: auto;
+	position: static;
+	box-shadow: none;
+	box-sizing: content-box;
+}
+self:focus .inner_border
+{
+	box-shadow: none;
+}
+self:normal .text
+{
+	width: 100%;
+	height: 100%;
+	box-sizing: border-box;
+}
+self:normal .icon
+{
+	background-position: left center;
+	-fm-icon-color: rgba(30.1961%,30.1961%,30.1961%,1);
+	-fm-icon-padding: 0.5em;
+}
+self:hover .icon
+{
+	-fm-icon-color: rgba(30.1961%,30.1961%,30.1961%,1);
+}
+self:pressed .icon
+{
+	-fm-icon-color: rgba(30.1961%,30.1961%,30.1961%,1);
+}
+self:checked .icon
+{
+	-fm-icon-color: rgba(30.1961%,30.1961%,30.1961%,1);
+}
+self:normal .baseline
+{
+	border-top-color: rgba(0%,0%,0%,0);
+	border-right-color: rgba(0%,0%,0%,0);
+	border-bottom-color: rgba(0%,0%,0%,0);
+	border-left-color: rgba(0%,0%,0%,0);
+	border-top-style: none;
+	border-right-style: none;
+	border-bottom-style: none;
+	border-left-style: none;
+	border-top-width: 0pt;
+	border-right-width: 0pt;
+	border-bottom-width: 0pt;
+	border-left-width: 0pt;
+}
+</FullCSS>
+              <ThemeName>com.filemaker.theme.custom.0A80DF60_45C3_4BA8_A88D_28ACF54F60F7</ThemeName>
+            </Styles>
+            <CharacterStyleVector>
+              <Style>
+                <Data/>
+                <CharacterStyle mask="32695">
+                  <Font-family codeSet="Roman" fontId="8" postScript="HelveticaNeue">Helvetica Neue</Font-family>
+                  <Font-size>16</Font-size>
+                  <Face>0</Face>
+                  <Color>#343434</Color>
+                </CharacterStyle>
+              </Style>
+            </CharacterStyleVector>
+            <ParagraphStyleVector>
+              <Style>
+                <Data/>
+                <ParagraphStyle mask="0"/>
+              </Style>
+            </ParagraphStyleVector>
+          </TextObj>
+          <ButtonObj buttonFlags="2" iconSize="42" displayType="5">
+            <Step enable="True" id="167" name="Refresh Object">
+              <ObjectName>
+                <Calculation><![CDATA[Let ( $$TOGGLE.VALUE = not $$TOGGLE.VALUE ; "bar.toggle" )]]></Calculation>
+              </ObjectName>
+              <Repetition>
+                <Calculation><![CDATA[1]]></Calculation>
+              </Repetition>
+            </Step>
+            <Stream size="18">
+              <Type>FNAM</Type>
+              <HexData>000000010533373B3D3F0006353474292C3D</HexData>
+            </Stream>
+            <Stream size="1">
+              <Type>GLPH</Type>
+              <HexData>01</HexData>
+            </Stream>
+            <Stream size="1359">
+              <Type>SVG </Type>
+              <HexData>3C3F786D6C2076657273696F6E3D22312E302220656E636F64696E673D227574662D38223F3E0D0A3C212D2D2047656E657261746F723A2041646F626520496C6C7573747261746F722031362E302E342C20535647204578706F727420506C75672D496E202E205356472056657273696F6E3A20362E3030204275696C6420302920202D2D3E0D0A3C21444F435459504520737667205055424C494320222D2F2F5733432F2F4454442053564720312E312F2F454E222022687474703A2F2F7777772E77332E6F72672F47726170686963732F5356472F312E312F4454442F73766731312E647464223E0D0A3C7376672076657273696F6E3D22312E31222069643D224C617965725F322220786D6C6E733D22687474703A2F2F7777772E77332E6F72672F323030302F7376672220786D6C6E733A786C696E6B3D22687474703A2F2F7777772E77332E6F72672F313939392F786C696E6B2220783D223070782220793D22307078220D0A092077696474683D223337707822206865696768743D2232327078222076696577426F783D22302E352031312E352033372032322220656E61626C652D6261636B67726F756E643D226E657720302E352031312E352033372032322220786D6C3A73706163653D227072657365727665223E0D0A3C6720636C6173733D22666D5F66696C6C223E0D0A3C7469746C653E47726F75703C2F7469746C653E0D0A3C646573633E43726561746564207769746820536B657463682E3C2F646573633E0D0A3C7061746820636C6173733D22666D5F66696C6C2220643D224D31362E3034322C32322E35303263302D332E3836332C322E3039362D372E3237312C352E3239342D392E3333364831312E3532632D352E3630392C302D31302E31362C342E31382D31302E31362C392E3333360D0A0963302C352E3135372C342E3534382C392E3333352C31302E31362C392E33333568392E3831364331382E3133382C32392E3737322C31362E3034322C32362E3336352C31362E3034322C32322E3530327A222F3E0D0A3C673E0D0A093C673E0D0A09093C7061746820636C6173733D22666D5F66696C6C2220643D224D32362E3439392C31312E354831312E35303143352E3433332C31312E352C302E352C31362E3432352C302E352C32322E3563302C362E3037362C342E3932362C31312C31312E3030312C31316831342E39393863362E3036382C302C31312E3030312D342E3932352C31312E3030312D31310D0A0909094333372E352C31362E3432332C33322E3537342C31312E352C32362E3439392C31312E357A204D32362E3530342C33312E354831312E343936632D342E3936392C302D382E3939362D342E3032382D382E3939362D3963302D342E3937312C342E3032392D392C382E3939362D396831352E3030380D0A09090963342E3936392C302C382E3939362C342E3032382C382E3939362C394333352E352C32372E3437312C33312E3437312C33312E352C32362E3530342C33312E357A222F3E0D0A093C2F673E0D0A3C2F673E0D0A3C673E0D0A093C673E0D0A09093C7061746820636C6173733D22666D5F66696C6C2220643D224D32362E352C31312E35632D362E3037352C302D31312C342E3932352D31312C313173342E3932352C31312C31312C31317331312D342E3932352C31312D31315333322E3537352C31312E352C32362E352C31312E357A204D32362E352C33312E350D0A090909632D342E3937312C302D392D342E3032392D392D3973342E3032392D392C392D3973392C342E3032392C392C395333312E3437312C33312E352C32362E352C33312E357A222F3E0D0A093C2F673E0D0A3C2F673E0D0A3C2F673E0D0A3C2F7376673E0D0A</HexData>
+            </Stream>
+          </ButtonObj>
+          <HideCondition findMode="True">
+            <Calculation><![CDATA[not $$TOGGLE.VALUE]]></Calculation>
+          </HideCondition>
+          <LabelCalc>
+            <Calculation><![CDATA["Toggle switch"]]></Calculation>
+          </LabelCalc>
+        </Object>
+      </ButtonBarObj>
+    </Object>
+  </Layout>
+</fmxmlsnippet>
+

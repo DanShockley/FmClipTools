@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<fmxmlsnippet type="FMObjectList">
+  <Step enable="True" id="89" name="# (comment)">
+    <Text>PURPOSE: Do something special.</Text>
+  </Step>
+  <Step enable="True" id="89" name="# (comment)">
+    <Text>RETURNS: [type] value(s)</Text>
+  </Step>
+  <Step enable="True" id="89" name="# (comment)"/>
+  <Step enable="True" id="89" name="# (comment)">
+    <Text>📌 Important note</Text>
+  </Step>
+  <Step enable="True" id="89" name="# (comment)"/>
+  <Step enable="True" id="85" name="Allow User Abort">
+    <Set state="False"/>
+  </Step>
+  <Step enable="True" id="86" name="Set Error Capture">
+    <Set state="True"/>
+  </Step>
+  <Step enable="True" id="89" name="# (comment)"/>
+  <Step enable="True" id="89" name="# (comment)">
+    <Text>----------------------------------</Text>
+  </Step>
+  <Step enable="True" id="89" name="# (comment)">
+    <Text>⚙️ Parameters &amp; Defaults</Text>
+  </Step>
+  <Step enable="True" id="89" name="# (comment)">
+    <Text>----------------------------------</Text>
+  </Step>
+  <Step enable="True" id="89" name="# (comment)"/>
+  <Step enable="True" id="141" name="Set Variable">
+    <Repetition>
+      <Calculation><![CDATA[1]]></Calculation>
+    </Repetition>
+    <Name>$parameters</Name>
+  </Step>
+  <Step enable="True" id="68" name="If">
+    <Calculation><![CDATA[Let ( $parameters = Get ( ScriptParameter ) ; JSONIsValid ( $parameters ) )]]></Calculation>
+  </Step>
+  <Step enable="True" id="89" name="# (comment)"/>
+  <Step enable="True" id="89" name="# (comment)">
+    <Text>Parameters</Text>
+  </Step>
+  <Step enable="True" id="141" name="Set Variable">
+    <Value>
+      <Calculation><![CDATA[/*[Number]*/
+JSONGetElement ( $parameters ; "id" )]]></Calculation>
+    </Value>
+    <Repetition>
+      <Calculation><![CDATA[1]]></Calculation>
+    </Repetition>
+    <Name>$id</Name>
+  </Step>
+  <Step enable="True" id="89" name="# (comment)"/>
+  <Step enable="True" id="89" name="# (comment)">
+    <Text>Defaults</Text>
+  </Step>
+  <Step enable="True" id="141" name="Set Variable">
+    <Value>
+      <Calculation><![CDATA[If ( IsEmpty ( $target ) ; "default value" )]]></Calculation>
+    </Value>
+    <Repetition>
+      <Calculation><![CDATA[1]]></Calculation>
+    </Repetition>
+    <Name>$target</Name>
+  </Step>
+  <Step enable="True" id="141" name="Set Variable">
+    <Value>
+      <Calculation><![CDATA[$id]]></Calculation>
+    </Value>
+    <Repetition>
+      <Calculation><![CDATA[1]]></Calculation>
+    </Repetition>
+    <Name>$$CURRENTFILE.ID</Name>
+  </Step>
+  <Step enable="True" id="89" name="# (comment)"/>
+  <Step enable="True" id="89" name="# (comment)">
+    <Text>Validation</Text>
+  </Step>
+  <Step enable="True" id="141" name="Set Variable">
+    <Value>
+      <Calculation><![CDATA[True]]></Calculation>
+    </Value>
+    <Repetition>
+      <Calculation><![CDATA[1]]></Calculation>
+    </Repetition>
+    <Name>$parametersValid</Name>
+  </Step>
+  <Step enable="True" id="89" name="# (comment)"/>
+  <Step enable="True" id="68" name="If">
+    <Calculation><![CDATA[not $parametersValid]]></Calculation>
+  </Step>
+  <Step enable="True" id="1" name="Perform Script">
+    <Calculation><![CDATA[JSONSetElement ( "{}" ;
+	[ "script" ; Get ( ScriptName ) ; JSONString ];
+	[ "reason" ; "Invalid parameters" ; JSONString ]
+)]]></Calculation>
+    <Script id="19" name="Parameter Error"/>
+  </Step>
+  <Step enable="True" id="103" name="Exit Script"/>
+  <Step enable="True" id="70" name="End If"/>
+  <Step enable="True" id="69" name="Else"/>
+  <Step enable="True" id="89" name="# (comment)">
+    <Text>Handle bad JSON error.</Text>
+  </Step>
+  <Step enable="True" id="1" name="Perform Script">
+    <Calculation><![CDATA[JSONSetElement ( "{}" ;
+	[ "script" ; Get ( ScriptName ) ; JSONString ];
+	[ "reason" ; "Invalid JSON" ; JSONString ]
+)]]></Calculation>
+    <Script id="19" name="Parameter Error"/>
+  </Step>
+  <Step enable="True" id="103" name="Exit Script"/>
+  <Step enable="True" id="70" name="End If"/>
+  <Step enable="True" id="89" name="# (comment)"/>
+  <Step enable="True" id="89" name="# (comment)">
+    <Text>----------------------------------</Text>
+  </Step>
+  <Step enable="True" id="89" name="# (comment)">
+    <Text>⚡️ Main Script</Text>
+  </Step>
+  <Step enable="True" id="89" name="# (comment)">
+    <Text>----------------------------------</Text>
+  </Step>
+  <Step enable="True" id="89" name="# (comment)"/>
+</fmxmlsnippet>
+

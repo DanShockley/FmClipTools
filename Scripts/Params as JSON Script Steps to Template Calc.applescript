@@ -1,5 +1,5 @@
--- Extra - Param Script Steps to Template Calc
--- version 2023-03-25, Daniel A. Shockley
+-- Params as JSON Script Steps to Template Calc
+-- version 2023-05-24, Daniel A. Shockley
 
 (*
 	Takes 'Set Variable' script step objects in clipboard and makes a template calculation to call the script. 
@@ -24,6 +24,7 @@
 	A later version of this script may look for a data type in a comment in the Set Variable step. 
 
 	HISTORY: 
+		2023-06-16 ( danshockley ): Updates to comments. 
 		2023-05-24 ( danshockley ): Added examples. Removed references to defaultValue, callStack, and other more-involved coding standards not widely used in the community. Finished a workable version. 
 		2023-03-25 ( danshockley ): First created. Based off of "Param Script Steps to Template Calc" (was SFR dictinoary param-passing).
 *)

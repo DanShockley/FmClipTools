@@ -1,5 +1,5 @@
 -- Params as JSON Script Steps to Template Calc
--- version 2023-10-28, Daniel A. Shockley
+-- version 2023-11-14, Daniel A. Shockley
 
 (*
 	Takes 'Set Variable' script step objects in clipboard and makes a template calculation to call the script. 
@@ -24,6 +24,7 @@
 	A later version of this script may look for a data type in a comment in the Set Variable step. 
 
 	HISTORY: 
+		2023-11-14 ( danshockley ): If the useShockleyCustomFunctions property is set, use the CallStack custom function in the param template.
 		2023-10-28 ( danshockley ): Support GetJParam custom function in addition to just JSONGetElement. 
 		2023-06-16 ( danshockley ): Updates to comments. 
 		2023-05-24 ( danshockley ): Added examples. Removed references to defaultValue, callStack, and other more-involved coding standards not widely used in the community. Finished a workable version. 
@@ -32,9 +33,14 @@
 
 property debugMode : false
 
+property useShockleyCustomFunctions : false
 
 on run
 	
+	if ((path to home folder) as string) contains ":danshock:" then
+		-- custom option that most will not use, so set only for author.
+		set useShockleyCustomFunctions to true
+	end if
 	
 	-- load the translator library:
 	set transPath to (((((path to me as text) & "::") as alias) as string) & "fmObjectTranslator.applescript")
@@ -133,8 +139,12 @@ on getParamCalc(paramName, paramComment, isFirstParam)
 	set paramCalc to replaceSimple({paramCalc, "###PARAM_NAME###", paramName})
 	
 	if isFirstParam then
-		set paramCalc to "Parameters:" & return & return Â
-			& "JSONSetElement ( \"{}\"" & return & paramCalc
+		set paramCalc to "Parameters:" & return & return
+		if useShockleyCustomFunctions then
+			set paramCalc to paramCalc & "JSONSetElement ( CallStack ( \"JSON\" )" & return & paramCalc
+		else
+			set paramCalc to paramCalc & "JSONSetElement ( \"{}\" " & return & paramCalc
+		end if
 	end if
 	
 	return paramCalc

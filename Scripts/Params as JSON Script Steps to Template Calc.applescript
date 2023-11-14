@@ -139,11 +139,12 @@ on getParamCalc(paramName, paramComment, isFirstParam)
 	set paramCalc to replaceSimple({paramCalc, "###PARAM_NAME###", paramName})
 	
 	if isFirstParam then
-		set paramCalc to "Parameters:" & return & return
 		if useShockleyCustomFunctions then
-			set paramCalc to paramCalc & "JSONSetElement ( CallStack ( \"JSON\" )" & return & paramCalc
+			set paramCalc to "Parameters:" & return & return & Â
+				"JSONSetElement ( CallStack ( \"JSON\" )" & return & paramCalc
 		else
-			set paramCalc to paramCalc & "JSONSetElement ( \"{}\" " & return & paramCalc
+			set paramCalc to "Parameters:" & return & return & Â
+				"JSONSetElement ( \"{}\" " & return & paramCalc
 		end if
 	end if
 	

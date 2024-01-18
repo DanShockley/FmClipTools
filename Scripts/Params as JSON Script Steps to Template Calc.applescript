@@ -1,5 +1,5 @@
 -- Params as JSON Script Steps to Template Calc
--- version 2023-11-14, Daniel A. Shockley
+-- version 2024-01-18, Daniel A. Shockley
 
 (*
 	Takes 'Set Variable' script step objects in clipboard and makes a template calculation to call the script. 
@@ -20,10 +20,10 @@
 		; [ "SomeParam1" ; "Whatever the SomeParam1 should be" ; JSONString ]
 		)
 		
-	Note that you will need to change the JSON data type from JSONString to whatever it SHOULD be. 
-	A later version of this script may look for a data type in a comment in the Set Variable step. 
+	Note that the JSON data type will be JSONString unless the script step using GetJParam specifies some other data type (Text,Number,Date, etc.). 
 
 	HISTORY: 
+		2024-01-18 ( danshockley ): If the script step using GetJParam specifies what data type the variable should be, also use the matching JSON data type in the template calc generated. 
 		2023-11-14 ( danshockley ): If the useShockleyCustomFunctions property is set, use the CallStack custom function in the param template.
 		2023-10-28 ( danshockley ): Support GetJParam custom function in addition to just JSONGetElement. 
 		2023-06-16 ( danshockley ): Updates to comments. 
@@ -61,7 +61,9 @@ on run
 		
 		set scriptStepElements to every XML element of XML element "fmxmlsnippet" of xmlData whose name is "Step"
 		
+		
 		repeat with oneScriptStepElement in scriptStepElements
+			
 			
 			if value of XML attribute "name" of oneScriptStepElement is not "Set Variable" then
 				-- not a Set Variable script step, so ignore it.
@@ -81,6 +83,20 @@ on run
 					else
 						-- this IS a parameter variable being pulled, so process it:
 						
+						-- get the param name (JSON key) by nibbling away: 
+						set oneParamName to valueCalcCDATA
+						set oneParamName to my getTextAfter(oneParamName, "GetJParam")
+						set oneParamName to my getTextAfter(oneParamName, "(")
+						set oneParamName to my getTextAfter(oneParamName, "\"")
+						set oneParamName to my getTextBefore(oneParamName, "\"")
+						
+						
+						-- get the param data type (if any) by nibbling away: 
+						set oneParamDataType to valueCalcCDATA
+						set oneParamDataType to my getTextAfter(oneParamDataType, oneParamName & "\"")
+						set oneParamDataType to my getTextAfter(oneParamDataType, "\"")
+						set oneParamDataType to my getTextBefore(oneParamDataType, "\"")
+						
 						set oneParamComment to my getTextAfter(valueCalcCDATA, "//")
 						
 						if length of oneParamComment is 0 then
@@ -94,15 +110,14 @@ on run
 						
 						set oneParamComment to my trimWhitespace(oneParamComment)
 						
-						
-						-- Remove leading "$" - 
-						set oneParamName to text 2 thru -1 of varName
-						
+						-- get one of the pieces of the calc:
+						set oneParamCalc to my getParamCalc(oneParamName, oneParamComment, onFirstParam, oneParamDataType)
+						-- stitch them together appropriately (1st gets special handling):
 						if onFirstParam then
-							set paramCalcSample to paramCalcSample & my getParamCalc(oneParamName, oneParamComment, onFirstParam)
+							set paramCalcSample to paramCalcSample & oneParamCalc
 							set onFirstParam to false
 						else
-							set paramCalcSample to paramCalcSample & return & my getParamCalc(oneParamName, oneParamComment, onFirstParam)
+							set paramCalcSample to paramCalcSample & return & oneParamCalc
 						end if
 						
 					end if
@@ -129,9 +144,31 @@ end run
 
 
 
-on getParamCalc(paramName, paramComment, isFirstParam)
+on getParamCalc(paramName, paramComment, isFirstParam, paramDataType)
 	
-	set paramCalc to tab & "; [ \"###PARAM_NAME###\" ;  ; JSONString ]"
+	
+	(* HISTORY
+		2024-01-18 ( danshockley ): added paramDataType to this handler's incoming parameters.
+	*)
+	
+	(* Note: Any dates/times/timestamps must be specified as JSONString in the params. Script will convert. *)
+	(* Note: If the key is not in the JSON, GetJParam will not set the variable. *)
+	if length of paramDataType is 0 then
+		set jsonType to "JSONString"
+	else if paramDataType is "Number" then
+		set jsonType to "JSONNumber"
+	else if paramDataType is "Boolean" then
+		set jsonType to "JSONBoolean"
+	else if paramDataType is "Date" then
+		set jsonType to "JSONString"
+	else if paramDataType is "Time" then
+		set jsonType to "JSONString"
+	else if paramDataType is "Timestamp" then
+		set jsonType to "JSONString"
+	end if
+	
+	
+	set paramCalc to tab & "; [ \"###PARAM_NAME###\" ;  ; " & jsonType & " ]"
 	if length of paramComment is greater than 0 then -- need to append the comment
 		set paramCalc to paramCalc & "    /* " & paramComment & " */"
 	end if

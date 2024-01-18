@@ -1,0 +1,76 @@
+<fmxmlsnippet type="FMObjectList">
+    <CustomFunction id="203" functionArity="2" visible="True" parameters="ParamName;DataType" name="GetJParam">
+        <Calculation><![CDATA[// GetJParam ( ParamName ; DataType )
+// version 2023-07-06
+
+/*
+       Simple function to pull a parameter from JSON in the ScriptParameter. DataType defaults to "Text" if not specified.
+
+REQUIRES: 
+       JSON.ContainsProperty, from https://github.com/geistinteractive/fm-json-additions
+
+HISTORY:
+       2023-07-06 ( danshockley ): Only pull if it EXISTS in the params-as-JSON, since you otherwise get weird errors or 0 when you want a null variable. 
+       2023-06-22 ( danshockley ): Created. 
+*/
+
+Case (
+       /* if specified param is NOT in the script parameter, return empty string. */ 
+       not JSON.ContainsProperty ( Get ( ScriptParameter ) ; ParamName )
+       ; ""
+       ; 
+       DataType = "Number" or DataType = "Boolean"
+       ; GetAsNumber ( JSONGetElement ( Get ( ScriptParameter ) ; ParamName ) )
+       ; 
+       DataType = "Date"
+       ; GetAsDate ( JSONGetElement ( Get ( ScriptParameter ) ; ParamName ) )
+       ; 
+       DataType = "Time"
+       ; GetAsTime ( JSONGetElement ( Get ( ScriptParameter ) ; ParamName ) )
+       ; 
+       DataType = "Timestamp"
+       ; GetAsTimestamp ( JSONGetElement ( Get ( ScriptParameter ) ; ParamName ) )
+       ; 
+       JSONGetElement ( Get ( ScriptParameter ) ; ParamName )
+       )]]></Calculation>
+    </CustomFunction>
+    <CustomFunction id="204" functionArity="2" visible="True" parameters="json;name" name="JSON.ContainsProperty">
+        <Calculation><![CDATA[/**
+ * =====================================
+ * 
+ * Test if the JSON contains the given property
+ *
+ * @param {object} json a valid JSON object
+ * @param {string} name the property to test (can be in form body.path.item)
+ *
+ * @returns {boolean} 
+ *
+ * @module fm-json-additions
+ * @see https://github.com/geistinteractive/fm-json-additions
+ * 
+ * @history 2017-10-12, todd@geistinteractive.com, fixed depth gh #14
+ * @history  2017-05-16, john@e-rwu.com, added path depth, gh #3
+ * @history  2017-04-09, todd@geistinteractive.com
+ *
+ * =====================================
+ */
+
+
+Case ( PatternCount ( name ; "." ) > 0 and Length ( name ) >= 3 ; 
+
+       JSON.ContainsProperty ( JSONGetElement ( json ; GetValue ( Substitute ( name ; "." ; ¶ ) ; 1 ) ) ; Middle ( name ; Position ( name ; "." ; 1 ; 1 ) + 1 ; Length ( name ) ) )
+
+;
+
+Let ( [
+
+       keys = JSONListKeys ( json ; "" )
+
+] ;
+
+       not IsEmpty ( FilterValues ( name ; keys ) )
+
+)
+)]]></Calculation>
+    </CustomFunction>
+</fmxmlsnippet>

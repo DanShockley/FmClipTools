@@ -148,6 +148,7 @@ on getParamCalc(paramName, paramComment, isFirstParam, paramDataType)
 	
 	
 	(* HISTORY
+		2024-01-25 ( danshockley ): Make sure jsonType is set to SOMETHING. 
 		2024-01-18 ( danshockley ): added paramDataType to this handler's incoming parameters.
 	*)
 	
@@ -164,6 +165,8 @@ on getParamCalc(paramName, paramComment, isFirstParam, paramDataType)
 	else if paramDataType is "Time" then
 		set jsonType to "JSONString"
 	else if paramDataType is "Timestamp" then
+		set jsonType to "JSONString"
+	else
 		set jsonType to "JSONString"
 	end if
 	

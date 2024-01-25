@@ -1,5 +1,5 @@
 -- Params as JSON Script Steps to Template Calc
--- version 2024-01-18, Daniel A. Shockley
+-- version 2024-01-25, Daniel A. Shockley
 
 (*
 	Takes 'Set Variable' script step objects in clipboard and makes a template calculation to call the script. 
@@ -23,6 +23,7 @@
 	Note that the JSON data type will be JSONString unless the script step using GetJParam specifies some other data type (Text,Number,Date, etc.). 
 
 	HISTORY: 
+		2024-01-25 ( danshockley ): In getParamCalc, make sure jsonType is set to SOMETHING. 
 		2024-01-18 ( danshockley ): If the script step using GetJParam specifies what data type the variable should be, also use the matching JSON data type in the template calc generated. 
 		2023-11-14 ( danshockley ): If the useShockleyCustomFunctions property is set, use the CallStack custom function in the param template.
 		2023-10-28 ( danshockley ): Support GetJParam custom function in addition to just JSONGetElement. 

@@ -1,11 +1,12 @@
 -- fmClip - Copy Specific Custom Functions
--- version 2023-05-24
+-- version 2024-03-15
 
 (*
 
 	Takes whatever custom functions are in the clipboard, copies the existing custom functions from an ALREADY-OPEN Manage Custom Functions window in the "target" file, then removes whatever functions that target already has, then pastes.  
 
 HISTORY: 
+	2024-03-15 ( danshockley ): Removed parens around "the clipboard" when setting, since that was causing an error - ugh. 
 	2023-05-24 ( danshockley ): Added getFmAppProc to avoid being tied to one specific "FileMaker" app name, and to avoid going by the bundle ID. 
 	2023-03-10 ( danshockley ): remove embedded fmObjectTranslator. 
 	2023-02-07 ( danshockley ): first created. 
@@ -62,7 +63,7 @@ on run
 				*)
 				click menu item "Select All" of menu "Edit" of menu bar 1
 				click menu item "Copy" of menu "Edit" of menu bar 1
-				delay 0.5
+				delay 2
 				
 				
 			end tell
@@ -91,7 +92,7 @@ on run
 		set justDesiredFunctionsXML to removeFunctions(sourceTextXML, removeFunctionNames)
 		
 		tell application "System Events"
-			set (the clipboard) to justDesiredFunctionsXML
+			set the clipboard to justDesiredFunctionsXML
 		end tell
 		set convertResult to clipboardConvertToFMObjects({}) of objTrans
 		

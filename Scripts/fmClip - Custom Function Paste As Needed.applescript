@@ -60,6 +60,8 @@ on run
 			end tell
 		end tell
 		
+		set countOrig to count of origFunctionNames
+		
 		-- now, read out what functions the target already has:
 		checkClipboardForObjects({}) of objTrans
 		set targetTextXML to clipboardGetObjectsasXML({}) of objTrans
@@ -70,19 +72,23 @@ on run
 		
 		-- get the (possibly) reduced set of functions, then put those in clipboard:
 		set justFunctionsXML to removeFunctions(sourceTextXML, targetFunctionNames)
-		set the clipboard to justFunctionsXML
 		
-		set convertResult to clipboardConvertToFMObjects({}) of objTrans
-		
-		-- PASTE only the needed functions:
-		tell application "System Events"
-			tell process id fmAppProcID
-				set frontmost to true
-				delay 0.5
-				click menu item "Paste" of menu "Edit" of menu bar 1
+		if length of justFunctionsXML is 0 then
+			display dialog "All " & countOrig & " custom functions from the clipboard already exist in the target."
+		else
+			set the clipboard to justFunctionsXML
+			
+			set convertResult to clipboardConvertToFMObjects({}) of objTrans
+			
+			-- PASTE only the needed functions:
+			tell application "System Events"
+				tell process id fmAppProcID
+					set frontmost to true
+					delay 0.5
+					click menu item "Paste" of menu "Edit" of menu bar 1
+				end tell
 			end tell
-		end tell
-		
+		end if
 		return convertResult
 		
 	on error errMsg number errNum

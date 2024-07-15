@@ -5,7 +5,7 @@
 	
 
 HISTORY:
-	4.4 - 2024-07-15 ( danshockley ): Target the FileMaker app by process ID, NOT by a reference to a process, since the dereference loses the intended target. Also, get the first STANDARD window to check for the table name, to avoid being confused by various floating utility windows. 
+	4.4 - 2024-07-15 ( danshockley ): Target the FileMaker app by process ID, NOT by a reference to a process, since the dereference loses the intended target. Also, get the first non-floating window to check for the table name, to avoid being confused by various floating utility windows. 
 	4.3 - 2023-05-24 ( danshockley ): Added getFmAppProc to avoid being tied to one specific "FileMaker" app name. 
 	4.2 - 2023-02-07 ( danshockley ): Add support for custom functions (XMFN) by adding the function NAMES to the clipboard alongside the objects. 
 	4.1 - 2019-09-11 ( danshockley ): If clipboard was Script Steps (XMSS) and not ALL were 'Set Field' or 'Set Variable', try to get useful info about all the different script steps, rather than ignoring. 
@@ -128,7 +128,7 @@ on run
 		tell application "System Events"
 			set fmAppProcID to my getFmAppProcessID()
 			tell process id fmAppProcID
-				set window1 to first window whose subrole is "AXStandardWindow"
+				set window1 to first window whose subrole is not "AXFloatingWindow"
 				if name of window1 starts with "Manage Database for" then
 					set tableName to value of pop up button 1 of tab group 1 of window1
 				else

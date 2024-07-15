@@ -138,7 +138,11 @@ on removeFunctions(sourceStringXML, removeNames)
 	end repeat
 	set newXML to newXML & return & snippetFoot
 	
-	return newXML
+	if newXML is equal to snippetHead & return & snippetFoot then
+		return ""
+	else
+		return newXML
+	end if
 	
 end removeFunctions
 

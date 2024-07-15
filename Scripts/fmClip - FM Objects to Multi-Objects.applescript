@@ -1,10 +1,11 @@
 -- FM-XML Objects to Multi-Objects
--- version 4.3, Daniel A. Shockley, Erik Shagdar
+-- version 4.4, Daniel A. Shockley, Erik Shagdar
 (* 
 	Takes objects in the clipboard and adds multiple types of FileMaker objects into clipboard (plus return-delimited text). 
 	
 
 HISTORY:
+	4.4 - 2024-07-15 ( danshockley ): Target the FileMaker app by process ID, NOT by a reference to a process, since the dereference loses the intended target. Also, get the first STANDARD window to check for the table name, to avoid being confused by various floating utility windows. 
 	4.3 - 2023-05-24 ( danshockley ): Added getFmAppProc to avoid being tied to one specific "FileMaker" app name. 
 	4.2 - 2023-02-07 ( danshockley ): Add support for custom functions (XMFN) by adding the function NAMES to the clipboard alongside the objects. 
 	4.1 - 2019-09-11 ( danshockley ): If clipboard was Script Steps (XMSS) and not ALL were 'Set Field' or 'Set Variable', try to get useful info about all the different script steps, rather than ignoring. 
@@ -125,13 +126,15 @@ on run
 		end tell
 		-- result DOES NOT INCLUDE THE TABLE!
 		tell application "System Events"
-			set fmAppProc to my getFmAppProc()
-			
-			if name of window 1 of fmAppProc starts with "Manage Database for" then
-				set tableName to value of pop up button 1 of tab group 1 of window 1 of fmAppProc
-			else
-				set tableName to text returned of (display dialog "Please enter the table name for these field objects." default answer "")
-			end if
+			set fmAppProcID to my getFmAppProcessID()
+			tell process id fmAppProcID
+				set window1 to first window whose subrole is "AXStandardWindow"
+				if name of window1 starts with "Manage Database for" then
+					set tableName to value of pop up button 1 of tab group 1 of window1
+				else
+					set tableName to text returned of (display dialog "Please enter the table name for these field objects." default answer "")
+				end if
+			end tell
 		end tell
 		
 		set fieldNames to tableName & "::" & my unParseChars(fieldShortNames, return & tableName & "::")
@@ -438,25 +441,29 @@ on run
 end run
 
 
-on getFmAppProc()
-	-- version 2023-05-24
-	-- Gets the frontmost "FileMaker" app (if any), otherwise the 1st one available.
+on getFmAppProcessID()
+	-- version 2024-07-15
+	-- Gets process ID of "FileMaker" app that is frontmost (if any), otherwise the 1st one available.
+	set appNameMatchString to "FileMaker"
+	-- [ NOTE: the code below is identical to the function "getAppProcessID" ]
+	
 	tell application "System Events"
-		set fmAppProc to first application process whose frontmost is true
-		if name of fmAppProc does not contain "FileMaker" then
-			-- frontmost is not FileMaker, so just get the 1st one we can find 
-			-- (if multiple copies running, must make the one you want is frontmost to be sure it is used)
+		set frontAppName to name of first application process whose frontmost is true
+		set appProcID to id of first application process whose frontmost is true
+		-- ^^^ we MUST get this HERE - we MUST NOT try to get a reference to the frontmost app, since the dereference will then talk to some OTHER app.
+		if frontAppName does not contain appNameMatchString then
+			-- frontmost does not match, so just get the 1st one we can find.
+			-- (when using, you should probably tell it to set frontmost to true, to be sure)
 			try
-				set fmAppProc to get first application process whose name contains "FileMaker"
+				set appProcID to id of first application process whose name contains appNameMatchString
 			on error errMsg number errNum
-				if errNum is -1719 then return false
 				error errMsg number errNum
 			end try
 		end if
-		return fmAppProc
+		return appProcID
 	end tell
-end getFmAppProc
-
+	
+end getFmAppProcessID
 
 on addTextToVariableScriptSteps(nameOptionalValueList)
 	

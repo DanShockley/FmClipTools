@@ -5,7 +5,7 @@
 	Takes Set Field script step objects in clipboard and puts back into clipboard those same steps wrapped in IF step that compares. USe this to avoid setting a field to a value it already has, so you can avoid making unnecessary modification metadata changes. 
 
 HISTORY:
-	4.2 - 2024-07-15 ( danshockley ): Target the FileMaker app by process ID, NOT by a reference to a process, since the dereference loses the intended target. 
+	4.2 - 2024-07-15 ( danshockley ): Target the FileMaker app by process ID, NOT by a reference to a process, since the dereference loses the intended target. Also, restore focus to frontmost app by bringing it back to front (should not have been necessary?). 
 	4.1 - 2023-05-24 ( danshockley ): Added getFmAppProc to avoid being tied to one specific "FileMaker" app name. 
 	4.0.1 - 2018-10-29 ( dshockley ): Made change recommended by https://github.com/jwillinghalpern - modified nameThruEndStep to by less specific so that any alternate XML tags between Step and /Field tags will not interrupt parsing. TODO: A better fix would be to re-work the whole thing to parse XML properly, but that is a longer-term project. 
 	4.0 - 2018-04-04 ( dshockley/eshagdar ): load fmObjectTranslator code by reference instead of embedded.
@@ -138,6 +138,8 @@ on run
 		tell process id fmAppProcID
 			set frontmost to true
 			display dialog "Converted " & countSetFieldSteps & " Set Field steps to be wrapped in IF-not-same test." buttons {"OK"} default button "OK"
+			delay 0.2
+			set frontmost to true
 		end tell
 	end tell
 	

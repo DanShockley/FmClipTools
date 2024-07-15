@@ -5,6 +5,7 @@
 	In the current/frontmost copy of FileMaker (if running multiple copies/versions of the app), copy the layout objects of the two frontmost windows (BOTH MUST BE IN LAYOUT MODE!), then compare the XML, saving each XML to temporary items director, opening in BBEdit, stripping away superficial differences (internal unique keys), then running a BBEdit comparison to show any differences.
 
 HISTORY:
+	2024-07-15 ( danshockley ): Documentation update: we CAN specify AXStandardWindow in this script, since the windows that might contain a layout ARE standard (some other FM-scripting might need to use AXWindow, so those target windows that are NOT AXFloatingWindow.
 	2024-06-21 ( danshockley ): Created. 
 	
 *)
@@ -45,7 +46,6 @@ on run
 			tell process id frontAppID
 				set frontmost to true
 				delay 0.2
-				--			properties of first window whose subrole is not "AXFloatingWindow"
 				set stdWindows to every window whose subrole is "AXStandardWindow"
 				if debugMode then log stdWindows
 				if debugMode then log {name of item 1 of stdWindows, name of item 2 of stdWindows}

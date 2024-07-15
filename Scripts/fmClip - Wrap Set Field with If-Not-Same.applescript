@@ -1,10 +1,11 @@
 -- Set Fields IF not same
--- version 4.1, Daniel A. Shockley, Erik Shagdar
+-- version 4.2, Daniel A. Shockley, Erik Shagdar
 
 (* 
 	Takes Set Field script step objects in clipboard and puts back into clipboard those same steps wrapped in IF step that compares. USe this to avoid setting a field to a value it already has, so you can avoid making unnecessary modification metadata changes. 
 
 HISTORY:
+	4.2 - 2024-07-15 ( danshockley ): Target the FileMaker app by process ID, NOT by a reference to a process, since the dereference loses the intended target. 
 	4.1 - 2023-05-24 ( danshockley ): Added getFmAppProc to avoid being tied to one specific "FileMaker" app name. 
 	4.0.1 - 2018-10-29 ( dshockley ): Made change recommended by https://github.com/jwillinghalpern - modified nameThruEndStep to by less specific so that any alternate XML tags between Step and /Field tags will not interrupt parsing. TODO: A better fix would be to re-work the whole thing to parse XML properly, but that is a longer-term project. 
 	4.0 - 2018-04-04 ( dshockley/eshagdar ): load fmObjectTranslator code by reference instead of embedded.
@@ -133,9 +134,9 @@ on run
 	clipboardConvertToFMObjects({}) of objTrans
 	
 	tell application "System Events"
-		set fmAppProc to my getFmAppProc()
-		set frontmost of fmAppProc to true
-		tell fmAppProc
+		set fmAppProcID to my getFmAppProcessID()
+		tell process id fmAppProcID
+			set frontmost to true
 			display dialog "Converted " & countSetFieldSteps & " Set Field steps to be wrapped in IF-not-same test." buttons {"OK"} default button "OK"
 		end tell
 	end tell
@@ -145,26 +146,29 @@ on run
 end run
 
 
-on getFmAppProc()
-	-- version 2023-05-24
-	-- Gets the frontmost "FileMaker" app (if any), otherwise the 1st one available.
+on getFmAppProcessID()
+	-- version 2024-07-15
+	-- Gets process ID of "FileMaker" app that is frontmost (if any), otherwise the 1st one available.
+	set appNameMatchString to "FileMaker"
+	-- [ NOTE: the code below is identical to the function "getAppProcessID" ]
+	
 	tell application "System Events"
-		set fmAppProc to first application process whose frontmost is true
-		if name of fmAppProc does not contain "FileMaker" then
-			-- frontmost is not FileMaker, so just get the 1st one we can find 
-			-- (if multiple copies running, must make the one you want is frontmost to be sure it is used)
+		set frontAppName to name of first application process whose frontmost is true
+		set appProcID to id of first application process whose frontmost is true
+		-- ^^^ we MUST get this HERE - we MUST NOT try to get a reference to the frontmost app, since the dereference will then talk to some OTHER app.
+		if frontAppName does not contain appNameMatchString then
+			-- frontmost does not match, so just get the 1st one we can find.
+			-- (when using, you should probably tell it to set frontmost to true, to be sure)
 			try
-				set fmAppProc to get first application process whose name contains "FileMaker"
+				set appProcID to id of first application process whose name contains appNameMatchString
 			on error errMsg number errNum
-				if errNum is -1719 then return false
 				error errMsg number errNum
 			end try
 		end if
-		return fmAppProc
+		return appProcID
 	end tell
-end getFmAppProc
-
-
+	
+end getFmAppProcessID
 
 
 

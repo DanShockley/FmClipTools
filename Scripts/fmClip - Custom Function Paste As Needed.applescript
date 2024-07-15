@@ -1,11 +1,12 @@
 -- fmClip - Custom Function Paste As Needed
--- version 2023-05-24
+-- version 2024-07-15
 
 (*
 
 	Takes whatever custom functions are in the clipboard, copies the existing custom functions from an ALREADY-OPEN Manage Custom Functions window in the "target" file, then removes whatever functions that target already has, then pastes.  
 
 HISTORY: 
+	2024-07-15 ( danshockley ): Target the FileMaker app by process ID, NOT by a reference to a process, since the dereference loses the intended target. 
 	2023-05-24 ( danshockley ): Added getFmAppProc to avoid being tied to one specific "FileMaker" app name. 
 	2022-08-16 ( danshockley ): first created. 
 
@@ -45,8 +46,8 @@ on run
 			set origFunctionNames to value of XML attribute "name" of (every XML element of XML element 1 of origSourceXMLData whose name is "CustomFunction")
 			
 			-- get the target's existing functions into the clipboard:
-			set fmAppProc to my getFmAppProc()
-			tell fmAppProc
+			set fmAppProcID to my getFmAppProcessID()
+			tell process id fmAppProcID
 				set frontmost to true
 				set frontWinName to name of window 1
 				if frontWinName does not start with winNameManageCFs then
@@ -75,7 +76,7 @@ on run
 		
 		-- PASTE only the needed functions:
 		tell application "System Events"
-			tell fmAppProc
+			tell process id fmAppProcID
 				set frontmost to true
 				delay 0.5
 				click menu item "Paste" of menu "Edit" of menu bar 1
@@ -92,24 +93,30 @@ on run
 	
 end run
 
-on getFmAppProc()
-	-- version 2023-05-24
-	-- Gets the frontmost "FileMaker" app (if any), otherwise the 1st one available.
+on getFmAppProcessID()
+	-- version 2024-07-15
+	-- Gets process ID of "FileMaker" app that is frontmost (if any), otherwise the 1st one available.
+	set appNameMatchString to "FileMaker"
+	-- [ NOTE: the code below is identical to the function "getAppProcessID" ]
+	
 	tell application "System Events"
-		set fmAppProc to first application process whose frontmost is true
-		if name of fmAppProc does not contain "FileMaker" then
-			-- frontmost is not FileMaker, so just get the 1st one we can find 
-			-- (if multiple copies running, must make the one you want is frontmost to be sure it is used)
+		set frontAppName to name of first application process whose frontmost is true
+		set appProcID to id of first application process whose frontmost is true
+		-- ^^^ we MUST get this HERE - we MUST NOT try to get a reference to the frontmost app, since the dereference will then talk to some OTHER app.
+		if frontAppName does not contain appNameMatchString then
+			-- frontmost does not match, so just get the 1st one we can find.
+			-- (when using, you should probably tell it to set frontmost to true, to be sure)
 			try
-				set fmAppProc to get first application process whose name contains "FileMaker"
+				set appProcID to id of first application process whose name contains appNameMatchString
 			on error errMsg number errNum
-				if errNum is -1719 then return false
 				error errMsg number errNum
 			end try
 		end if
-		return fmAppProc
+		return appProcID
 	end tell
-end getFmAppProc
+	
+end getFmAppProcessID
+
 
 
 on removeFunctions(sourceStringXML, removeNames)

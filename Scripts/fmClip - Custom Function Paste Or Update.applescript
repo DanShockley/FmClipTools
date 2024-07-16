@@ -1,17 +1,17 @@
--- fmClip - Custom Function Paste As Needed
+-- fmClip - Custom Function Paste Or Update
 -- version 2024-07-16
 
 (*
 
-	Takes whatever custom functions are in the clipboard, copies the existing custom functions from an ALREADY-OPEN Manage Custom Functions window in the "target" file, then removes whatever functions that target already has, then pastes.  
+	Takes whatever custom functions are in the clipboard, and then:
+	 - Pastes every custom function that does not yet exist in the target (like the As Needed script)
+	 - For every function that DOES already exist, compare it to what was in the clipboard, then loop over those, opening up the existing function and pasting in the “new” calculation code for each, then saving.
+	 Includes a dialog at the end saying how many were pasted and how many were updated.
 	Restores the clipboard at end of script, if it was modified. 
 
 HISTORY: 
-	2024-07-16 ( danshockley ): Better variable names for "source" values. 
-	2024-07-16 ( danshockley ): Restore original clipboard objects at end of script, if it was modified. 
-	2024-07-15 ( danshockley ): Target the FileMaker app by process ID, NOT by a reference to a process, since the dereference loses the intended target. In removeFunctionsFromXML, if none left, return empty string, not header/footer with no functions in between. 
-	2023-05-24 ( danshockley ): Added getFmAppProc to avoid being tied to one specific "FileMaker" app name. 
-	2022-08-16 ( danshockley ): first created. 
+	2024-07-16 ( danshockley ): Finished building first version. 
+	2024-07-15 ( danshockley ): first created. 
 
 *)
 
@@ -22,12 +22,15 @@ use scripting additions
 property winNameManageCFs : "Manage Custom Functions"
 property snippetHead : "<fmxmlsnippet type=\"FMObjectList\">"
 property snippetFoot : "</fmxmlsnippet>"
-property debugMode : false
+
 
 on run
 	
+	set resultMsgList to {}
+	
 	try
 		set restoreClipboard to false
+		
 		-- load the translator library:
 		set transPath to (((((path to me as text) & "::") as alias) as string) & "fmObjectTranslator.applescript")
 		set objTrans to run script (transPath as alias)
@@ -44,28 +47,25 @@ on run
 		-- get the source functions:
 		set sourceTextXML to clipboardGetObjectsasXML({}) of objTrans
 		
+		set fmProcID to my getFmAppProcessID()
 		tell application "System Events"
 			-- get the NAMEs of the source functions:
 			set sourceXMLData to make new XML data with properties {text:sourceTextXML}
 			set sourceFunctionNames to value of XML attribute "name" of (every XML element of XML element 1 of sourceXMLData whose name is "CustomFunction")
 			
 			-- get the target's existing functions into the clipboard:
-			set fmAppProcID to my getFmAppProcessID()
-			tell process id fmAppProcID
+			tell process id fmProcID
 				set frontmost to true
 				set frontWinName to name of window 1
 				if frontWinName does not start with winNameManageCFs then
 					error "You must have the " & winNameManageCFs & " window open in your target database." number -1024
 				end if
-				
 				click menu item "Select All" of menu "Edit" of menu bar 1
 				click menu item "Copy" of menu "Edit" of menu bar 1
 				delay 0.5
 				set restoreClipboard to true -- just modified clipboard, so should restore at end
 			end tell
 		end tell
-		
-		set countSource to count of sourceFunctionNames
 		
 		-- now, read out what functions the target already has:
 		checkClipboardForObjects({}) of objTrans
@@ -75,47 +75,131 @@ on run
 			set targetFunctionNames to value of XML attribute "name" of (every XML element of XML element 1 of targetXMLData whose name is "CustomFunction")
 		end tell
 		
-		if debugMode then log "targetFunctionNames: " & targetFunctionNames
-		
 		-- get the (possibly) reduced set of functions, then put those in clipboard:
-		set justFunctionsXML to removeFunctionsFromXML(sourceTextXML, targetFunctionNames)
+		set pasteXML to removeFunctionsFromXML(sourceTextXML, targetFunctionNames)
 		
-		if length of justFunctionsXML is 0 then
-			display dialog "All " & countSource & " custom functions from the clipboard already exist in the target."
-		else
-			set the clipboard to justFunctionsXML
-			
+		tell application "System Events"
+			set pasteXMLData to make new XML data with properties {text:pasteXML}
+			set pasteFunctionNames to value of XML attribute "name" of (every XML element of XML element 1 of pasteXMLData whose name is "CustomFunction")
+		end tell
+		
+		if (count of pasteFunctionNames) is greater than 0 then
+			-- NEED TO PASTE SOME:		
+			set the clipboard to pasteXML
 			set convertResult to clipboardConvertToFMObjects({}) of objTrans
 			
-			-- PASTE only the needed functions:
 			tell application "System Events"
-				tell process id fmAppProcID
+				tell process id fmProcID
 					set frontmost to true
 					delay 0.5
 					click menu item "Paste" of menu "Edit" of menu bar 1
-					delay 0.5
 				end tell
 			end tell
+			set oneResultMsg to ("Pasted " & (count of pasteFunctionNames) & " functions.") as string
+			copy oneResultMsg to end of resultMsgList
+			
 		end if
+		
+		
+		-- ANY TO UPDATE? 
+		-- see which functions, if any, need to be updated:
+		tell application "System Events"
+			-- loop over the SOURCE functions, seeing if they need to be updated:
+			set sourceNodes to (every XML element of XML element 1 of sourceXMLData whose name is "CustomFunction")
+			
+			set countUpdated to 0
+			repeat with oneSourceNode in sourceNodes
+				set oneSourceName to value of XML attribute "name" of oneSourceNode
+				if oneSourceName is in targetFunctionNames then
+					-- ALREADY existed, so see if we need to update:
+					set oneSourceCALC to (value of XML element "Calculation" of oneSourceNode)
+					
+					set targetFunctionCALC to (value of XML element "Calculation" of (first XML element of XML element 1 of targetXMLData whose value of XML attribute "name" is oneSourceName))
+					if oneSourceCALC is not equal to targetFunctionCALC then
+						-- DIFF, SO NEED TO UPDATE THIS CALC:
+						my updateExistingCustomFunction({functionName:oneSourceName, calcCode:oneSourceCALC, fmProcID:fmProcID})
+						set countUpdated to countUpdated + 1
+					end if
+				end if
+			end repeat
+			if countUpdated is greater than 0 then
+				set oneResultMsg to ("Updated " & (countUpdated) & " functions.") as string
+				copy oneResultMsg to end of resultMsgList
+			end if
+		end tell
 		
 		if restoreClipboard then
 			set the clipboard to sourceTextXML
 			clipboardConvertToFMObjects({}) of objTrans
 		end if
 		
-		return convertResult
+		set resultDialogMsg to unParseChars(resultMsgList, return)
+		display dialog resultDialogMsg buttons {"OK"} default button "OK"
+		
+		return true
+		
 		
 	on error errMsg number errNum
-		if restoreClipboard then
+			if restoreClipboard then
 			set the clipboard to sourceTextXML
 			clipboardConvertToFMObjects({}) of objTrans
 		end if
-		display dialog errMsg
+
+		display dialog errMsg buttons {" Cancel "} default button " Cancel "
 		return false
 	end try
 	
 	
 end run
+
+
+on updateExistingCustomFunction(prefs)
+	-- version 2024-07-15
+	
+	set defaultPrefs to {functionName:null, calcCode:null}
+	set prefs to prefs & defaultPrefs
+	try
+		set fmProcID to fmProcID of prefs
+	on error
+		set fmProcID to my getFmAppProcessID()
+	end try
+	
+	tell application "System Events"
+		tell process id fmProcID
+			try
+				select (first row of (table 1 of scroll area 1 of window 1) whose name of static text 1 is functionName of prefs)
+				delay 0.05
+				set selectedFunctionName to value of static text 1 of (first row of table 1 of scroll area 1 of window 1 whose selected is true)
+				if functionName of prefs is not equal to selectedFunctionName then
+					error "failed to select function even though function exists" number -1024
+				end if
+				
+				set editButton to first button of window 1 whose name begins with "Edit"
+				
+				click editButton
+				delay 0.1
+				if name of window 1 is not "Edit Custom Function" then
+					error "failed to OPEN Edit window?" number -1024
+				end if
+				
+				-- SET THE CALCULATION CODE:
+				set value of text area 1 of scroll area 4 of window 1 to calcCode of prefs
+				
+				-- SAVE the CALC EDIT:
+				click (first button of window 1 whose name begins with "OK")
+				delay 0.1
+				
+				if name of window 1 is not "Edit Custom Function" then
+					error "failed to CLOSE Edit window?" number -1024
+				end if
+				
+			on error
+				return false
+			end try
+		end tell
+	end tell
+	
+end updateExistingCustomFunction
 
 on getFmAppProcessID()
 	-- version 2024-07-15
@@ -171,6 +255,18 @@ on removeFunctionsFromXML(sourceStringXML, removeNames)
 end removeFunctionsFromXML
 
 
-
-
-
+on unParseChars(thisList, newDelim)
+	-- version 1.2, Daniel A. Shockley, https://www.danshockley.com
+	set oldDelims to AppleScript's text item delimiters
+	try
+		set AppleScript's text item delimiters to the {newDelim as string}
+		set the unparsedText to thisList as string
+		set AppleScript's text item delimiters to oldDelims
+		return unparsedText
+	on error errMsg number errNum
+		try
+			set AppleScript's text item delimiters to oldDelims
+		end try
+		error "ERROR: unParseChars() handler: " & errMsg number errNum
+	end try
+end unParseChars

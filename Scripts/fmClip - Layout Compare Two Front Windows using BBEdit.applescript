@@ -5,6 +5,7 @@
 	In the current/frontmost copy of FileMaker (if running multiple copies/versions of the app), copy the layout objects of the two frontmost windows (BOTH MUST BE IN LAYOUT MODE!), then compare the XML, saving each XML to temporary items director, opening in BBEdit, stripping away superficial differences (internal unique keys), then running a BBEdit comparison to show any differences.
 
 HISTORY:
+	2024-07-16 ( danshockley ): Use getFmAppProcessID and then tell by process id. 
 	2024-07-15 ( danshockley ): Documentation update: we CAN specify AXStandardWindow in this script, since the windows that might contain a layout ARE standard (some other FM-scripting might need to use AXWindow, so those target windows that are NOT AXFloatingWindow.
 	2024-06-21 ( danshockley ): Created. 
 	
@@ -30,20 +31,10 @@ on run
 		*)
 		
 		
+		set fmProcID to my getFmAppProcessID()
 		
 		tell application "System Events"
-			set frontAppName to get name of first application process whose frontmost is true
-			set frontAppID to id of first application process whose frontmost is true
-			if frontAppName does not contain "FileMaker" then
-				try
-					set firstFmApp to first application process whose name contains "FileMaker"
-				on error errMsg number errNum
-					return false
-				end try
-				set frontAppName to name of firstFmApp
-				set frontAppID to id of firstFmApp
-			end if
-			tell process id frontAppID
+			tell process id fmProcID
 				set frontmost to true
 				delay 0.2
 				set stdWindows to every window whose subrole is "AXStandardWindow"
@@ -108,7 +99,7 @@ on run
 		
 		-- need to bring it to front first:
 		tell application "System Events"
-			tell process id frontAppID
+			tell process id fmProcID
 				-- bring window 2 to front
 				tell win2
 					perform action "AXRaise"
@@ -175,7 +166,7 @@ on run
 		
 	on error errMsg number errNum
 		tell application "System Events"
-			tell process id frontAppID
+			tell process id fmProcID
 				set frontmost to true
 				delay 0.2
 				showError({errMsg:errMsg})
@@ -187,6 +178,30 @@ on run
 end run
 
 
+
+on getFmAppProcessID()
+	-- version 2024-07-15
+	-- Gets process ID of "FileMaker" app that is frontmost (if any), otherwise the 1st one available.
+	set appNameMatchString to "FileMaker"
+	-- [ NOTE: the code below is identical to the function "getAppProcessID" ]
+	
+	tell application "System Events"
+		set frontAppName to name of first application process whose frontmost is true
+		set appProcID to id of first application process whose frontmost is true
+		-- ^^^ we MUST get this HERE - we MUST NOT try to get a reference to the frontmost app, since the dereference will then talk to some OTHER app.
+		if frontAppName does not contain appNameMatchString then
+			-- frontmost does not match, so just get the 1st one we can find.
+			-- (when using, you should probably tell it to set frontmost to true, to be sure)
+			try
+				set appProcID to id of first application process whose name contains appNameMatchString
+			on error errMsg number errNum
+				error errMsg number errNum
+			end try
+		end if
+		return appProcID
+	end tell
+	
+end getFmAppProcessID
 
 on showError(prefs)
 	

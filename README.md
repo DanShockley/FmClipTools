@@ -12,8 +12,8 @@ To do that:
 * Open up /Applications/Script Editor.app and go into its Preferences. 
 * Activate the checkbox for "Show Script menu in menu bar"
 * Switch to FileMaker
-* Click the Scripts menu, then pick "Open Scripts Folder -> Open FileMaker Pro Advanced Scripts Folder"
-* Put an alias to each of the Scripts into that folder. 
+* Click the (AppleScript) menubar item added above (an S-shaped sheet of paper icon), then pick "Open Scripts Folder." You could create a sub-folder there named "FileMaker Pro", but I prefer to have these available from any application context, so I keep them at the top level. This will open `~/Library/Scripts/` in the Finder. 
+* Put an alias to each of the `fmClip - {whatever}` scripts into that folder. 
 
 2024-07-16 update: Added the `fmClip - Custom Function Paste Or Update` script, so you can now copy a bunch of custom functions from a good/current source file, go to a target file's Manage Custom Functions, and run this script. It will paste any that do not yet exist in the target, then update any existing functions that do not match the source. NOTE: It will not (yet) rename/add/remove parameters, so that would get an error when it tries to save the modified calculation. 
 

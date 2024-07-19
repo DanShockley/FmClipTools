@@ -5,7 +5,7 @@
 	Takes Set Field script step objects in clipboard and puts back into clipboard those same steps wrapped in IF step that compares, using `If Not Exact`. Use this to avoid setting a field to a value it already has, so you can avoid making unnecessary modification metadata changes. 
 
 HISTORY:
-	2024-07-19 ( danshockley ): Minor update to scritp description, mkaing clear that this uses a NOT EXACT comparison, instead of case-insensitive inequality operator. 
+	2024-07-19 ( danshockley ): Minor update to script description, making clear that this uses a NOT EXACT comparison, instead of the case-insensitive inequality operator (actual change was years ago in 3.9.2). 
 	4.2 - 2024-07-15 ( danshockley ): Target the FileMaker app by process ID, NOT by a reference to a process, since the dereference loses the intended target. Also, restore focus to frontmost app by bringing it back to front (should not have been necessary?). 
 	4.1 - 2023-05-24 ( danshockley ): Added getFmAppProc to avoid being tied to one specific "FileMaker" app name. 
 	4.0.1 - 2018-10-29 ( dshockley ): Made change recommended by https://github.com/jwillinghalpern - modified nameThruEndStep to by less specific so that any alternate XML tags between Step and /Field tags will not interrupt parsing. TODO: A better fix would be to re-work the whole thing to parse XML properly, but that is a longer-term project. 

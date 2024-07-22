@@ -20,10 +20,12 @@ use AppleScript version "2.4" -- Yosemite (10.10) or later
 use framework "Foundation"
 use scripting additions
 
+property debugMode : false
+property ScriptName : "Custom Function Paste As Needed"
+
 property winNameManageCFs : "Manage Custom Functions"
 property snippetHead : "<fmxmlsnippet type=\"FMObjectList\">"
 property snippetFoot : "</fmxmlsnippet>"
-property debugMode : false
 
 on run
 	

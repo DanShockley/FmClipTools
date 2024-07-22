@@ -10,7 +10,7 @@
 	Restores the clipboard at end of script, if it was modified. 
 
 HISTORY: 
-	2024-07-22 ( danshockley ): Updated comments. Added more error handling info. Gather the "update" list, then TELL the user which will be updated so they can confirm/refuse, by picking ALL, or from the list. 
+	2024-07-22 ( danshockley ): Updated comments. Added more error handling info. Gather the "update" list, then TELL the user which will be updated so they can confirm/refuse, by picking ALL, or from the list. Added debugMode property for testing purposes (set to false once testing is done).
 	2024-07-16 ( danshockley ): Finished building first version. 
 	2024-07-15 ( danshockley ): first created. 
 
@@ -19,6 +19,9 @@ HISTORY:
 use AppleScript version "2.4" -- Yosemite (10.10) or later
 use framework "Foundation"
 use scripting additions
+
+property debugMode : false
+property ScriptName : "Custom Function Paste Or Update"
 
 property winNameManageCFs : "Manage Custom Functions"
 property snippetHead : "<fmxmlsnippet type=\"FMObjectList\">"
@@ -96,7 +99,9 @@ on run
 		
 		try
 			-- PASTE FUNCTIONS, if any:
-			if (count of pasteFunctionNames) is greater than 0 then
+			if (count of pasteFunctionNames) is 0 then
+				copy "No new functions were pasted." to end of resultMsgList
+			else
 				-- NEED TO PASTE SOME:		
 				set the clipboard to pasteXML
 				set convertResult to clipboardConvertToFMObjects({}) of objTrans
@@ -132,9 +137,16 @@ on run
 						set oneSourceCALC to (value of XML element "Calculation" of oneSourceNode)
 						
 						set targetFunctionCALC to (value of XML element "Calculation" of (first XML element of XML element 1 of targetXMLData whose value of XML attribute "name" is oneSourceName))
-						if oneSourceCALC is not equal to targetFunctionCALC then
+						if oneSourceCALC is equal to targetFunctionCALC then
+							-- SAME, so no need to do anything. 
+							if debugMode then log "oneSourceName (SAME CALCS!): " & oneSourceName
+						else
 							-- DIFF, so add to the "diff" list:
 							copy oneSourceName to end of differentFunctionNames
+							if debugMode then log "oneSourceName: " & oneSourceName
+							if debugMode then log "oneSourceCALC: " & oneSourceCALC
+							if debugMode then log "targetFunctionCALC: " & targetFunctionCALC
+							
 						end if
 					end if
 				end repeat
@@ -148,31 +160,38 @@ on run
 			-- UPDATE FUNCTIONS:
 			
 			set countDiff to count of differentFunctionNames
-			set dialogChooseUpdate to choose from list differentFunctionNames with title "Update existing functions?" with prompt "The following " & countDiff & " custom functions already exist in the target file, and are DIFFERENT from the source. By default, those will all be updated, but you can choose to deselect any that should not, or Cancel doing any updates of existing functions." default items differentFunctionNames OK button name "Update" with multiple selections allowed
-			
-			if class of dialogChooseUpdate is equal to class of false then
-				-- they chose to CANCEL, so do not update any.
-				set sourceNamesToUpdate to {}
-			else
-				set sourceNamesToUpdate to dialogChooseUpdate
-			end if
-			set countToUpdate to count of sourceNamesToUpdate
-			
-			tell application "System Events"
+			if countDiff is 0 then
+				copy "No existing functions were different, so none needed to be updated." to end of resultMsgList
 				
-				set countUpdated to 0
-				repeat with oneSourceName in sourceNamesToUpdate
+			else
+				set dialogChooseUpdate to choose from list differentFunctionNames with title "Update existing functions?" with prompt "The following " & countDiff & " custom functions already exist in the target file, and are DIFFERENT from the source. By default, those will all be updated, but you can choose to deselect any that should not, or Cancel doing any updates of existing functions." default items differentFunctionNames OK button name "Update" with multiple selections allowed
+				
+				if class of dialogChooseUpdate is equal to class of false then
+					-- they chose to CANCEL, so do not update any.
+					set sourceNamesToUpdate to {}
+				else
+					set sourceNamesToUpdate to dialogChooseUpdate
+				end if
+				set countToUpdate to count of sourceNamesToUpdate
+				
+				tell application "System Events"
 					
-					set oneSourceName to contents of oneSourceName
-					set oneSourceCALC to (value of XML element "Calculation" of (first XML element of XML element 1 of sourceXMLData whose value of XML attribute "name" is oneSourceName))
-					my updateExistingCustomFunction({functionName:oneSourceName, calcCode:oneSourceCALC, fmProcID:fmProcID})
-					set countUpdated to countUpdated + 1
-				end repeat
-			end tell
-			
-			if countUpdated is greater than 0 then
-				set oneResultMsg to ("Updated " & (countUpdated) & " functions.") as string
-				copy oneResultMsg to end of resultMsgList
+					set countUpdated to 0
+					repeat with oneSourceName in sourceNamesToUpdate
+						
+						set oneSourceName to contents of oneSourceName
+						set oneSourceCALC to (value of XML element "Calculation" of (first XML element of XML element 1 of sourceXMLData whose value of XML attribute "name" is oneSourceName))
+						my updateExistingCustomFunction({functionName:oneSourceName, calcCode:oneSourceCALC, fmProcID:fmProcID})
+						set countUpdated to countUpdated + 1
+					end repeat
+				end tell
+				
+				if countUpdated is 0 then
+					copy "No existing functions were updated." to end of resultMsgList
+				else
+					set oneResultMsg to ("Updated " & (countUpdated) & " functions.") as string
+					copy oneResultMsg to end of resultMsgList
+				end if
 			end if
 			
 		on error errMsg number errNum
@@ -194,7 +213,7 @@ on run
 		end try
 		
 		set resultDialogMsg to unParseChars(resultMsgList, return)
-		display dialog resultDialogMsg buttons {"OK"} default button "OK"
+		display dialog resultDialogMsg with title ScriptName buttons {"OK"} default button "OK"
 		
 		return true
 		

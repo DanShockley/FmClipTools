@@ -10,6 +10,7 @@
 	Restores the clipboard at end of script, if it was modified. 
 
 HISTORY: 
+	2024-07-22 ( danshockley ): The snippetHead and snippetFoot belong inside the removeFunctionsFromXML handler.
 	2024-07-22 ( danshockley ): Updated comments. Added more error handling info. Gather the "update" list, then TELL the user which will be updated so they can confirm/refuse, by picking ALL, or from the list. Added debugMode property for testing purposes (set to false once testing is done).
 	2024-07-16 ( danshockley ): Finished building first version. 
 	2024-07-15 ( danshockley ): first created. 
@@ -24,8 +25,6 @@ property debugMode : false
 property ScriptName : "Custom Function Paste Or Update"
 
 property winNameManageCFs : "Manage Custom Functions"
-property snippetHead : "<fmxmlsnippet type=\"FMObjectList\">"
-property snippetFoot : "</fmxmlsnippet>"
 
 
 on run
@@ -308,7 +307,10 @@ end getFmAppProcessID
 
 
 on removeFunctionsFromXML(sourceStringXML, removeNames)
-	-- version 2024-07-15
+	-- version 2024-07-22
+	
+	set snippetHead to "<fmxmlsnippet type=\"FMObjectList\">"
+	set snippetFoot to "</fmxmlsnippet>"
 	
 	-- now, generate a (possibly) REDUCED XML block:
 	set {theXMLDoc, theError} to current application's NSXMLDocument's alloc()'s initWithXMLString:sourceStringXML options:0 |error|:(reference)

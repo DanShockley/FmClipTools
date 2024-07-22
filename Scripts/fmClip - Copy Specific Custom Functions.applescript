@@ -6,6 +6,7 @@
 	Asks for a list of custom function names, copies the existing custom functions from an ALREADY-OPEN Manage Custom Functions window in the "source" file, then modifies clipboard to contain ONLY the specified functions.  
 
 HISTORY: 
+	2024-07-22 ( danshockley ): The snippetHead and snippetFoot belong inside the removeFunctionsFromXML handler.
 	2024-07-22 ( danshockley ): Added more error handling info. Says how many were copied at end of script.
 	2024-07-22 ( danshockley ): Fixed description. Updated the removeFunctionsFromXML handler. 
 	2024-07-15 ( danshockley ): Target the FileMaker app by process ID, NOT by a reference to a process, since the dereference loses the intended target. 
@@ -25,9 +26,6 @@ property debugMode : false
 property ScriptName : "Copy Specific Custom Functions"
 
 property winNameManageCFs : "Manage Custom Functions"
-property snippetHead : "<fmxmlsnippet type=\"FMObjectList\">"
-property snippetFoot : "</fmxmlsnippet>"
-
 
 
 on run
@@ -182,7 +180,11 @@ end getFmAppProcessID
 
 
 on removeFunctionsFromXML(sourceStringXML, removeNames)
-	-- version 2024-07-15
+	-- version 2024-07-22
+	
+	set snippetHead to "<fmxmlsnippet type=\"FMObjectList\">"
+	set snippetFoot to "</fmxmlsnippet>"
+	
 	-- now, generate a (possibly) REDUCED XML block:
 	set {theXMLDoc, theError} to current application's NSXMLDocument's alloc()'s initWithXMLString:sourceStringXML options:0 |error|:(reference)
 	if theXMLDoc is missing value then error (theError's localizedDescription() as text)

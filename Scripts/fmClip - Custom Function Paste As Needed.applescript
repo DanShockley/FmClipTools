@@ -7,6 +7,7 @@
 	Restores the clipboard at end of script, if it was modified. 
 
 HISTORY: 
+	2024-07-22 ( danshockley ): The snippetHead and snippetFoot belong inside the removeFunctionsFromXML handler.
 	2024-07-22 ( danshockley ): Updated comments. 
 	2024-07-16 ( danshockley ): Better variable names for "source" values. 
 	2024-07-16 ( danshockley ): Restore original clipboard objects at end of script, if it was modified. 
@@ -24,8 +25,6 @@ property debugMode : false
 property ScriptName : "Custom Function Paste As Needed"
 
 property winNameManageCFs : "Manage Custom Functions"
-property snippetHead : "<fmxmlsnippet type=\"FMObjectList\">"
-property snippetFoot : "</fmxmlsnippet>"
 
 on run
 	
@@ -147,7 +146,10 @@ end getFmAppProcessID
 
 
 on removeFunctionsFromXML(sourceStringXML, removeNames)
-	-- version 2024-07-15
+	-- version 2024-07-22
+	
+	set snippetHead to "<fmxmlsnippet type=\"FMObjectList\">"
+	set snippetFoot to "</fmxmlsnippet>"
 	
 	-- now, generate a (possibly) REDUCED XML block:
 	set {theXMLDoc, theError} to current application's NSXMLDocument's alloc()'s initWithXMLString:sourceStringXML options:0 |error|:(reference)

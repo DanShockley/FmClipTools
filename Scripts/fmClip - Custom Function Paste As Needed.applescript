@@ -7,7 +7,8 @@
 	Restores the clipboard at end of script, if it was modified. 
 
 HISTORY: 
-	2024-07-22 ( danshockley ): The snippetHead and snippetFoot belong inside the removeFunctionsFromXML handler.
+	2024-07-22 ( danshockley ): The removeFunctionsFromXML handler now preserves CDATA tags, isntead of converting to escaped entities. 
+	2024-07-22 ( danshockley ): The snippetHead and snippetFoot properties are no longer needed. 
 	2024-07-22 ( danshockley ): Updated comments. 
 	2024-07-16 ( danshockley ): Better variable names for "source" values. 
 	2024-07-16 ( danshockley ): Restore original clipboard objects at end of script, if it was modified. 
@@ -148,33 +149,26 @@ end getFmAppProcessID
 on removeFunctionsFromXML(sourceStringXML, removeNames)
 	-- version 2024-07-22
 	
-	set snippetHead to "<fmxmlsnippet type=\"FMObjectList\">"
-	set snippetFoot to "</fmxmlsnippet>"
+	-- Removes any CustomFunction nodes with one of the names to remove.
 	
-	-- now, generate a (possibly) REDUCED XML block:
-	set {theXMLDoc, theError} to current application's NSXMLDocument's alloc()'s initWithXMLString:sourceStringXML options:0 |error|:(reference)
-	if theXMLDoc is missing value then error (theError's localizedDescription() as text)
-	set snippetNode to theXMLDoc's childAtIndex:0
-	set sourceCount to snippetNode's childCount as integer
-	set newXML to snippetHead
-	repeat with nodeIndex from 0 to sourceCount - 1
-		set oneNode to (snippetNode's childAtIndex:nodeIndex)
-		set nameAttr to (oneNode's attributeForName:"name")
-		set functionName to nameAttr's stringValue as text
-		if functionName is not in removeNames then
-			set functionXML to oneNode's XMLString as text
-			set newXML to newXML & return & functionXML
-		end if
+	-- Parse the XML and preserve CDATA sections
+	set xmlDoc to current application's NSXMLDocument's alloc()'s initWithXMLString:sourceStringXML options:(current application's NSXMLNodePreserveCDATA) |error|:(missing value)
+	
+	repeat with oneRemoveName in removeNames
+		set xpath to "//CustomFunction[@name='" & oneRemoveName & "']"
+		set nodesToRemove to (xmlDoc's nodesForXPath:xpath |error|:(missing value))
+		repeat with node in nodesToRemove
+			node's detach()
+		end repeat
 	end repeat
-	set newXML to newXML & return & snippetFoot
+	-- Extract inner XML of the root element
+	set rootElement to xmlDoc's rootElement()
+	set modifiedXMLString to (rootElement's XMLStringWithOptions:(0))
 	
-	if newXML is equal to snippetHead & return & snippetFoot then
-		return ""
-	else
-		return newXML
-	end if
+	return modifiedXMLString as text
 	
 end removeFunctionsFromXML
+
 
 
 

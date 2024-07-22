@@ -5,6 +5,7 @@
 	In the current/frontmost copy of FileMaker (if running multiple copies/versions of the app), copy the layout objects of the two frontmost windows (BOTH MUST BE IN LAYOUT MODE!), then compare the XML, saving each XML to temporary items director, opening in BBEdit, stripping away superficial differences (internal unique keys), then running a BBEdit comparison to show any differences.
 
 HISTORY:
+	2024-07-22 ( danshockley ): BUG-FIX: missing "my" for showError. BBEdit should use "file <path>" for opening. The showError handler now targets the (1st) frontmost app process for displaying the alert. Added more error-handling info. 
 	2024-07-16 ( danshockley ): Use getFmAppProcessID and then tell by process id. 
 	2024-07-15 ( danshockley ): Documentation update: we CAN specify AXStandardWindow in this script, since the windows that might contain a layout ARE standard (some other FM-scripting might need to use AXWindow, so those target windows that are NOT AXFloatingWindow.
 	2024-06-21 ( danshockley ): Created. 
@@ -68,30 +69,46 @@ on run
 				end try
 				
 				
-				-- get the LAYOUT NAMES:
-				tell win1
-					set layoutName1 to title of first button whose accessibility description is "Layout Menu"
-				end tell
-				tell win2
-					set layoutName2 to title of first button whose accessibility description is "Layout Menu"
-				end tell
+				try
+					-- get LAYOUT NAMES:
+					tell win1
+						set layoutName1 to title of first button whose accessibility description is "Layout Menu"
+					end tell
+					tell win2
+						set layoutName2 to title of first button whose accessibility description is "Layout Menu"
+					end tell
+				on error errMsg number errNum
+					set errMsg to errMsg & " [Get Layout Names]."
+					error errMsg number errNum
+				end try
 				
 				
+				try
+					-- COPY all objects from window 1:
+					click menu item "Select All" of menu "Edit" of menu bar 1
+					delay 0.2
+					click menu item "Copy" of menu "Edit" of menu bar 1
+					delay 0.2
+				on error errMsg number errNum
+					set errMsg to errMsg & " [COPY all objects from window 1]."
+					error errMsg number errNum
+				end try
 				
-				-- COPY all objects from window 1:
-				click menu item "Select All" of menu "Edit" of menu bar 1
-				delay 0.2
-				click menu item "Copy" of menu "Edit" of menu bar 1
-				delay 0.2
 			end tell
 		end tell
-		-- make sure layout objects were copied:
-		checkClipboardForObjects({}) of objTrans
-		if currentCode of objTrans is not "XML2" then
-			error "Could not get FileMaker layout objects from the clipboard, unclear why copying failed." number -1024
-		end if
-		-- get the layout objects:
-		set layoutObjectsXML_1 to clipboardGetObjectsasXML({}) of objTrans
+		
+		try
+			-- make sure layout objects were copied:
+			checkClipboardForObjects({}) of objTrans
+			if currentCode of objTrans is not "XML2" then
+				error "Could not get FileMaker layout objects from the clipboard, unclear why copying failed." number -1024
+			end if
+			-- get the layout objects:
+			set layoutObjectsXML_1 to clipboardGetObjectsasXML({}) of objTrans
+		on error errMsg number errNum
+			set errMsg to errMsg & " [Check Clipboard for Layout Objects (from window 1)]."
+			error errMsg number errNum
+		end try
 		
 		
 		
@@ -100,47 +117,78 @@ on run
 		-- need to bring it to front first:
 		tell application "System Events"
 			tell process id fmProcID
-				-- bring window 2 to front
-				tell win2
-					perform action "AXRaise"
+				try
+					-- bring window 2 to front
+					tell win2
+						perform action "AXRaise"
+						delay 0.2
+					end tell
+					
+					-- COPY all objects from window 2:
+					click menu item "Select All" of menu "Edit" of menu bar 1
 					delay 0.2
-				end tell
+					click menu item "Copy" of menu "Edit" of menu bar 1
+					delay 0.2
+				on error errMsg number errNum
+					set errMsg to errMsg & " [Copy all objects from window 2]."
+					error errMsg number errNum
+				end try
 				
-				-- COPY all objects from window 2:
-				click menu item "Select All" of menu "Edit" of menu bar 1
-				delay 0.2
-				click menu item "Copy" of menu "Edit" of menu bar 1
-				delay 0.2
-				-- restore window 1 to front (leave things as we found them):
-				tell win1
-					perform action "AXRaise"
-					delay 0.2
-				end tell
+				try
+					-- restore window 1 to front (leave things as we found them):
+					tell win1
+						perform action "AXRaise"
+						delay 0.2
+					end tell
+				on error errMsg number errNum
+					set errMsg to errMsg & " [Restore Window 1 to front]."
+					error errMsg number errNum
+				end try
 				
 			end tell
 		end tell
-		-- make sure layout objects were copied:
-		checkClipboardForObjects({}) of objTrans
-		if currentCode of objTrans is not "XML2" then
-			error "Could not get FileMaker layout objects from the clipboard, unclear why copying failed." number -1024
-		end if
-		-- get the layout objects:
-		set layoutObjectsXML_2 to clipboardGetObjectsasXML({}) of objTrans
 		
+		try
+			-- make sure layout objects were copied:
+			checkClipboardForObjects({}) of objTrans
+			if currentCode of objTrans is not "XML2" then
+				error "Could not get FileMaker layout objects from the clipboard, unclear why copying failed." number -1024
+			end if
+			-- get the layout objects:
+			set layoutObjectsXML_2 to clipboardGetObjectsasXML({}) of objTrans
+		on error errMsg number errNum
+			set errMsg to errMsg & " [Check Clipboard for Layout Objects (from window 2)]."
+			error errMsg number errNum
+		end try
 		
-		-- SAVE XML of layout objects:
-		set filePathLayout1 to ((path to temporary items) as string) & layoutName1 & ".xml"
-		writeToFile({targetFile:filePathLayout1, writeData:layoutObjectsXML_1, writeAs:Çclass utf8È})
-		set filePathLayout2 to ((path to temporary items) as string) & layoutName2 & ".xml"
-		writeToFile({targetFile:filePathLayout2, writeData:layoutObjectsXML_2, writeAs:Çclass utf8È})
+		try
+			-- SAVE XML of layout objects:
+			set filePathLayout1 to ((path to temporary items) as string) & layoutName1 & ".xml"
+			writeToFile({targetFile:filePathLayout1, writeData:layoutObjectsXML_1, writeAs:Çclass utf8È})
+			set filePathLayout2 to ((path to temporary items) as string) & layoutName2 & ".xml"
+			writeToFile({targetFile:filePathLayout2, writeData:layoutObjectsXML_2, writeAs:Çclass utf8È})
+		on error errMsg number errNum
+			set errMsg to errMsg & " [Save both layouts to temp XML files.]."
+			error errMsg number errNum
+		end try
 		
 		
 		tell application "BBEdit"
 			activate
-			-- Open the first XML file
-			set doc1 to open filePathLayout1
-			-- Open the second XML file
-			set doc2 to open filePathLayout2
+			try
+				-- Open the first XML file
+				set doc1 to open  filePathLayout1
+			on error errMsg number errNum
+				set errMsg to errMsg & " filePathLayout1: " & filePathLayout1
+				error errMsg number errNum
+			end try
+			try
+				-- Open the second XML file
+				set doc2 to open filePathLayout2
+			on error errMsg number errNum
+				set errMsg to errMsg & " filePathLayout2: " & filePathLayout2
+				error errMsg number errNum
+			end try
 			
 			repeat with onePair in grepReplacePairs
 				set oneSearch to item 1 of onePair
@@ -154,8 +202,13 @@ on run
 			end repeat
 			
 			
-			-- Use BBEdit's compare feature
-			set comparisonResults to compare doc1 against doc2 options {case sensitive:true}
+			try
+				-- Use BBEdit's compare feature
+				set comparisonResults to compare doc1 against doc2 options {case sensitive:true}
+			on error errMsg number errNum
+				set errMsg to errMsg & " [BBEdit Comparison]."
+				error errMsg number errNum
+			end try
 			
 			if differences found of comparisonResults is false then
 				display dialog reason for no differences of comparisonResults buttons {"OK"} default button "OK"
@@ -163,24 +216,22 @@ on run
 			
 		end tell
 		
-		
 	on error errMsg number errNum
 		tell application "System Events"
 			tell process id fmProcID
 				set frontmost to true
-				delay 0.2
-				showError({errMsg:errMsg})
+				delay 0.5
 			end tell
 		end tell
+		showError({errMsg:errMsg})
 	end try
-	
 	
 end run
 
 
 
 on getFmAppProcessID()
-	-- version 2024-07-15
+	-- version 2024-07-16
 	-- Gets process ID of "FileMaker" app that is frontmost (if any), otherwise the 1st one available.
 	set appNameMatchString to "FileMaker"
 	-- [ NOTE: the code below is identical to the function "getAppProcessID" ]
@@ -203,6 +254,7 @@ on getFmAppProcessID()
 	
 end getFmAppProcessID
 
+
 on showError(prefs)
 	
 	set defaultPrefs to {errMsg:"Error: unspecified.", buttonList:{"OK"}, defButton:"OK"}
@@ -211,16 +263,16 @@ on showError(prefs)
 	set prefs to prefs & defaultPrefs
 	
 	try
-		display alert errMsg of prefs buttons buttonList of prefs default button defButton of prefs
-		return true
+		tell application "System Events"
+			tell (first application process whose frontmost is true)
+				display alert errMsg of prefs buttons buttonList of prefs default button defButton of prefs
+				return true
+			end tell
+		end tell
 	on error errMsg number errNum
 		error "unable to showError - " & errMsg number errNum
 	end try
 end showError
-
-
-
-
 
 
 on writeToFile(prefs)

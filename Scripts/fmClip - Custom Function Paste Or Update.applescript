@@ -1,5 +1,5 @@
 -- fmClip - Custom Function Paste Or Update
--- version 2024-07-16
+-- version 2024-07-22
 
 (*
 
@@ -10,6 +10,7 @@
 	Restores the clipboard at end of script, if it was modified. 
 
 HISTORY: 
+	2024-07-22 ( danshockley ): Updated comments. 
 	2024-07-16 ( danshockley ): Finished building first version. 
 	2024-07-15 ( danshockley ): first created. 
 
@@ -140,11 +141,11 @@ on run
 		
 		
 	on error errMsg number errNum
-			if restoreClipboard then
+		if restoreClipboard then
 			set the clipboard to sourceTextXML
 			clipboardConvertToFMObjects({}) of objTrans
 		end if
-
+		
 		display dialog errMsg buttons {" Cancel "} default button " Cancel "
 		return false
 	end try
@@ -228,6 +229,7 @@ end getFmAppProcessID
 
 
 on removeFunctionsFromXML(sourceStringXML, removeNames)
+	-- version 2024-07-15
 	
 	-- now, generate a (possibly) REDUCED XML block:
 	set {theXMLDoc, theError} to current application's NSXMLDocument's alloc()'s initWithXMLString:sourceStringXML options:0 |error|:(reference)

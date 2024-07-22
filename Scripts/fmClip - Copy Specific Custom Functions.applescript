@@ -1,11 +1,12 @@
 -- fmClip - Copy Specific Custom Functions
--- version 2024-07-15
+-- version 2024-07-22
 
 (*
 
-	Takes whatever custom functions are in the clipboard, copies the existing custom functions from an ALREADY-OPEN Manage Custom Functions window in the "target" file, then removes whatever functions that target already has, then pastes.  
+	Asks for a list of custom function names, copies the existing custom functions from an ALREADY-OPEN Manage Custom Functions window in the "source" file, then modifies clipboard to contain ONLY the specified functions.  
 
 HISTORY: 
+	2024-07-22 ( danshockley ): Fixed description. Updated the removeFunctionsFromXML handler. 
 	2024-07-15 ( danshockley ): Target the FileMaker app by process ID, NOT by a reference to a process, since the dereference loses the intended target. 
 	2024-03-15 ( danshockley ): Removed parens around "the clipboard" when setting, since that was causing an error - ugh. 
 	2023-05-24 ( danshockley ): Added getFmAppProc to avoid being tied to one specific "FileMaker" app name, and to avoid going by the bundle ID. 
@@ -90,7 +91,7 @@ on run
 		set removeFunctionNames to listRemoveFromFirstList({sourceFunctionNames, desiredFunctionNames})
 		
 		-- get the (possibly) reduced set of functions, then put only those desired objects into the clipboard:
-		set justDesiredFunctionsXML to removeFunctions(sourceTextXML, removeFunctionNames)
+		set justDesiredFunctionsXML to removeFunctionsFromXML(sourceTextXML, removeFunctionNames)
 		
 		tell application "System Events"
 			set the clipboard to justDesiredFunctionsXML
@@ -139,8 +140,8 @@ on getFmAppProcessID()
 end getFmAppProcessID
 
 
-on removeFunctions(sourceStringXML, removeNames)
-	
+on removeFunctionsFromXML(sourceStringXML, removeNames)
+	-- version 2024-07-15
 	-- now, generate a (possibly) REDUCED XML block:
 	set {theXMLDoc, theError} to current application's NSXMLDocument's alloc()'s initWithXMLString:sourceStringXML options:0 |error|:(reference)
 	if theXMLDoc is missing value then error (theError's localizedDescription() as text)
@@ -158,9 +159,13 @@ on removeFunctions(sourceStringXML, removeNames)
 	end repeat
 	set newXML to newXML & return & snippetFoot
 	
-	return newXML
+	if newXML is equal to snippetHead & return & snippetFoot then
+		return ""
+	else
+		return newXML
+	end if
 	
-end removeFunctions
+end removeFunctionsFromXML
 
 
 on listRemoveFromFirstList(prefs)

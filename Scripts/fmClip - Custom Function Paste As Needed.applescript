@@ -1,5 +1,5 @@
 -- fmClip - Custom Function Paste As Needed
--- version 2024-07-16
+-- version 2024-07-22
 
 (*
 
@@ -7,6 +7,7 @@
 	Restores the clipboard at end of script, if it was modified. 
 
 HISTORY: 
+	2024-07-22 ( danshockley ): Updated comments. 
 	2024-07-16 ( danshockley ): Better variable names for "source" values. 
 	2024-07-16 ( danshockley ): Restore original clipboard objects at end of script, if it was modified. 
 	2024-07-15 ( danshockley ): Target the FileMaker app by process ID, NOT by a reference to a process, since the dereference loses the intended target. In removeFunctionsFromXML, if none left, return empty string, not header/footer with no functions in between. 
@@ -144,6 +145,7 @@ end getFmAppProcessID
 
 
 on removeFunctionsFromXML(sourceStringXML, removeNames)
+	-- version 2024-07-15
 	
 	-- now, generate a (possibly) REDUCED XML block:
 	set {theXMLDoc, theError} to current application's NSXMLDocument's alloc()'s initWithXMLString:sourceStringXML options:0 |error|:(reference)

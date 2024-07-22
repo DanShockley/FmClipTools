@@ -90,8 +90,10 @@ on run
 		-- just the list of functions we do NOT want from the source:
 		set removeFunctionNames to listRemoveFromFirstList({sourceFunctionNames, desiredFunctionNames})
 		
+		
 		-- get the (possibly) reduced set of functions, then put only those desired objects into the clipboard:
 		set justDesiredFunctionsXML to removeFunctionsFromXML(sourceTextXML, removeFunctionNames)
+				
 		
 		tell application "System Events"
 			set the clipboard to justDesiredFunctionsXML

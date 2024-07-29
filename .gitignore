@@ -1,2 +1,4 @@
 .DS_Store
 FmObjectTranslator.app
+Snippets/*
+!Snippets/README.md

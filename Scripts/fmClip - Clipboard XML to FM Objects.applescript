@@ -39,7 +39,8 @@ on run
 				set dialogMsg to dialogMsg & return & "Clipboard starts with: " & clipboardStartsWith
 			end try
 		end try
-		display dialog dialogMsg
+		display notification dialogMsg with title "FileMaker Clipboard" sound name "Funk"
+		--display dialog dialogMsg
 		return false
 	end if
 	

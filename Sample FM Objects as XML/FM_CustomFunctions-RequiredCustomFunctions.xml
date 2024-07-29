@@ -1,58 +1,55 @@
 <fmxmlsnippet type="FMObjectList">
-
-<CustomFunction id="5" functionArity="2" visible="True" parameters="name;value" name="#">
-<Calculation>
-<![CDATA[// # ( name; value )
-// version 1.1.1, SixFriedRice.com
+    <CustomFunction id="1" functionArity="2" visible="True" parameters="name;value" name="#">
+        <Calculation><![CDATA[// # ( name ; value )
+// version 2023-08-29
 
 /*
-       Entirely self-contained version of DictItem. Creates a name/value (aka key/value) pair for a  SixFriedRice.com-style dictionary.
+       Code-independent version of DictItem. Creates a name/value (aka key/value) pair for a SixFriedRice.com-style dictionary. 
 
 
 HISTORY:
-       1.1.1 - 2016-09-29 ( eshagdar ): updated documentation. formatted for readibility.
-       1.1 - 201x-xx-xx ( eshagdar ): Reformatted to match standards.
-       1.0 - xxxx-xx-xx ( xxxxx ): Taken from SixFriedRice.com
+       2023-08-29 ( danshockley ): Updated documentation. 
+       2022-12-29 ( danshockley ): Updated documentation. Code reformat. 
+       20xx-xx-xx ( xxxxx ): Created. Pulled from SixFriedRice.com blog. 
 */
 
 
 "<:" 
 & Substitute ( 
-       name; 
-       ["="; "/="]; 
-       [":"; "/:"]; 
-       [">"; "/>"]; 
-       ["<" ; "/<"] 
-) 
+       name
+       ; [ "=" ; "/=" ]
+       ; [ ":" ; "/:" ]
+       ; [ ">" ; "/>" ] 
+       ; [ "<" ; "/<" ] 
+       ) 
 & ":=" 
 & Substitute ( 
-       value; 
-       ["="; "/="]; 
-       [":"; "/:"]; 
-       [">"; "/>"]; 
-       ["<" ; "/<"] 
-)
-& ":>"]]>
-</Calculation>
-</CustomFunction>
-<CustomFunction id="6" functionArity="1" visible="True" parameters="name" name="#P">
-<Calculation>
-<![CDATA[// #P ( name )
-// version 1.2.1, SixFriedRice.com
+       value
+       ; [ "=" ; "/=" ]
+       ; [ ":" ; "/:" ]
+       ; [ ">" ; "/>" ]
+       ; [ "<" ; "/<" ] 
+       )
+& ":>"]]></Calculation>
+    </CustomFunction>
+    <CustomFunction id="2" functionArity="1" visible="True" parameters="name" name="#P">
+        <Calculation><![CDATA[// #P ( name )
+// version 2023-08-29
 
 /*
-       Entirely self-contained calc that gets a specified key name's value from ScriptParameter when it is a  SixFriedRice.com-style dictionary.
+       Code-independent calc that gets a specified key name's value from ScriptParameter when it is a SixFriedRice.com-style dictionary.
 
 
 HISTORY:
-       1.2.1 - 2016-09-29 ( eshagdar ): updated documentation.
-       1.2 - 201x-xx-xx ( eshagdar ): Reformatted to match newer standards.
-       1.1 - 201x-xx-xx ( xxxxx ): Reformatted to match standards.
-       1.0 - 201x-xx-xx ( xxxxx ): Taken from SixFriedRice.com
+       2023-08-29 ( danshockley ): Updated documentation. 
+       2022-12-29 ( danshockley ): Updated documentation. Code reformat. 
+       20xx-xx-xx ( xxxxx ): Created. Pulled from SixFriedRice.com blog. 
 */
 
 
-Let ( [ dict = Get ( ScriptParameter ) ];
+Let ( [ 
+               dict = Get ( ScriptParameter ) 
+];
 
        Let ( [
                        match = 
@@ -63,47 +60,45 @@ Let ( [ dict = Get ( ScriptParameter ) ];
                                        ; [ ":"; "/:" ] 
                                        ; [ ">"; "/>" ] 
                                        ; [ "<"; "/<" ] 
-                               ) 
+                                       ) 
                                & ":="
-                       ; pstart = Position ( dict; match; 1; 1)
-                       ; start = pstart + Length(match)
-                       ; end = Position ( dict ; ":>"; start; 1)
-                       ; len = If ( end = 0; 999999999; end - start)
+                       ; pstart = Position ( dict ; match ; 1 ; 1 )
+                       ; start = pstart + Length ( match )
+                       ; end = Position ( dict ; ":>" ; start ; 1 )
+                       ; len = If ( end = 0 ; 999999999 ; end - start )
                ];
 
                If ( pstart = 0
                        ; ""
-                       ; Substitute( 
-                               Middle ( dict; start; len )
+                       ; Substitute ( 
+                               Middle ( dict ; start ; len )
                                ; [ "/:"; ":" ]
                                ; [ "/="; "=" ]
                                ; [ "/>"; ">" ]
                                ; [ "/<"; "<" ] 
-                       )
+                               )
                )
        )
-)]]>
-</Calculation>
-</CustomFunction>
-<CustomFunction id="94" functionArity="1" visible="True" parameters="name" name="#R">
-<Calculation>
-<![CDATA[// #R ( name )
-// version 1.2.1, SixFriedRice.com
+       
+)]]></Calculation>
+    </CustomFunction>
+    <CustomFunction id="3" functionArity="1" visible="True" parameters="name" name="#R">
+        <Calculation><![CDATA[// #R ( name )
+// version 2023-08-29
 
 /*
-       Entirely self-contained calc that gets a specified key name's value from ScriptResult when it is a  SixFriedRice.com-style dictionary.
+       Code-independent calc that gets a specified key name's value from ScriptResult when it is a SixFriedRice.com-style dictionary.
 
 
 HISTORY:
-       1.2.1 - 2016-09-29 ( eshagdar ): updated documentation.
-       1.2 - 201x-xx-xx ( eshagdar ): Reformatted to match newer standards.
-       1.1 - 201x-xx-xx ( xxxxx ): Reformatted to match standards.
-       1.0 - xxxx-xx-xx ( xxxxx ): Taken from SixFriedRice.com
+       2023-08-29 ( danshockley ): Updated documentation. 
+       2022-12-29 ( danshockley ): Updated documentation. Code reformat. 
+       20xx-xx-xx ( xxxxx ): Created. Pulled from SixFriedRice.com blog. 
 */
 
 
 Let( [
-               dict = Get ( ScriptResult )
+                 dict = Get ( ScriptResult )
                ; match = 
                        "<:" 
                        & Substitute ( 
@@ -112,32 +107,28 @@ Let( [
                                ; [ ":"; "/:" ]
                                ; [ ">"; "/>" ]
                                ; [ "<"; "/<" ]
-                       ) 
+                               ) 
                        & ":="
-               ; pstart = Position( dict; match; 1; 1 )
-               ; start = pstart + Length( match )
-               ; end = Position( dict ; ":>"; start; 1 )
-               ; len = If( end = 0; 999999999; end - start )
-       ];
-
-       If ( pstart = 0
-               ; ""
-               ; Substitute( 
-                       Middle( dict; start; len )
-                       ; [ "/:"; ":" ]
-                       ; [ "/="; "=" ]
-                       ; [ "/>"; ">" ]
-                       ; [ "/<"; "<" ]
-               )
-       )
-)]]>
-</Calculation>
-</CustomFunction>
-
-<CustomFunction id="14" functionArity="2" visible="True" parameters="dict;name" name="DictContains">
-<Calculation>
-<![CDATA[// DictContains( dict; name )
-// version 1.2.1, Daniel A. Shockley, NYHTC
+               ; pstart = Position ( dict ; match ; 1 ; 1 )
+               ; start = pstart + Length ( match )
+               ; end = Position ( dict ; ":>" ; start ; 1 )
+               ; len = If( end = 0 ; 999999999 ; end - start )
+];
+               If ( pstart = 0
+                       ; ""
+                       ; Substitute ( 
+                               Middle ( dict ; start ; len )
+                               ; [ "/:"; ":" ]
+                               ; [ "/="; "=" ]
+                               ; [ "/>"; ">" ]
+                               ; [ "/<"; "<" ]
+                               )
+                       )
+)]]></Calculation>
+    </CustomFunction>
+    <CustomFunction id="4" functionArity="2" visible="True" parameters="dict;name" name="DictContains">
+        <Calculation><![CDATA[// DictContains( dict; name )
+// version 2023-08-22
 
 /* 
        Simple test for whether a dictionary includes a specified key.
@@ -147,35 +138,34 @@ REQUIRES:
        DictEscape
 
 
-HISTORY:
-       1.2.1 - 2016-09-29 ( eshagdar ): updated documentation.
-       1.2 - 201x-xx-xx ( eshagdar ): Reformatted to match newer standards.
-       1.1 - 201x-xx-xx ( dshockley ): Use DictEscape instead of hard-coded Substitute within function.
-       1.0 - 201x-xx-xx ( dshockley ): first created.
+HISTORY: 
+       2023-08-22 ( danshockley ): Updated documentation. 
+       2016-09-29 ( eshagdar ): Updated documentation.
+       201x-xx-xx ( eshagdar ): Reformatted to match newer standards.
+       201x-xx-xx ( danshockley ): Use DictEscape instead of hard-coded Substitute within function.
+       201x-xx-xx ( danshockley ): Created. Date unknown. 
 */
 
 
 Let (
        pattern = "<:" & DictEscape ( name ) & ":=";
 
-       Position ( dict; pattern; 1; 1 ) > 0
-)]]>
-</Calculation>
-</CustomFunction>
-
-<CustomFunction id="25" functionArity="1" visible="True" parameters="input" name="DictEscape">
-<Calculation>
-<![CDATA[// DictEscape ( input )
-// version 1.1.1, NYHTC
+       Position ( dict ; pattern ; 1 ; 1 ) > 0
+)]]></Calculation>
+    </CustomFunction>
+    <CustomFunction id="5" functionArity="1" visible="True" parameters="input" name="DictEscape">
+        <Calculation><![CDATA[// DictEscape ( input )
+// version 2023-08-22
 
 /*
        Escapes a string (key or value) so it can be used in a SixFriedRice.com-style dictionary.
 
 
-HISTORY:
-       1.1.1 - 2016-09-29 ( eshagdar ): updated documentation.
-       1.1 - 201x-xx-xx ( eshagdar ): Reformatted to match newer standards.
-       1.0 - 201x-xx-xx ( xxxxx ): SixFriedRice.com
+HISTORY: 
+       2023-08-22 ( danshockley ): Updated documentation. 
+       2016-09-29 ( eshagdar ): Updated documentation. 
+       201x-xx-xx ( eshagdar ): Reformatted to match newer standards. 
+       201x-xx-xx ( xxxxx ): SixFriedRice.com. Date unknown. 
 */
 
 
@@ -185,56 +175,53 @@ Substitute (
        ; [ ":"; "/:" ]
        ; [ ">"; "/>" ]
        ; [ "<"; "/<" ]
-)]]>
-</Calculation>
-</CustomFunction>
-<CustomFunction id="8" functionArity="2" visible="True" parameters="dict;name" name="DictGet">
-<Calculation>
-<![CDATA[// DictGet ( dict; name )
-// version 1.2, SixFriedRice.com
+)]]></Calculation>
+    </CustomFunction>
+    <CustomFunction id="6" functionArity="2" visible="True" parameters="dict;name" name="DictGet">
+        <Calculation><![CDATA[// DictGet ( dict ; name )
+// version 2023-08-29
 
-// Gets the specified key name's value from a SixFriedRice.com-style dictionary.
+/* 
+       Gets the specified key name's value from a SixFriedRice.com-style dictionary.
 
-/*
-VERSION HISTORY:
-       1.2 - Reformatted to match newer standards.
-       1.1 - Reformatted calc to fit standards. Still uses hard-coded escape/unescape so it can stand alone. 
+HISTORY:
+       2023-08-29 ( danshockley ): Updated documentation. Code reformat. Still uses hard-coded escape/unescape so it can stand alone. 
+       20xx-xx-xx ( xxxxx ): Created. Pulled from SixFriedRice.com blog. 
 */
 
 
-Let( [
+Let ( [
                match =
                        "<:" 
                        & Substitute ( 
                                name 
-                               ; [ "="; "/=" ]
-                               ; [ ":"; "/:" ] 
-                               ; [ ">"; "/>" ]
-                               ; [ "<"; "/<" ]
-                       ) & ":="
-               ; pstart = Position ( dict; match; 1; 1 )
+                               ; [ "=" ; "/=" ]
+                               ; [ ":" ; "/:" ] 
+                               ; [ ">" ; "/>" ]
+                               ; [ "<" ; "/<" ]
+                               ) 
+                       & ":="
+               ; pstart = Position ( dict ; match ; 1 ; 1 )
                ; start = pstart + Length ( match )
-               ; end = Position ( dict ; ":>"; start; 1 )
-               ; len = If ( end = 0; 999999999; end - start )
+               ; end = Position ( dict ; ":>" ; start; 1 )
+               ; len = If ( end = 0 ; 999999999 ; end - start )
        ];
 
-       If ( pstart = 0
-               ; ""
-               ; Substitute ( 
-                       Middle ( dict; start; len)
-                       ; [ "/:"; ":" ]
-                       ; [ "/="; "=" ] 
-                       ; [ "/>"; ">" ] 
-                       ; [ "/<"; "<" ]
-               )
-       )
-)]]>
-</Calculation>
-</CustomFunction>
-<CustomFunction id="118" functionArity="2" visible="True" parameters="name;value" name="DictItem">
-<Calculation>
-<![CDATA[// DictItem ( name; value )
-// version 1.1, SixFriedRice.com
+               If ( pstart = 0
+                       ; ""
+                       ; Substitute ( 
+                               Middle ( dict ; start ; len)
+                               ; [ "/:" ; ":" ]
+                               ; [ "/=" ; "=" ] 
+                               ; [ "/>" ; ">" ] 
+                               ; [ "/<" ; "<" ]
+                               )
+                       )
+       )]]></Calculation>
+    </CustomFunction>
+    <CustomFunction id="7" functionArity="2" visible="True" parameters="name;value" name="DictItem">
+        <Calculation><![CDATA[// DictItem ( name ; value )
+// version 2023-08-22
 
 /*
        Creates a name/value (aka key/value) pair for a SixFriedRice.com-style dictionary.
@@ -245,26 +232,26 @@ REQUIRES:
 
 
 HISTORY:
-       1.1 - 2016-09-29 ( eshagdar ): updated documentation.
-       1.0 - 201x-xx-xx ( xxxxx ): first created.
+       2023-08-22: Updated documentation. 
+       2016-09-29: Updated documentation.
+       201x-xx-xx ( xxxxx ): First created. Date unknown. 
 */
 
 
-"<:" & DictEscape ( name ) & ":=" & DictEscape ( value ) & ":>"]]>
-</Calculation>
-</CustomFunction>
-<CustomFunction id="288" functionArity="2" visible="True" parameters="someValue;someType" name="ValueAsType">
-<Calculation>
-<![CDATA[// ValueAsType ( someValue; someType )
-// version 1.1, Daniel A. Shockley, NYHTC
+"<:" & DictEscape ( name ) & ":=" & DictEscape ( value ) & ":>"]]></Calculation>
+    </CustomFunction>
+    <CustomFunction id="8" functionArity="2" visible="True" parameters="someValue;someType" name="ValueAsType">
+        <Calculation><![CDATA[// ValueAsType ( someValue ; someType )
+// version 2023-08-28
 
 /*
-       coerce the value to the specified type
+       Coerce the value to the specified type. 
 
 
 HISTORY:
-       1.1 — 2017-01-04 ( eshagdar ): added documentation.
-       1.0 - 201x-xx-xx ( dshockley ): created.
+       2023-08-28 ( danshockley ): Updated documentation. 
+       2017-01-04 ( eshagdar ): Added documentation. 
+       201x-xx-xx ( danshockley ): Created. Date unknown. 
 */
 
 
@@ -285,8 +272,6 @@ Case (
        ; GetAsTimestamp ( someValue )
        ; 
        someValue
-       )]]>
-</Calculation>
-</CustomFunction>
-
+       )]]></Calculation>
+    </CustomFunction>
 </fmxmlsnippet>

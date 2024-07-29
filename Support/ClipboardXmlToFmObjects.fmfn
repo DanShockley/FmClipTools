@@ -162,13 +162,13 @@ Let ( [
 	]; 
 		Case ( 
 			IsEmpty ( objectType )
-			; "Could not identify any FileMaker objects in the clipboard, which begins with the following text: "
-				& Char ( 13 ) & Left ( textFromClipboard ; 100 )
+			; "Could not identify any FileMaker objects in the clipboard, which"
+				& If ( not IsEmpty ( textFromClipboard )
+					; " begins with the following text: " & Char ( 13 ) & textFromClipboard
+					; " contains the following clipboard formats: " & Char ( 13 ) & clipboardFormats
+					)
 			; 
 			"Converted XML to FM object(s) of type: " & objectType
 			)
 
 	)
-	
-	
-	

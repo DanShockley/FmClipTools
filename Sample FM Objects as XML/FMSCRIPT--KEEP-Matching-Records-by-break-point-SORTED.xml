@@ -1,250 +1,251 @@
 <fmxmlsnippet type="FMObjectList">
-    <Step enable="True" id="89" name="# (comment)">
-        <Text>Description: &#13;&#13;KEEPs the records that match (or do not match - see optional param &apos;OmitMatch&apos;) a specified value when the found set is sorted by the specified field.&#13;This will then be VERY FAST (Order Log2 N), since it does a binary search on each loop iteration.&#13;</Text>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)">
-        <Text>HISTORY (recent at top):</Text>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)">
-        <Text>2024-07-29 ( danshockley ): Removed CF dependencies, where reasonable.</Text>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)">
-        <Text>2024-02-19 ( danshockley ): Removed call to debugging script.</Text>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)">
-        <Text>2023-09-04 ( danshockley ): Updated documentation. Updated Requires list.</Text>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)">
-        <Text>2018-07-09 ( dshockley, eshagdar ): Set Error Capture and restore. Updated error handling structure. Use TableNameOfField instead of custom calc.</Text>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)">
-        <Text>2018-07-05 ( eshagdar ): Updated with modern script template. Added no dialogs.</Text>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)">
-        <Text>2018-07-05 ( danshockley ): Renamed without params. Removed list of required custom functions, since they are all standard.</Text>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)">
-        <Text>2016-08-19 ( danshockley ): Listed additional REQUIRED custom functions that were accidentally left off earlier list.</Text>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)">
-        <Text>2016-05-19 ( danshockley ): Added comment indicating required custom functions.</Text>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)">
-        <Text>2016-02-24 ( danshockley ): Fixed a bug where it failed if BreakPointField is not IN this context&apos;s table - GO TO the RECORD, instead of trying GetNthRecord, since GetNthRecord works differently on related fields. BUT, this means the script needs to GO to each record, which is slower, so use the GetNthRecord method if possible.</Text>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)">
-        <Text>2016-02-03 ( danshockley ): The BreakPointFieldValue can now be explicitly null; attempts to get BreakPoint from active field (and its value), but asks user to confirm.</Text>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)">
-        <Text>2015-03-06 ( danshockley ): Created.</Text>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="89" name="# (comment)">
-        <Text>Parameters:&#13;&#13;&#09;# ( &quot;BreakPointFieldName&quot;; ) /* REQUIRED. The field the found set is ALREADY sorted by. */&#13;&amp;&#09;# ( &quot;BreakPointFieldValue&quot;; ) /* REQUIRED. */&#13;&amp;&#09;# ( &quot;OmitMatch&quot;; ) /* OPTIONAL, BOOL. Do we want to KEEP those that match. Default is FALSE */&#13;&amp;&#09;# ( &quot;ValueType&quot;; ) /* OPTIONAL, BOOL. What type of value is it: Text | Number | Date | Time | Timestamp. Default is text. */&#13;&amp;&#09;# ( &quot;NoDialogs&quot; ; ) /* OPTIONAL */&#13;&#13;&amp;&#09;CallStack ( &quot;&quot; )</Text>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="89" name="# (comment)">
-        <Text>REQUIRES: &#13;&#09;#&#13;&#09;#P&#13;&#09;CallStack [if not used, broken script step can just be removed.]&#13;&#09;DictContains&#13;&#09;DictGet&#13;&#09;ValueAsType</Text>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="89" name="# (comment)">
-        <Text>WARNING: &#13; - If there are somehow any No Access records in the found set, that WILL throw off this script. For example, this can happen when a table is tenant-transparent with logically-deleted records and RecordAccess is Yes instead of using the standard custom function.</Text>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)">
-        <Text>NOTE:&#13; - Must ALREADY be SORTED in such a way that the specified &quot;break point&quot; field falls into two/three groups - those matching the specified value and those NOT matching the specified value.&#13; - There might be some non-matching before matching records and also some non-matching after matching records - both will be kept/omitted.</Text>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)">
-        <Text>Algorithm:&#13;Finds the &quot;First Match&quot; record number for those that match, then find the &quot;Last Match&quot; record number. Once those are found, either:&#13; - omits those before First and omits those after Last (if KEEPING those that match),&#13; - or omits the records matching. &#13;</Text>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="89" name="# (comment)">
-        <Text>----------------------------------------</Text>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)">
-        <Text>Script states</Text>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="141" name="Set Variable">
-        <Value>
-            <Calculation><![CDATA[Get ( ErrorCaptureState )]]></Calculation>
-        </Value>
-        <Repetition>
-            <Calculation><![CDATA[1]]></Calculation>
-        </Repetition>
-        <Name>$originalErrorCaptureState</Name>
-    </Step>
-    <Step enable="True" id="86" name="Set Error Capture">
-        <Set state="True"></Set>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="89" name="# (comment)">
-        <Text>----------------------------------------</Text>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)">
-        <Text>Declare constants</Text>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="89" name="# (comment)">
-        <Text>----------------------------------------</Text>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)">
-        <Text>Declare incoming params</Text>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="141" name="Set Variable">
-        <Value>
-            <Calculation><![CDATA[Get ( ScriptParameter )]]></Calculation>
-        </Value>
-        <Repetition>
-            <Calculation><![CDATA[1]]></Calculation>
-        </Repetition>
-        <Name>$params</Name>
-    </Step>
-    <Step enable="True" id="141" name="Set Variable">
-        <Value>
-            <Calculation><![CDATA[CallStack ( "SetScriptVars" )    /* Sets the callstack, if it was passed in. NOTE: if you do not use the CallStack custom function, this broken script step can just be removed. */]]></Calculation>
-        </Value>
-        <Repetition>
-            <Calculation><![CDATA[1]]></Calculation>
-        </Repetition>
-        <Name>$setCallStack</Name>
-    </Step>
-    <Step enable="True" id="141" name="Set Variable">
-        <Value>
-            <Calculation><![CDATA[If ( GetAsBoolean ( PatternCount ( Get ( ApplicationVersion ) ; "Server" ) ) 
+    <Script includeInMenu="False" SiriShortcutVisible="False" runFullAccess="False" id="84" name="Keep_Omit Matching Sorted Records">
+        <Step enable="True" id="89" name="# (comment)">
+            <Text>Description: &#13;&#13;KEEPs the records that match (or do not match - see optional param &apos;OmitMatch&apos;) a specified value when the found set is sorted by the specified field.&#13;This will then be VERY FAST (Order Log2 N), since it does a binary search on each loop iteration.&#13;</Text>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)">
+            <Text>HISTORY (recent at top):</Text>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)">
+            <Text>2024-07-29 ( danshockley ): Removed CF dependencies, where reasonable.</Text>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)">
+            <Text>2024-02-19 ( danshockley ): Removed call to debugging script.</Text>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)">
+            <Text>2023-09-04 ( danshockley ): Updated documentation. Updated Requires list.</Text>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)">
+            <Text>2018-07-09 ( dshockley, eshagdar ): Set Error Capture and restore. Updated error handling structure. Use TableNameOfField instead of custom calc.</Text>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)">
+            <Text>2018-07-05 ( eshagdar ): Updated with modern script template. Added no dialogs.</Text>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)">
+            <Text>2018-07-05 ( danshockley ): Renamed without params. Removed list of required custom functions, since they are all standard.</Text>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)">
+            <Text>2016-08-19 ( danshockley ): Listed additional REQUIRED custom functions that were accidentally left off earlier list.</Text>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)">
+            <Text>2016-05-19 ( danshockley ): Added comment indicating required custom functions.</Text>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)">
+            <Text>2016-02-24 ( danshockley ): Fixed a bug where it failed if BreakPointField is not IN this context&apos;s table - GO TO the RECORD, instead of trying GetNthRecord, since GetNthRecord works differently on related fields. BUT, this means the script needs to GO to each record, which is slower, so use the GetNthRecord method if possible.</Text>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)">
+            <Text>2016-02-03 ( danshockley ): The BreakPointFieldValue can now be explicitly null; attempts to get BreakPoint from active field (and its value), but asks user to confirm.</Text>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)">
+            <Text>2015-03-06 ( danshockley ): Created.</Text>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="89" name="# (comment)">
+            <Text>Parameters:&#13;&#13;&#09;# ( &quot;BreakPointFieldName&quot;; ) /* REQUIRED. The field the found set is ALREADY sorted by. */&#13;&amp;&#09;# ( &quot;BreakPointFieldValue&quot;; ) /* REQUIRED. */&#13;&amp;&#09;# ( &quot;OmitMatch&quot;; ) /* OPTIONAL, BOOL. Do we want to KEEP those that match. Default is FALSE */&#13;&amp;&#09;# ( &quot;ValueType&quot;; ) /* OPTIONAL, BOOL. What type of value is it: Text | Number | Date | Time | Timestamp. Default is text. */&#13;&amp;&#09;# ( &quot;NoDialogs&quot; ; ) /* OPTIONAL */&#13;&#13;&amp;&#09;CallStack ( &quot;&quot; )</Text>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="89" name="# (comment)">
+            <Text>REQUIRES: &#13;&#09;#&#13;&#09;#P&#13;&#09;CallStack [if not used, broken script step can just be removed.]&#13;&#09;DictContains&#13;&#09;DictGet&#13;&#09;ValueAsType</Text>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="89" name="# (comment)">
+            <Text>WARNING: &#13; - If there are somehow any No Access records in the found set, that WILL throw off this script. For example, this can happen when a table is tenant-transparent with logically-deleted records and RecordAccess is Yes instead of using the standard custom function.</Text>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)">
+            <Text>NOTE:&#13; - Must ALREADY be SORTED in such a way that the specified &quot;break point&quot; field falls into two/three groups - those matching the specified value and those NOT matching the specified value.&#13; - There might be some non-matching before matching records and also some non-matching after matching records - both will be kept/omitted.</Text>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)">
+            <Text>Algorithm:&#13;Finds the &quot;First Match&quot; record number for those that match, then find the &quot;Last Match&quot; record number. Once those are found, either:&#13; - omits those before First and omits those after Last (if KEEPING those that match),&#13; - or omits the records matching. &#13;</Text>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="89" name="# (comment)">
+            <Text>----------------------------------------</Text>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)">
+            <Text>Script states</Text>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="141" name="Set Variable">
+            <Value>
+                <Calculation><![CDATA[Get ( ErrorCaptureState )]]></Calculation>
+            </Value>
+            <Repetition>
+                <Calculation><![CDATA[1]]></Calculation>
+            </Repetition>
+            <Name>$originalErrorCaptureState</Name>
+        </Step>
+        <Step enable="True" id="86" name="Set Error Capture">
+            <Set state="True"></Set>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="89" name="# (comment)">
+            <Text>----------------------------------------</Text>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)">
+            <Text>Declare constants</Text>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="89" name="# (comment)">
+            <Text>----------------------------------------</Text>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)">
+            <Text>Declare incoming params</Text>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="141" name="Set Variable">
+            <Value>
+                <Calculation><![CDATA[Get ( ScriptParameter )]]></Calculation>
+            </Value>
+            <Repetition>
+                <Calculation><![CDATA[1]]></Calculation>
+            </Repetition>
+            <Name>$params</Name>
+        </Step>
+        <Step enable="True" id="141" name="Set Variable">
+            <Value>
+                <Calculation><![CDATA[CallStack ( "SetScriptVars" )    /* Sets the callstack, if it was passed in. NOTE: if you do not use the CallStack custom function, this broken script step can just be removed. */]]></Calculation>
+            </Value>
+            <Repetition>
+                <Calculation><![CDATA[1]]></Calculation>
+            </Repetition>
+            <Name>$setCallStack</Name>
+        </Step>
+        <Step enable="True" id="141" name="Set Variable">
+            <Value>
+                <Calculation><![CDATA[If ( GetAsBoolean ( PatternCount ( Get ( ApplicationVersion ) ; "Server" ) ) 
        ; True 
        ; #P ( "NoDialogs" ) 
        )  /* OPTIONAL, but if on Server, always True. */]]></Calculation>
-        </Value>
-        <Repetition>
-            <Calculation><![CDATA[1]]></Calculation>
-        </Repetition>
-        <Name>$NoDialogs</Name>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="141" name="Set Variable">
-        <Value>
-            <Calculation><![CDATA[#P ( "BreakPointFieldName" )    /* REQUIRED. The field the found set is ALREADY sorted by. */]]></Calculation>
-        </Value>
-        <Repetition>
-            <Calculation><![CDATA[1]]></Calculation>
-        </Repetition>
-        <Name>$BreakPointFieldName</Name>
-    </Step>
-    <Step enable="True" id="141" name="Set Variable">
-        <Value>
-            <Calculation><![CDATA[#P ( "BreakPointFieldValue" )    /* REQUIRED. */]]></Calculation>
-        </Value>
-        <Repetition>
-            <Calculation><![CDATA[1]]></Calculation>
-        </Repetition>
-        <Name>$BreakPointFieldValue</Name>
-    </Step>
-    <Step enable="True" id="141" name="Set Variable">
-        <Value>
-            <Calculation><![CDATA[#P ( "OmitMatch" )    /* OPTIONAL, BOOL. Do we want to KEEP those that match. Default is FALSE */]]></Calculation>
-        </Value>
-        <Repetition>
-            <Calculation><![CDATA[1]]></Calculation>
-        </Repetition>
-        <Name>$OmitMatch</Name>
-    </Step>
-    <Step enable="True" id="141" name="Set Variable">
-        <Value>
-            <Calculation><![CDATA[#P ( "ValueType" )    /* OPTIONAL, BOOL. What type of value is it: Text | Number | Date | Time | Timestamp. Default is text. */]]></Calculation>
-        </Value>
-        <Repetition>
-            <Calculation><![CDATA[1]]></Calculation>
-        </Repetition>
-        <Name>$ValueType</Name>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="89" name="# (comment)">
-        <Text>----------------------------------------</Text>
-    </Step>
-    <Step enable="True" id="71" name="Loop">
-        <FlushType value="Always"></FlushType>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)">
-        <Text>BEGIN: Error-handling Loop:</Text>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)">
-        <Text>------------------------------------</Text>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="89" name="# (comment)">
-        <Text>----------------------------------------</Text>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)">
-        <Text>Init variables</Text>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="141" name="Set Variable">
-        <Value>
-            <Calculation><![CDATA[DictContains ( $params ; "BreakPointFieldValue" )]]></Calculation>
-        </Value>
-        <Repetition>
-            <Calculation><![CDATA[1]]></Calculation>
-        </Repetition>
-        <Name>$didSetBreakPointFieldValue</Name>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="68" name="If">
-        <Calculation><![CDATA[IsEmpty ( $ValueType )]]></Calculation>
-    </Step>
-    <Step enable="True" id="141" name="Set Variable">
-        <Value>
-            <Calculation><![CDATA["Text"]]></Calculation>
-        </Value>
-        <Repetition>
-            <Calculation><![CDATA[1]]></Calculation>
-        </Repetition>
-        <Name>$ValueType</Name>
-    </Step>
-    <Step enable="True" id="70" name="End If"></Step>
-    <Step enable="True" id="141" name="Set Variable">
-        <Value>
-            <Calculation><![CDATA[ValueAsType ( $BreakPointFieldValue ; $ValueType )    /* Get value as the appropriate type so that comparisons work properly. */]]></Calculation>
-        </Value>
-        <Repetition>
-            <Calculation><![CDATA[1]]></Calculation>
-        </Repetition>
-        <Name>$BreakPointFieldValue</Name>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="89" name="# (comment)">
-        <Text>BreakPointFieldName wasn&apos;t specified by param.</Text>
-    </Step>
-    <Step enable="True" id="68" name="If">
-        <Calculation><![CDATA[IsEmpty ( $BreakPointFieldName )]]></Calculation>
-    </Step>
-    <Step enable="True" id="68" name="If">
-        <Calculation><![CDATA[IsEmpty ( Get ( ActiveFieldName ) )]]></Calculation>
-    </Step>
-    <Step enable="True" id="141" name="Set Variable">
-        <Value>
-            <Calculation><![CDATA["You need to click into the field you want to keep/omit matching records for."]]></Calculation>
-        </Value>
-        <Repetition>
-            <Calculation><![CDATA[1]]></Calculation>
-        </Repetition>
-        <Name>$errMsg</Name>
-    </Step>
-    <Step enable="True" id="72" name="Exit Loop If">
-        <Calculation><![CDATA[True    /* EXIT error-handling loop */]]></Calculation>
-    </Step>
-    <Step enable="True" id="69" name="Else"></Step>
-    <Step enable="True" id="141" name="Set Variable">
-        <Value>
-            <Calculation><![CDATA[Let ( [
+            </Value>
+            <Repetition>
+                <Calculation><![CDATA[1]]></Calculation>
+            </Repetition>
+            <Name>$NoDialogs</Name>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="141" name="Set Variable">
+            <Value>
+                <Calculation><![CDATA[#P ( "BreakPointFieldName" )    /* REQUIRED. The field the found set is ALREADY sorted by. */]]></Calculation>
+            </Value>
+            <Repetition>
+                <Calculation><![CDATA[1]]></Calculation>
+            </Repetition>
+            <Name>$BreakPointFieldName</Name>
+        </Step>
+        <Step enable="True" id="141" name="Set Variable">
+            <Value>
+                <Calculation><![CDATA[#P ( "BreakPointFieldValue" )    /* REQUIRED. */]]></Calculation>
+            </Value>
+            <Repetition>
+                <Calculation><![CDATA[1]]></Calculation>
+            </Repetition>
+            <Name>$BreakPointFieldValue</Name>
+        </Step>
+        <Step enable="True" id="141" name="Set Variable">
+            <Value>
+                <Calculation><![CDATA[#P ( "OmitMatch" )    /* OPTIONAL, BOOL. Do we want to KEEP those that match. Default is FALSE */]]></Calculation>
+            </Value>
+            <Repetition>
+                <Calculation><![CDATA[1]]></Calculation>
+            </Repetition>
+            <Name>$OmitMatch</Name>
+        </Step>
+        <Step enable="True" id="141" name="Set Variable">
+            <Value>
+                <Calculation><![CDATA[#P ( "ValueType" )    /* OPTIONAL, BOOL. What type of value is it: Text | Number | Date | Time | Timestamp. Default is text. */]]></Calculation>
+            </Value>
+            <Repetition>
+                <Calculation><![CDATA[1]]></Calculation>
+            </Repetition>
+            <Name>$ValueType</Name>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="89" name="# (comment)">
+            <Text>----------------------------------------</Text>
+        </Step>
+        <Step enable="True" id="71" name="Loop">
+            <FlushType value="Always"></FlushType>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)">
+            <Text>BEGIN: Error-handling Loop:</Text>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)">
+            <Text>------------------------------------</Text>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="89" name="# (comment)">
+            <Text>----------------------------------------</Text>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)">
+            <Text>Init variables</Text>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="141" name="Set Variable">
+            <Value>
+                <Calculation><![CDATA[DictContains ( $params ; "BreakPointFieldValue" )]]></Calculation>
+            </Value>
+            <Repetition>
+                <Calculation><![CDATA[1]]></Calculation>
+            </Repetition>
+            <Name>$didSetBreakPointFieldValue</Name>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="68" name="If">
+            <Calculation><![CDATA[IsEmpty ( $ValueType )]]></Calculation>
+        </Step>
+        <Step enable="True" id="141" name="Set Variable">
+            <Value>
+                <Calculation><![CDATA["Text"]]></Calculation>
+            </Value>
+            <Repetition>
+                <Calculation><![CDATA[1]]></Calculation>
+            </Repetition>
+            <Name>$ValueType</Name>
+        </Step>
+        <Step enable="True" id="70" name="End If"></Step>
+        <Step enable="True" id="141" name="Set Variable">
+            <Value>
+                <Calculation><![CDATA[ValueAsType ( $BreakPointFieldValue ; $ValueType )    /* Get value as the appropriate type so that comparisons work properly. */]]></Calculation>
+            </Value>
+            <Repetition>
+                <Calculation><![CDATA[1]]></Calculation>
+            </Repetition>
+            <Name>$BreakPointFieldValue</Name>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="89" name="# (comment)">
+            <Text>BreakPointFieldName wasn&apos;t specified by param.</Text>
+        </Step>
+        <Step enable="True" id="68" name="If">
+            <Calculation><![CDATA[IsEmpty ( $BreakPointFieldName )]]></Calculation>
+        </Step>
+        <Step enable="True" id="68" name="If">
+            <Calculation><![CDATA[IsEmpty ( Get ( ActiveFieldName ) )]]></Calculation>
+        </Step>
+        <Step enable="True" id="141" name="Set Variable">
+            <Value>
+                <Calculation><![CDATA["You need to click into the field you want to keep/omit matching records for."]]></Calculation>
+            </Value>
+            <Repetition>
+                <Calculation><![CDATA[1]]></Calculation>
+            </Repetition>
+            <Name>$errMsg</Name>
+        </Step>
+        <Step enable="True" id="72" name="Exit Loop If">
+            <Calculation><![CDATA[True    /* EXIT error-handling loop */]]></Calculation>
+        </Step>
+        <Step enable="True" id="69" name="Else"></Step>
+        <Step enable="True" id="141" name="Set Variable">
+            <Value>
+                <Calculation><![CDATA[Let ( [
                activeFieldName = Get ( ActiveFieldName )
        ] ;
 
@@ -253,354 +254,300 @@
                ; Get ( ActiveFieldTableName ) & "::" & activeFieldName
        )
 )]]></Calculation>
-        </Value>
-        <Repetition>
-            <Calculation><![CDATA[1]]></Calculation>
-        </Repetition>
-        <Name>$BreakPointFieldName</Name>
-    </Step>
-    <Step enable="True" id="141" name="Set Variable">
-        <Value>
-            <Calculation><![CDATA[GetField ( $BreakPointFieldName )]]></Calculation>
-        </Value>
-        <Repetition>
-            <Calculation><![CDATA[1]]></Calculation>
-        </Repetition>
-        <Name>$BreakPointFieldValue</Name>
-    </Step>
-    <Step enable="True" id="141" name="Set Variable">
-        <Value>
-            <Calculation><![CDATA[True]]></Calculation>
-        </Value>
-        <Repetition>
-            <Calculation><![CDATA[1]]></Calculation>
-        </Repetition>
-        <Name>$didSetBreakPointFieldValue</Name>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="141" name="Set Variable">
-        <Value>
-            <Calculation><![CDATA[MiddleWords ( 
+            </Value>
+            <Repetition>
+                <Calculation><![CDATA[1]]></Calculation>
+            </Repetition>
+            <Name>$BreakPointFieldName</Name>
+        </Step>
+        <Step enable="True" id="141" name="Set Variable">
+            <Value>
+                <Calculation><![CDATA[GetField ( $BreakPointFieldName )]]></Calculation>
+            </Value>
+            <Repetition>
+                <Calculation><![CDATA[1]]></Calculation>
+            </Repetition>
+            <Name>$BreakPointFieldValue</Name>
+        </Step>
+        <Step enable="True" id="141" name="Set Variable">
+            <Value>
+                <Calculation><![CDATA[True]]></Calculation>
+            </Value>
+            <Repetition>
+                <Calculation><![CDATA[1]]></Calculation>
+            </Repetition>
+            <Name>$didSetBreakPointFieldValue</Name>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="141" name="Set Variable">
+            <Value>
+                <Calculation><![CDATA[MiddleWords ( 
        FieldType ( Get ( FileName ) ; $BreakPointFieldName ) 
        ; 2 
        ; 1 
        )]]></Calculation>
-        </Value>
-        <Repetition>
-            <Calculation><![CDATA[1]]></Calculation>
-        </Repetition>
-        <Name>$ValueType</Name>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="68" name="If">
-        <Calculation><![CDATA[$NoDialogs]]></Calculation>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)">
-        <Text>Clicked into a field, but no dialogs is specified. Edge case, so error out.</Text>
-    </Step>
-    <Step enable="True" id="141" name="Set Variable">
-        <Value>
-            <Calculation><![CDATA["User clicked in a field, but no dialogs is specified. Not sure if we want to keep/omit."]]></Calculation>
-        </Value>
-        <Repetition>
-            <Calculation><![CDATA[1]]></Calculation>
-        </Repetition>
-        <Name>$errMsg</Name>
-    </Step>
-    <Step enable="True" id="72" name="Exit Loop If">
-        <Calculation><![CDATA[True    /* EXIT error-handling loop */]]></Calculation>
-    </Step>
-    <Step enable="True" id="69" name="Else"></Step>
-    <Step enable="True" id="87" name="Show Custom Dialog">
-        <Title>
-            <Calculation><![CDATA["Keep Matching Records By…?"]]></Calculation>
-        </Title>
-        <Message>
-            <Calculation><![CDATA["Keep records where the value in " & 
+            </Value>
+            <Repetition>
+                <Calculation><![CDATA[1]]></Calculation>
+            </Repetition>
+            <Name>$ValueType</Name>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="68" name="If">
+            <Calculation><![CDATA[$NoDialogs]]></Calculation>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)">
+            <Text>Clicked into a field, but no dialogs is specified. Edge case, so error out.</Text>
+        </Step>
+        <Step enable="True" id="141" name="Set Variable">
+            <Value>
+                <Calculation><![CDATA["User clicked in a field, but no dialogs is specified. Not sure if we want to keep/omit."]]></Calculation>
+            </Value>
+            <Repetition>
+                <Calculation><![CDATA[1]]></Calculation>
+            </Repetition>
+            <Name>$errMsg</Name>
+        </Step>
+        <Step enable="True" id="72" name="Exit Loop If">
+            <Calculation><![CDATA[True    /* EXIT error-handling loop */]]></Calculation>
+        </Step>
+        <Step enable="True" id="69" name="Else"></Step>
+        <Step enable="True" id="87" name="Show Custom Dialog">
+            <Title>
+                <Calculation><![CDATA["Keep Matching Records By…?"]]></Calculation>
+            </Title>
+            <Message>
+                <Calculation><![CDATA["Keep records where the value in " & 
        Quote ( $BreakPointFieldName ) & 
        " is equal to " & 
        Quote ( $BreakPointFieldValue ) & 
        ", or Omit those that match?"]]></Calculation>
-        </Message>
-        <Buttons>
-            <Button CommitState="True">
-                <Calculation><![CDATA["Keep"]]></Calculation>
-            </Button>
-            <Button CommitState="False">
-                <Calculation><![CDATA["Omit"]]></Calculation>
-            </Button>
-            <Button CommitState="False">
-                <Calculation><![CDATA["Cancel"]]></Calculation>
-            </Button>
-        </Buttons>
-    </Step>
-    <Step enable="True" id="68" name="If">
-        <Calculation><![CDATA[Get ( LastMessageChoice ) = 1]]></Calculation>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)">
-        <Text>Keep matches, so just continue…</Text>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="125" name="Else If">
-        <Calculation><![CDATA[Get ( LastMessageChoice ) = 2]]></Calculation>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)">
-        <Text>Omit match</Text>
-    </Step>
-    <Step enable="True" id="141" name="Set Variable">
-        <Value>
-            <Calculation><![CDATA[True]]></Calculation>
-        </Value>
-        <Repetition>
-            <Calculation><![CDATA[1]]></Calculation>
-        </Repetition>
-        <Name>$OmitMatch</Name>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="125" name="Else If">
-        <Calculation><![CDATA[Get ( LastMessageChoice ) = 3]]></Calculation>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)">
-        <Text>Cancel</Text>
-    </Step>
-    <Step enable="True" id="141" name="Set Variable">
-        <Value>
-            <Calculation><![CDATA["User canceled when asked to confirm selected field."]]></Calculation>
-        </Value>
-        <Repetition>
-            <Calculation><![CDATA[1]]></Calculation>
-        </Repetition>
-        <Name>$cancelDesc</Name>
-    </Step>
-    <Step enable="True" id="72" name="Exit Loop If">
-        <Calculation><![CDATA[True    /* EXIT error-handling loop */]]></Calculation>
-    </Step>
-    <Step enable="True" id="70" name="End If"></Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="89" name="# (comment)">
-        <Text>END OF: NoDialogs</Text>
-    </Step>
-    <Step enable="True" id="70" name="End If"></Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="70" name="End If"></Step>
-    <Step enable="True" id="70" name="End If"></Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="89" name="# (comment)">
-        <Text>----------------------------------------</Text>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)">
-        <Text>Error Checking</Text>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="68" name="If">
-        <Calculation><![CDATA[IsEmpty ( $result )]]></Calculation>
-    </Step>
-    <Step enable="True" id="68" name="If">
-        <Calculation><![CDATA[not Get ( SortState ) and Get ( FoundCount ) > 1]]></Calculation>
-    </Step>
-    <Step enable="True" id="141" name="Set Variable">
-        <Value>
-            <Calculation><![CDATA["The found set MUST ALREADY BE SORTED by your specified field '" & $BreakPointFieldName & "'. "
+            </Message>
+            <Buttons>
+                <Button CommitState="True">
+                    <Calculation><![CDATA["Keep"]]></Calculation>
+                </Button>
+                <Button CommitState="False">
+                    <Calculation><![CDATA["Omit"]]></Calculation>
+                </Button>
+                <Button CommitState="False">
+                    <Calculation><![CDATA["Cancel"]]></Calculation>
+                </Button>
+            </Buttons>
+        </Step>
+        <Step enable="True" id="68" name="If">
+            <Calculation><![CDATA[Get ( LastMessageChoice ) = 1]]></Calculation>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)">
+            <Text>Keep matches, so just continue…</Text>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="125" name="Else If">
+            <Calculation><![CDATA[Get ( LastMessageChoice ) = 2]]></Calculation>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)">
+            <Text>Omit match</Text>
+        </Step>
+        <Step enable="True" id="141" name="Set Variable">
+            <Value>
+                <Calculation><![CDATA[True]]></Calculation>
+            </Value>
+            <Repetition>
+                <Calculation><![CDATA[1]]></Calculation>
+            </Repetition>
+            <Name>$OmitMatch</Name>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="125" name="Else If">
+            <Calculation><![CDATA[Get ( LastMessageChoice ) = 3]]></Calculation>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)">
+            <Text>Cancel</Text>
+        </Step>
+        <Step enable="True" id="141" name="Set Variable">
+            <Value>
+                <Calculation><![CDATA["User canceled when asked to confirm selected field."]]></Calculation>
+            </Value>
+            <Repetition>
+                <Calculation><![CDATA[1]]></Calculation>
+            </Repetition>
+            <Name>$cancelDesc</Name>
+        </Step>
+        <Step enable="True" id="72" name="Exit Loop If">
+            <Calculation><![CDATA[True    /* EXIT error-handling loop */]]></Calculation>
+        </Step>
+        <Step enable="True" id="70" name="End If"></Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="89" name="# (comment)">
+            <Text>END OF: NoDialogs</Text>
+        </Step>
+        <Step enable="True" id="70" name="End If"></Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="70" name="End If"></Step>
+        <Step enable="True" id="70" name="End If"></Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="89" name="# (comment)">
+            <Text>----------------------------------------</Text>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)">
+            <Text>Error Checking</Text>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="68" name="If">
+            <Calculation><![CDATA[not Get ( SortState ) and Get ( FoundCount ) > 1]]></Calculation>
+        </Step>
+        <Step enable="True" id="141" name="Set Variable">
+            <Value>
+                <Calculation><![CDATA["The found set MUST ALREADY BE SORTED by your specified field '" & $BreakPointFieldName & "'. "
        & If ( IsEmpty ( $params )
                ; ""    /* Ran manually, so don't tell them to talk to a developer. */
                ; "Please ask your developer for assistance." 
                )]]></Calculation>
-        </Value>
-        <Repetition>
-            <Calculation><![CDATA[1]]></Calculation>
-        </Repetition>
-        <Name>$errMsg</Name>
-    </Step>
-    <Step enable="True" id="72" name="Exit Loop If">
-        <Calculation><![CDATA[True    /* EXIT error-handling loop */]]></Calculation>
-    </Step>
-    <Step enable="True" id="70" name="End If"></Step>
-    <Step enable="True" id="70" name="End If"></Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="68" name="If">
-        <Calculation><![CDATA[IsEmpty ( $result )]]></Calculation>
-    </Step>
-    <Step enable="True" id="68" name="If">
-        <Calculation><![CDATA[Get ( FoundCount ) = 0]]></Calculation>
-    </Step>
-    <Step enable="True" id="141" name="Set Variable">
-        <Value>
-            <Calculation><![CDATA["The found set was ZERO records, so nothing to do."]]></Calculation>
-        </Value>
-        <Repetition>
-            <Calculation><![CDATA[1]]></Calculation>
-        </Repetition>
-        <Name>$successDesc</Name>
-    </Step>
-    <Step enable="True" id="72" name="Exit Loop If">
-        <Calculation><![CDATA[True    /* EXIT error-handling loop */]]></Calculation>
-    </Step>
-    <Step enable="True" id="70" name="End If"></Step>
-    <Step enable="True" id="70" name="End If"></Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="68" name="If">
-        <Calculation><![CDATA[IsEmpty ( $result )]]></Calculation>
-    </Step>
-    <Step enable="True" id="68" name="If">
-        <Calculation><![CDATA[IsEmpty ( $BreakPointFieldName ) 
+            </Value>
+            <Repetition>
+                <Calculation><![CDATA[1]]></Calculation>
+            </Repetition>
+            <Name>$errMsg</Name>
+        </Step>
+        <Step enable="True" id="72" name="Exit Loop If">
+            <Calculation><![CDATA[True    /* EXIT error-handling loop */]]></Calculation>
+        </Step>
+        <Step enable="True" id="70" name="End If"></Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="68" name="If">
+            <Calculation><![CDATA[Get ( FoundCount ) = 0]]></Calculation>
+        </Step>
+        <Step enable="True" id="141" name="Set Variable">
+            <Value>
+                <Calculation><![CDATA["The found set was ZERO records, so nothing to do."]]></Calculation>
+            </Value>
+            <Repetition>
+                <Calculation><![CDATA[1]]></Calculation>
+            </Repetition>
+            <Name>$successDesc</Name>
+        </Step>
+        <Step enable="True" id="72" name="Exit Loop If">
+            <Calculation><![CDATA[True    /* EXIT error-handling loop */]]></Calculation>
+        </Step>
+        <Step enable="True" id="70" name="End If"></Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="68" name="If">
+            <Calculation><![CDATA[IsEmpty ( $BreakPointFieldName ) 
   or 
 not $didSetBreakPointFieldValue]]></Calculation>
-    </Step>
-    <Step enable="True" id="141" name="Set Variable">
-        <Value>
-            <Calculation><![CDATA[Quote ( Get ( ScriptName ) ) 
+        </Step>
+        <Step enable="True" id="141" name="Set Variable">
+            <Value>
+                <Calculation><![CDATA[Quote ( Get ( ScriptName ) ) 
 & " script in " 
 & Quote ( Get ( FileName ) ) 
 & " file"
 & " was called without required parameters: BreakPointFieldName, BreakPointFieldValue. Please ask your developer for assistance."]]></Calculation>
-        </Value>
-        <Repetition>
+            </Value>
+            <Repetition>
+                <Calculation><![CDATA[1]]></Calculation>
+            </Repetition>
+            <Name>$errMsg</Name>
+        </Step>
+        <Step enable="True" id="72" name="Exit Loop If">
+            <Calculation><![CDATA[True    /* EXIT error-handling loop */]]></Calculation>
+        </Step>
+        <Step enable="True" id="70" name="End If"></Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="89" name="# (comment)">
+            <Text>----------------------------------------</Text>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)">
+            <Text>Setup Environment</Text>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="75" name="Commit Records/Requests">
+            <NoInteract state="True"></NoInteract>
+            <Option state="False"></Option>
+            <ESSForceCommit state="False"></ESSForceCommit>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="89" name="# (comment)">
+            <Text>If the BreakPointField is NOT in this layout context&apos;s table, we cannot just use GetNthRecord, since that counts by which related record, not the layout&apos;s found records.&#13;For these, we have to GO TO the records to see whether to Omit/Keep.</Text>
+        </Step>
+        <Step enable="True" id="141" name="Set Variable">
+            <Value>
+                <Calculation><![CDATA[GetValue ( Substitute ( $BreakPointFieldName ; [ "::" ; Char ( 13 ) ] ) ; 1 )]]></Calculation>
+            </Value>
+            <Repetition>
+                <Calculation><![CDATA[1]]></Calculation>
+            </Repetition>
+            <Name>$BreakPointTableName</Name>
+        </Step>
+        <Step enable="True" id="68" name="If">
+            <Calculation><![CDATA[$BreakPointTableName ≠ Get ( LayoutTableName )]]></Calculation>
+        </Step>
+        <Step enable="True" id="141" name="Set Variable">
+            <Value>
+                <Calculation><![CDATA[True]]></Calculation>
+            </Value>
+            <Repetition>
+                <Calculation><![CDATA[1]]></Calculation>
+            </Repetition>
+            <Name>$mustGoToRec</Name>
+        </Step>
+        <Step enable="True" id="79" name="Freeze Window"></Step>
+        <Step enable="True" id="70" name="End If"></Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="89" name="# (comment)">
+            <Text>----------------------------------------</Text>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)">
+            <Text>Check Start/End conditions:</Text>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="89" name="# (comment)">
+            <Text>Compare the FIRST and LAST record in the found set:</Text>
+        </Step>
+        <Step enable="True" id="68" name="If">
+            <Calculation><![CDATA[$mustGoToRec]]></Calculation>
+        </Step>
+        <Step enable="True" id="16" name="Go to Record/Request/Page">
+            <NoInteract state="True"></NoInteract>
+            <RowPageLocation value="ByCalculation"></RowPageLocation>
             <Calculation><![CDATA[1]]></Calculation>
-        </Repetition>
-        <Name>$errMsg</Name>
-    </Step>
-    <Step enable="True" id="72" name="Exit Loop If">
-        <Calculation><![CDATA[True    /* EXIT error-handling loop */]]></Calculation>
-    </Step>
-    <Step enable="True" id="70" name="End If"></Step>
-    <Step enable="True" id="70" name="End If"></Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="89" name="# (comment)">
-        <Text>Now, report any error gathered above.</Text>
-    </Step>
-    <Step enable="True" id="68" name="If">
-        <Calculation><![CDATA[not IsEmpty ( $result )]]></Calculation>
-    </Step>
-    <Step enable="True" id="68" name="If">
-        <Calculation><![CDATA[not $originalErrorCaptureState]]></Calculation>
-    </Step>
-    <Step enable="True" id="86" name="Set Error Capture">
-        <Set state="False"></Set>
-    </Step>
-    <Step enable="True" id="70" name="End If"></Step>
-    <Step enable="True" id="68" name="If">
-        <Calculation><![CDATA[DictGet ( $result ; "Result" ) = "Error"]]></Calculation>
-    </Step>
-    <Step enable="True" id="68" name="If">
-        <Calculation><![CDATA[not $NoDialogs]]></Calculation>
-    </Step>
-    <Step enable="True" id="87" name="Show Custom Dialog">
-        <Title>
-            <Calculation><![CDATA[DictGet ( $result ; "Result" )]]></Calculation>
-        </Title>
-        <Message>
-            <Calculation><![CDATA[DictGet ( $result ; "ResultDescription" )]]></Calculation>
-        </Message>
-        <Buttons>
-            <Button CommitState="False">
-                <Calculation><![CDATA["OK"]]></Calculation>
-            </Button>
-            <Button CommitState="False"></Button>
-            <Button CommitState="False"></Button>
-        </Buttons>
-    </Step>
-    <Step enable="True" id="70" name="End If"></Step>
-    <Step enable="True" id="70" name="End If"></Step>
-    <Step enable="True" id="103" name="Exit Script">
-        <Calculation><![CDATA[$result]]></Calculation>
-    </Step>
-    <Step enable="True" id="70" name="End If"></Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="89" name="# (comment)">
-        <Text>----------------------------------------</Text>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)">
-        <Text>Setup Environment</Text>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="75" name="Commit Records/Requests">
-        <NoInteract state="True"></NoInteract>
-        <Option state="False"></Option>
-        <ESSForceCommit state="False"></ESSForceCommit>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="89" name="# (comment)">
-        <Text>If the BreakPointField is NOT in this layout context&apos;s table, we cannot just use GetNthRecord, since that counts by which related record, not the layout&apos;s found records.&#13;For these, we have to GO TO the records to see whether to Omit/Keep.</Text>
-    </Step>
-    <Step enable="True" id="141" name="Set Variable">
-        <Value>
-            <Calculation><![CDATA[GetValue ( Substitute ( $BreakPointFieldName ; [ "::" ; Char ( 13 ) ] ) ; 1 )]]></Calculation>
-        </Value>
-        <Repetition>
-            <Calculation><![CDATA[1]]></Calculation>
-        </Repetition>
-        <Name>$BreakPointTableName</Name>
-    </Step>
-    <Step enable="True" id="68" name="If">
-        <Calculation><![CDATA[$BreakPointTableName ≠ Get ( LayoutTableName )]]></Calculation>
-    </Step>
-    <Step enable="True" id="141" name="Set Variable">
-        <Value>
-            <Calculation><![CDATA[True]]></Calculation>
-        </Value>
-        <Repetition>
-            <Calculation><![CDATA[1]]></Calculation>
-        </Repetition>
-        <Name>$mustGoToRec</Name>
-    </Step>
-    <Step enable="True" id="79" name="Freeze Window"></Step>
-    <Step enable="True" id="70" name="End If"></Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="89" name="# (comment)">
-        <Text>----------------------------------------</Text>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)">
-        <Text>Check Start/End conditions:</Text>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="89" name="# (comment)">
-        <Text>Compare the FIRST and LAST record in the found set:</Text>
-    </Step>
-    <Step enable="True" id="68" name="If">
-        <Calculation><![CDATA[$mustGoToRec]]></Calculation>
-    </Step>
-    <Step enable="True" id="16" name="Go to Record/Request/Page">
-        <NoInteract state="True"></NoInteract>
-        <RowPageLocation value="ByCalculation"></RowPageLocation>
-        <Calculation><![CDATA[1]]></Calculation>
-    </Step>
-    <Step enable="True" id="141" name="Set Variable">
-        <Value>
-            <Calculation><![CDATA[ValueAsType ( 
+        </Step>
+        <Step enable="True" id="141" name="Set Variable">
+            <Value>
+                <Calculation><![CDATA[ValueAsType ( 
                         GetField ( $BreakPointFieldName )
                         ; $ValueType 
                         )]]></Calculation>
-        </Value>
-        <Repetition>
-            <Calculation><![CDATA[1]]></Calculation>
-        </Repetition>
-        <Name>$valueRecFirst</Name>
-    </Step>
-    <Step enable="True" id="16" name="Go to Record/Request/Page">
-        <NoInteract state="True"></NoInteract>
-        <RowPageLocation value="ByCalculation"></RowPageLocation>
-        <Calculation><![CDATA[Get ( FoundCount )]]></Calculation>
-    </Step>
-    <Step enable="True" id="141" name="Set Variable">
-        <Value>
-            <Calculation><![CDATA[ValueAsType ( GetField ( $BreakPointFieldName ) ; $ValueType )]]></Calculation>
-        </Value>
-        <Repetition>
-            <Calculation><![CDATA[1]]></Calculation>
-        </Repetition>
-        <Name>$valueRecLast</Name>
-    </Step>
-    <Step enable="True" id="69" name="Else"></Step>
-    <Step enable="True" id="141" name="Set Variable">
-        <Value>
-            <Calculation><![CDATA[Let ( [ 
+            </Value>
+            <Repetition>
+                <Calculation><![CDATA[1]]></Calculation>
+            </Repetition>
+            <Name>$valueRecFirst</Name>
+        </Step>
+        <Step enable="True" id="16" name="Go to Record/Request/Page">
+            <NoInteract state="True"></NoInteract>
+            <RowPageLocation value="ByCalculation"></RowPageLocation>
+            <Calculation><![CDATA[Get ( FoundCount )]]></Calculation>
+        </Step>
+        <Step enable="True" id="141" name="Set Variable">
+            <Value>
+                <Calculation><![CDATA[ValueAsType ( GetField ( $BreakPointFieldName ) ; $ValueType )]]></Calculation>
+            </Value>
+            <Repetition>
+                <Calculation><![CDATA[1]]></Calculation>
+            </Repetition>
+            <Name>$valueRecLast</Name>
+        </Step>
+        <Step enable="True" id="69" name="Else"></Step>
+        <Step enable="True" id="141" name="Set Variable">
+            <Value>
+                <Calculation><![CDATA[Let ( [ 
                oneRecNum = 1
        ]; 
 
@@ -609,15 +556,15 @@ not $didSetBreakPointFieldValue]]></Calculation>
                $ValueType 
        )
 )]]></Calculation>
-        </Value>
-        <Repetition>
-            <Calculation><![CDATA[1]]></Calculation>
-        </Repetition>
-        <Name>$valueRecFirst</Name>
-    </Step>
-    <Step enable="True" id="141" name="Set Variable">
-        <Value>
-            <Calculation><![CDATA[Let ( [ 
+            </Value>
+            <Repetition>
+                <Calculation><![CDATA[1]]></Calculation>
+            </Repetition>
+            <Name>$valueRecFirst</Name>
+        </Step>
+        <Step enable="True" id="141" name="Set Variable">
+            <Value>
+                <Calculation><![CDATA[Let ( [ 
                oneRecNum = Get ( FoundCount )
        ] ; 
 
@@ -626,16 +573,16 @@ not $didSetBreakPointFieldValue]]></Calculation>
                $ValueType 
        )
 )]]></Calculation>
-        </Value>
-        <Repetition>
-            <Calculation><![CDATA[1]]></Calculation>
-        </Repetition>
-        <Name>$valueRecLast</Name>
-    </Step>
-    <Step enable="True" id="70" name="End If"></Step>
-    <Step enable="True" id="141" name="Set Variable">
-        <Value>
-            <Calculation><![CDATA[Case ( 
+            </Value>
+            <Repetition>
+                <Calculation><![CDATA[1]]></Calculation>
+            </Repetition>
+            <Name>$valueRecLast</Name>
+        </Step>
+        <Step enable="True" id="70" name="End If"></Step>
+        <Step enable="True" id="141" name="Set Variable">
+            <Value>
+                <Calculation><![CDATA[Case ( 
        $valueRecFirst < $BreakPointFieldValue 
        ; -1 
        ; 
@@ -644,15 +591,15 @@ not $didSetBreakPointFieldValue]]></Calculation>
        ;
        0
        )]]></Calculation>
-        </Value>
-        <Repetition>
-            <Calculation><![CDATA[1]]></Calculation>
-        </Repetition>
-        <Name>$compareFirst</Name>
-    </Step>
-    <Step enable="True" id="141" name="Set Variable">
-        <Value>
-            <Calculation><![CDATA[Case ( 
+            </Value>
+            <Repetition>
+                <Calculation><![CDATA[1]]></Calculation>
+            </Repetition>
+            <Name>$compareFirst</Name>
+        </Step>
+        <Step enable="True" id="141" name="Set Variable">
+            <Value>
+                <Calculation><![CDATA[Case ( 
        $valueRecLast < $BreakPointFieldValue 
        ; -1 
        ; 
@@ -661,15 +608,15 @@ not $didSetBreakPointFieldValue]]></Calculation>
        ; 
        0
        )]]></Calculation>
-        </Value>
-        <Repetition>
-            <Calculation><![CDATA[1]]></Calculation>
-        </Repetition>
-        <Name>$compareLast</Name>
-    </Step>
-    <Step enable="True" id="141" name="Set Variable">
-        <Value>
-            <Calculation><![CDATA[Case ( 
+            </Value>
+            <Repetition>
+                <Calculation><![CDATA[1]]></Calculation>
+            </Repetition>
+            <Name>$compareLast</Name>
+        </Step>
+        <Step enable="True" id="141" name="Set Variable">
+            <Value>
+                <Calculation><![CDATA[Case ( 
        $compareLast < 0 
        ; False 
        ; 
@@ -678,237 +625,222 @@ not $didSetBreakPointFieldValue]]></Calculation>
        ; 
        True 
        )]]></Calculation>
-        </Value>
-        <Repetition>
-            <Calculation><![CDATA[1]]></Calculation>
-        </Repetition>
-        <Name>$sortAscending</Name>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="68" name="If">
-        <Calculation><![CDATA[( $compareFirst < 0 and $compareLast < 0 )
+            </Value>
+            <Repetition>
+                <Calculation><![CDATA[1]]></Calculation>
+            </Repetition>
+            <Name>$sortAscending</Name>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="68" name="If">
+            <Calculation><![CDATA[( $compareFirst < 0 and $compareLast < 0 )
   or 
 ( $compareFirst >0 and $compareLast > 0 )]]></Calculation>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)">
-        <Text>BOTH are Less-than OR greater-than the value we are seeking, so either Omit all or Keep all (if $OmitMatch).</Text>
-    </Step>
-    <Step enable="True" id="68" name="If">
-        <Calculation><![CDATA[not $OmitMatch]]></Calculation>
-    </Step>
-    <Step enable="True" id="16" name="Go to Record/Request/Page">
-        <NoInteract state="False"></NoInteract>
-        <RowPageLocation value="First"></RowPageLocation>
-    </Step>
-    <Step enable="True" id="26" name="Omit Multiple Records">
-        <NoInteract state="True"></NoInteract>
-        <Calculation><![CDATA[Get ( FoundCount )]]></Calculation>
-    </Step>
-    <Step enable="True" id="70" name="End If"></Step>
-    <Step enable="True" id="141" name="Set Variable">
-        <Value>
-            <Calculation><![CDATA["Every record in the found set was DIFFERENT than the specified value."]]></Calculation>
-        </Value>
-        <Repetition>
-            <Calculation><![CDATA[1]]></Calculation>
-        </Repetition>
-        <Name>$successDesc</Name>
-    </Step>
-    <Step enable="True" id="72" name="Exit Loop If">
-        <Calculation><![CDATA[True    /* EXIT error-handling loop */]]></Calculation>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="125" name="Else If">
-        <Calculation><![CDATA[$compareFirst = 0 and $compareLast = 0]]></Calculation>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)">
-        <Text>BOTH are the SAME AS the value we are seeking, so either Keep all or Omit all (if $OmitMatch).</Text>
-    </Step>
-    <Step enable="True" id="68" name="If">
-        <Calculation><![CDATA[$OmitMatch]]></Calculation>
-    </Step>
-    <Step enable="True" id="16" name="Go to Record/Request/Page">
-        <NoInteract state="False"></NoInteract>
-        <RowPageLocation value="First"></RowPageLocation>
-    </Step>
-    <Step enable="True" id="26" name="Omit Multiple Records">
-        <NoInteract state="True"></NoInteract>
-        <Calculation><![CDATA[Get ( FoundCount )]]></Calculation>
-    </Step>
-    <Step enable="True" id="70" name="End If"></Step>
-    <Step enable="True" id="141" name="Set Variable">
-        <Value>
-            <Calculation><![CDATA["Every record in the found set was the SAME as the specified value."]]></Calculation>
-        </Value>
-        <Repetition>
-            <Calculation><![CDATA[1]]></Calculation>
-        </Repetition>
-        <Name>$successDesc</Name>
-    </Step>
-    <Step enable="True" id="72" name="Exit Loop If">
-        <Calculation><![CDATA[True    /* EXIT error-handling loop */]]></Calculation>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="125" name="Else If">
-        <Calculation><![CDATA[$compareFirst = 0]]></Calculation>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)">
-        <Text>First record in found set is SAME, so will only need to find end point.</Text>
-    </Step>
-    <Step enable="True" id="141" name="Set Variable">
-        <Value>
-            <Calculation><![CDATA[1]]></Calculation>
-        </Value>
-        <Repetition>
-            <Calculation><![CDATA[1]]></Calculation>
-        </Repetition>
-        <Name>$recNum_MatchFIRST</Name>
-    </Step>
-    <Step enable="True" id="141" name="Set Variable">
-        <Value>
-            <Calculation><![CDATA[""    /* not yet known */]]></Calculation>
-        </Value>
-        <Repetition>
-            <Calculation><![CDATA[1]]></Calculation>
-        </Repetition>
-        <Name>$recNum_MatchLAST</Name>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="125" name="Else If">
-        <Calculation><![CDATA[$compareLast = 0]]></Calculation>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)">
-        <Text>Last record in found set is SAME, so will only need to find start point.</Text>
-    </Step>
-    <Step enable="True" id="141" name="Set Variable">
-        <Value>
-            <Calculation><![CDATA[""    /* not yet known */]]></Calculation>
-        </Value>
-        <Repetition>
-            <Calculation><![CDATA[1]]></Calculation>
-        </Repetition>
-        <Name>$recNum_MatchFIRST</Name>
-    </Step>
-    <Step enable="True" id="141" name="Set Variable">
-        <Value>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)">
+            <Text>BOTH are Less-than OR greater-than the value we are seeking, so either Omit all or Keep all (if $OmitMatch).</Text>
+        </Step>
+        <Step enable="True" id="68" name="If">
+            <Calculation><![CDATA[not $OmitMatch]]></Calculation>
+        </Step>
+        <Step enable="True" id="16" name="Go to Record/Request/Page">
+            <NoInteract state="False"></NoInteract>
+            <RowPageLocation value="First"></RowPageLocation>
+        </Step>
+        <Step enable="True" id="26" name="Omit Multiple Records">
+            <NoInteract state="True"></NoInteract>
             <Calculation><![CDATA[Get ( FoundCount )]]></Calculation>
-        </Value>
-        <Repetition>
-            <Calculation><![CDATA[1]]></Calculation>
-        </Repetition>
-        <Name>$recNum_MatchLAST</Name>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="69" name="Else"></Step>
-    <Step enable="True" id="89" name="# (comment)">
-        <Text>neither is SAME and they bracket the specified value on either side, so need to find both start and end point.</Text>
-    </Step>
-    <Step enable="True" id="141" name="Set Variable">
-        <Value>
-            <Calculation><![CDATA[""    /* not yet known */]]></Calculation>
-        </Value>
-        <Repetition>
-            <Calculation><![CDATA[1]]></Calculation>
-        </Repetition>
-        <Name>$recNum_MatchFIRST</Name>
-    </Step>
-    <Step enable="True" id="141" name="Set Variable">
-        <Value>
-            <Calculation><![CDATA[""    /* not yet known */]]></Calculation>
-        </Value>
-        <Repetition>
-            <Calculation><![CDATA[1]]></Calculation>
-        </Repetition>
-        <Name>$recNum_MatchLAST</Name>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="70" name="End If"></Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="68" name="If">
-        <Calculation><![CDATA[not IsEmpty ( $result )]]></Calculation>
-    </Step>
-    <Step enable="True" id="68" name="If">
-        <Calculation><![CDATA[not $originalErrorCaptureState]]></Calculation>
-    </Step>
-    <Step enable="True" id="86" name="Set Error Capture">
-        <Set state="False"></Set>
-    </Step>
-    <Step enable="True" id="70" name="End If"></Step>
-    <Step enable="True" id="103" name="Exit Script">
-        <Calculation><![CDATA[$result]]></Calculation>
-    </Step>
-    <Step enable="True" id="70" name="End If"></Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="89" name="# (comment)">
-        <Text>----------------------------------------</Text>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)">
-        <Text>Need to find FIRST record that matches:</Text>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="68" name="If">
-        <Calculation><![CDATA[IsEmpty ( $recNum_MatchFIRST )]]></Calculation>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="141" name="Set Variable">
-        <Value>
-            <Calculation><![CDATA[1]]></Calculation>
-        </Value>
-        <Repetition>
-            <Calculation><![CDATA[1]]></Calculation>
-        </Repetition>
-        <Name>$rnSearchSpaceStart</Name>
-    </Step>
-    <Step enable="True" id="141" name="Set Variable">
-        <Value>
-            <Calculation><![CDATA[If ( not IsEmpty ( $recNum_MatchLAST )
+        </Step>
+        <Step enable="True" id="70" name="End If"></Step>
+        <Step enable="True" id="141" name="Set Variable">
+            <Value>
+                <Calculation><![CDATA["Every record in the found set was DIFFERENT than the specified value."]]></Calculation>
+            </Value>
+            <Repetition>
+                <Calculation><![CDATA[1]]></Calculation>
+            </Repetition>
+            <Name>$successDesc</Name>
+        </Step>
+        <Step enable="True" id="72" name="Exit Loop If">
+            <Calculation><![CDATA[True    /* EXIT error-handling loop */]]></Calculation>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="125" name="Else If">
+            <Calculation><![CDATA[$compareFirst = 0 and $compareLast = 0]]></Calculation>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)">
+            <Text>BOTH are the SAME AS the value we are seeking, so either Keep all or Omit all (if $OmitMatch).</Text>
+        </Step>
+        <Step enable="True" id="68" name="If">
+            <Calculation><![CDATA[$OmitMatch]]></Calculation>
+        </Step>
+        <Step enable="True" id="16" name="Go to Record/Request/Page">
+            <NoInteract state="False"></NoInteract>
+            <RowPageLocation value="First"></RowPageLocation>
+        </Step>
+        <Step enable="True" id="26" name="Omit Multiple Records">
+            <NoInteract state="True"></NoInteract>
+            <Calculation><![CDATA[Get ( FoundCount )]]></Calculation>
+        </Step>
+        <Step enable="True" id="70" name="End If"></Step>
+        <Step enable="True" id="141" name="Set Variable">
+            <Value>
+                <Calculation><![CDATA["Every record in the found set was the SAME as the specified value."]]></Calculation>
+            </Value>
+            <Repetition>
+                <Calculation><![CDATA[1]]></Calculation>
+            </Repetition>
+            <Name>$successDesc</Name>
+        </Step>
+        <Step enable="True" id="72" name="Exit Loop If">
+            <Calculation><![CDATA[True    /* EXIT error-handling loop */]]></Calculation>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="125" name="Else If">
+            <Calculation><![CDATA[$compareFirst = 0]]></Calculation>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)">
+            <Text>First record in found set is SAME, so will only need to find end point.</Text>
+        </Step>
+        <Step enable="True" id="141" name="Set Variable">
+            <Value>
+                <Calculation><![CDATA[1]]></Calculation>
+            </Value>
+            <Repetition>
+                <Calculation><![CDATA[1]]></Calculation>
+            </Repetition>
+            <Name>$recNum_MatchFIRST</Name>
+        </Step>
+        <Step enable="True" id="141" name="Set Variable">
+            <Value>
+                <Calculation><![CDATA[""    /* not yet known */]]></Calculation>
+            </Value>
+            <Repetition>
+                <Calculation><![CDATA[1]]></Calculation>
+            </Repetition>
+            <Name>$recNum_MatchLAST</Name>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="125" name="Else If">
+            <Calculation><![CDATA[$compareLast = 0]]></Calculation>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)">
+            <Text>Last record in found set is SAME, so will only need to find start point.</Text>
+        </Step>
+        <Step enable="True" id="141" name="Set Variable">
+            <Value>
+                <Calculation><![CDATA[""    /* not yet known */]]></Calculation>
+            </Value>
+            <Repetition>
+                <Calculation><![CDATA[1]]></Calculation>
+            </Repetition>
+            <Name>$recNum_MatchFIRST</Name>
+        </Step>
+        <Step enable="True" id="141" name="Set Variable">
+            <Value>
+                <Calculation><![CDATA[Get ( FoundCount )]]></Calculation>
+            </Value>
+            <Repetition>
+                <Calculation><![CDATA[1]]></Calculation>
+            </Repetition>
+            <Name>$recNum_MatchLAST</Name>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="69" name="Else"></Step>
+        <Step enable="True" id="89" name="# (comment)">
+            <Text>neither is SAME and they bracket the specified value on either side, so need to find both start and end point.</Text>
+        </Step>
+        <Step enable="True" id="141" name="Set Variable">
+            <Value>
+                <Calculation><![CDATA[""    /* not yet known */]]></Calculation>
+            </Value>
+            <Repetition>
+                <Calculation><![CDATA[1]]></Calculation>
+            </Repetition>
+            <Name>$recNum_MatchFIRST</Name>
+        </Step>
+        <Step enable="True" id="141" name="Set Variable">
+            <Value>
+                <Calculation><![CDATA[""    /* not yet known */]]></Calculation>
+            </Value>
+            <Repetition>
+                <Calculation><![CDATA[1]]></Calculation>
+            </Repetition>
+            <Name>$recNum_MatchLAST</Name>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="70" name="End If"></Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="89" name="# (comment)">
+            <Text>----------------------------------------</Text>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)">
+            <Text>Need to find FIRST record that matches:</Text>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="68" name="If">
+            <Calculation><![CDATA[IsEmpty ( $recNum_MatchFIRST )]]></Calculation>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="141" name="Set Variable">
+            <Value>
+                <Calculation><![CDATA[1]]></Calculation>
+            </Value>
+            <Repetition>
+                <Calculation><![CDATA[1]]></Calculation>
+            </Repetition>
+            <Name>$rnSearchSpaceStart</Name>
+        </Step>
+        <Step enable="True" id="141" name="Set Variable">
+            <Value>
+                <Calculation><![CDATA[If ( not IsEmpty ( $recNum_MatchLAST )
        ; $recNum_MatchLAST
        ; Get ( FoundCount ) 
 )]]></Calculation>
-        </Value>
-        <Repetition>
-            <Calculation><![CDATA[1]]></Calculation>
-        </Repetition>
-        <Name>$rnSearchSpaceEnd</Name>
-    </Step>
-    <Step enable="True" id="71" name="Loop">
-        <FlushType value="Always"></FlushType>
-    </Step>
-    <Step enable="True" id="141" name="Set Variable">
-        <Value>
-            <Calculation><![CDATA[$rnSearchSpaceStart 
+            </Value>
+            <Repetition>
+                <Calculation><![CDATA[1]]></Calculation>
+            </Repetition>
+            <Name>$rnSearchSpaceEnd</Name>
+        </Step>
+        <Step enable="True" id="71" name="Loop">
+            <FlushType value="Always"></FlushType>
+        </Step>
+        <Step enable="True" id="141" name="Set Variable">
+            <Value>
+                <Calculation><![CDATA[$rnSearchSpaceStart 
 + 
 Floor ( ( $rnSearchSpaceEnd - $rnSearchSpaceStart ) / 2 )]]></Calculation>
-        </Value>
-        <Repetition>
-            <Calculation><![CDATA[1]]></Calculation>
-        </Repetition>
-        <Name>$rnTesting</Name>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="68" name="If">
-        <Calculation><![CDATA[$mustGoToRec]]></Calculation>
-    </Step>
-    <Step enable="True" id="16" name="Go to Record/Request/Page">
-        <NoInteract state="True"></NoInteract>
-        <RowPageLocation value="ByCalculation"></RowPageLocation>
-        <Calculation><![CDATA[$rnTesting]]></Calculation>
-    </Step>
-    <Step enable="True" id="141" name="Set Variable">
-        <Value>
-            <Calculation><![CDATA[ValueAsType ( GetField ( $BreakPointFieldName ) ; $ValueType )]]></Calculation>
-        </Value>
-        <Repetition>
-            <Calculation><![CDATA[1]]></Calculation>
-        </Repetition>
-        <Name>$thisValue</Name>
-    </Step>
-    <Step enable="True" id="69" name="Else"></Step>
-    <Step enable="True" id="141" name="Set Variable">
-        <Value>
-            <Calculation><![CDATA[Let ( [ 
+            </Value>
+            <Repetition>
+                <Calculation><![CDATA[1]]></Calculation>
+            </Repetition>
+            <Name>$rnTesting</Name>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="68" name="If">
+            <Calculation><![CDATA[$mustGoToRec]]></Calculation>
+        </Step>
+        <Step enable="True" id="16" name="Go to Record/Request/Page">
+            <NoInteract state="True"></NoInteract>
+            <RowPageLocation value="ByCalculation"></RowPageLocation>
+            <Calculation><![CDATA[$rnTesting]]></Calculation>
+        </Step>
+        <Step enable="True" id="141" name="Set Variable">
+            <Value>
+                <Calculation><![CDATA[ValueAsType ( GetField ( $BreakPointFieldName ) ; $ValueType )]]></Calculation>
+            </Value>
+            <Repetition>
+                <Calculation><![CDATA[1]]></Calculation>
+            </Repetition>
+            <Name>$thisValue</Name>
+        </Step>
+        <Step enable="True" id="69" name="Else"></Step>
+        <Step enable="True" id="141" name="Set Variable">
+            <Value>
+                <Calculation><![CDATA[Let ( [ 
                oneRecNum = $rnTesting
        ]; 
 
@@ -917,112 +849,112 @@ Floor ( ( $rnSearchSpaceEnd - $rnSearchSpaceStart ) / 2 )]]></Calculation>
                $ValueType 
        )
 )]]></Calculation>
-        </Value>
-        <Repetition>
-            <Calculation><![CDATA[1]]></Calculation>
-        </Repetition>
-        <Name>$thisValue</Name>
-    </Step>
-    <Step enable="True" id="70" name="End If"></Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="68" name="If">
-        <Calculation><![CDATA[$thisValue = $BreakPointFieldValue]]></Calculation>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)">
-        <Text>Matches, so need to look earlier, since being IN the value means the first record is always earlier. &#13;BUT, this could be the first itself, since it matches.</Text>
-    </Step>
-    <Step enable="True" id="141" name="Set Variable">
-        <Value>
-            <Calculation><![CDATA[$rnTesting]]></Calculation>
-        </Value>
-        <Repetition>
-            <Calculation><![CDATA[1]]></Calculation>
-        </Repetition>
-        <Name>$rnSearchSpaceEnd</Name>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="125" name="Else If">
-        <Calculation><![CDATA[( $thisValue < $BreakPointFieldValue and $sortAscending )
+            </Value>
+            <Repetition>
+                <Calculation><![CDATA[1]]></Calculation>
+            </Repetition>
+            <Name>$thisValue</Name>
+        </Step>
+        <Step enable="True" id="70" name="End If"></Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="68" name="If">
+            <Calculation><![CDATA[$thisValue = $BreakPointFieldValue]]></Calculation>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)">
+            <Text>Matches, so need to look earlier, since being IN the value means the first record is always earlier. &#13;BUT, this could be the first itself, since it matches.</Text>
+        </Step>
+        <Step enable="True" id="141" name="Set Variable">
+            <Value>
+                <Calculation><![CDATA[$rnTesting]]></Calculation>
+            </Value>
+            <Repetition>
+                <Calculation><![CDATA[1]]></Calculation>
+            </Repetition>
+            <Name>$rnSearchSpaceEnd</Name>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="125" name="Else If">
+            <Calculation><![CDATA[( $thisValue < $BreakPointFieldValue and $sortAscending )
   or 
 ( $thisValue >$BreakPointFieldValue and not $sortAscending )]]></Calculation>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)">
-        <Text>BEFORE the matching-values-block, because: &#13; - this is LESS THAN the specified value (and sort is ascending), OR: &#13; - this is GREATER THAN the specified value (and sort is NOT ascending).&#13;Move search space to start one record after this one:</Text>
-    </Step>
-    <Step enable="True" id="141" name="Set Variable">
-        <Value>
-            <Calculation><![CDATA[$rnTesting + 1]]></Calculation>
-        </Value>
-        <Repetition>
-            <Calculation><![CDATA[1]]></Calculation>
-        </Repetition>
-        <Name>$rnSearchSpaceStart</Name>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="125" name="Else If">
-        <Calculation><![CDATA[( $thisValue > $BreakPointFieldValue and $sortAscending ) 
+        </Step>
+        <Step enable="True" id="89" name="# (comment)">
+            <Text>BEFORE the matching-values-block, because: &#13; - this is LESS THAN the specified value (and sort is ascending), OR: &#13; - this is GREATER THAN the specified value (and sort is NOT ascending).&#13;Move search space to start one record after this one:</Text>
+        </Step>
+        <Step enable="True" id="141" name="Set Variable">
+            <Value>
+                <Calculation><![CDATA[$rnTesting + 1]]></Calculation>
+            </Value>
+            <Repetition>
+                <Calculation><![CDATA[1]]></Calculation>
+            </Repetition>
+            <Name>$rnSearchSpaceStart</Name>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="125" name="Else If">
+            <Calculation><![CDATA[( $thisValue > $BreakPointFieldValue and $sortAscending ) 
 or 
 ( $thisValue < $BreakPointFieldValue and not $sortAscending )]]></Calculation>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)">
-        <Text>AFTER the matching-values-block, because: &#13; - this is GREATER THAN the specified value (and sort is ascending), OR: &#13; - this is LESS THAN the specified value (and sort is NOT ascending). &#13;Move search space to start one record after this one:</Text>
-    </Step>
-    <Step enable="True" id="141" name="Set Variable">
-        <Value>
-            <Calculation><![CDATA[$rnTesting - 1]]></Calculation>
-        </Value>
-        <Repetition>
-            <Calculation><![CDATA[1]]></Calculation>
-        </Repetition>
-        <Name>$rnSearchSpaceEnd</Name>
-    </Step>
-    <Step enable="True" id="70" name="End If"></Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="68" name="If">
-        <Calculation><![CDATA[$rnSearchSpaceEnd ≤ $rnSearchSpaceStart]]></Calculation>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)">
-        <Text>SAME record, so we&apos;ve found the break point (matching side of the split - if ANY match at all).</Text>
-    </Step>
-    <Step enable="True" id="141" name="Set Variable">
-        <Value>
-            <Calculation><![CDATA[$rnSearchSpaceStart]]></Calculation>
-        </Value>
-        <Repetition>
-            <Calculation><![CDATA[1]]></Calculation>
-        </Repetition>
-        <Name>$recNum_MatchFIRST</Name>
-    </Step>
-    <Step enable="True" id="72" name="Exit Loop If">
-        <Calculation><![CDATA[True]]></Calculation>
-    </Step>
-    <Step enable="True" id="70" name="End If"></Step>
-    <Step enable="True" id="73" name="End Loop"></Step>
-    <Step enable="True" id="70" name="End If"></Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="68" name="If">
-        <Calculation><![CDATA[$mustGoToRec]]></Calculation>
-    </Step>
-    <Step enable="True" id="16" name="Go to Record/Request/Page">
-        <NoInteract state="True"></NoInteract>
-        <RowPageLocation value="ByCalculation"></RowPageLocation>
-        <Calculation><![CDATA[$recNum_MatchFIRST]]></Calculation>
-    </Step>
-    <Step enable="True" id="141" name="Set Variable">
-        <Value>
-            <Calculation><![CDATA[ValueAsType ( GetField ( $BreakPointFieldName ) ; $ValueType )]]></Calculation>
-        </Value>
-        <Repetition>
-            <Calculation><![CDATA[1]]></Calculation>
-        </Repetition>
-        <Name>$thisValue</Name>
-    </Step>
-    <Step enable="True" id="69" name="Else"></Step>
-    <Step enable="True" id="141" name="Set Variable">
-        <Value>
-            <Calculation><![CDATA[Let ( [ 
+        </Step>
+        <Step enable="True" id="89" name="# (comment)">
+            <Text>AFTER the matching-values-block, because: &#13; - this is GREATER THAN the specified value (and sort is ascending), OR: &#13; - this is LESS THAN the specified value (and sort is NOT ascending). &#13;Move search space to start one record after this one:</Text>
+        </Step>
+        <Step enable="True" id="141" name="Set Variable">
+            <Value>
+                <Calculation><![CDATA[$rnTesting - 1]]></Calculation>
+            </Value>
+            <Repetition>
+                <Calculation><![CDATA[1]]></Calculation>
+            </Repetition>
+            <Name>$rnSearchSpaceEnd</Name>
+        </Step>
+        <Step enable="True" id="70" name="End If"></Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="68" name="If">
+            <Calculation><![CDATA[$rnSearchSpaceEnd ≤ $rnSearchSpaceStart]]></Calculation>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)">
+            <Text>SAME record, so we&apos;ve found the break point (matching side of the split - if ANY match at all).</Text>
+        </Step>
+        <Step enable="True" id="141" name="Set Variable">
+            <Value>
+                <Calculation><![CDATA[$rnSearchSpaceStart]]></Calculation>
+            </Value>
+            <Repetition>
+                <Calculation><![CDATA[1]]></Calculation>
+            </Repetition>
+            <Name>$recNum_MatchFIRST</Name>
+        </Step>
+        <Step enable="True" id="72" name="Exit Loop If">
+            <Calculation><![CDATA[True]]></Calculation>
+        </Step>
+        <Step enable="True" id="70" name="End If"></Step>
+        <Step enable="True" id="73" name="End Loop"></Step>
+        <Step enable="True" id="70" name="End If"></Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="68" name="If">
+            <Calculation><![CDATA[$mustGoToRec]]></Calculation>
+        </Step>
+        <Step enable="True" id="16" name="Go to Record/Request/Page">
+            <NoInteract state="True"></NoInteract>
+            <RowPageLocation value="ByCalculation"></RowPageLocation>
+            <Calculation><![CDATA[$recNum_MatchFIRST]]></Calculation>
+        </Step>
+        <Step enable="True" id="141" name="Set Variable">
+            <Value>
+                <Calculation><![CDATA[ValueAsType ( GetField ( $BreakPointFieldName ) ; $ValueType )]]></Calculation>
+            </Value>
+            <Repetition>
+                <Calculation><![CDATA[1]]></Calculation>
+            </Repetition>
+            <Name>$thisValue</Name>
+        </Step>
+        <Step enable="True" id="69" name="Else"></Step>
+        <Step enable="True" id="141" name="Set Variable">
+            <Value>
+                <Calculation><![CDATA[Let ( [ 
                oneRecNum = $recNum_MatchFIRST
        ] ; 
 
@@ -1031,124 +963,124 @@ or
                        ; $ValueType
                )
 )]]></Calculation>
-        </Value>
-        <Repetition>
-            <Calculation><![CDATA[1]]></Calculation>
-        </Repetition>
-        <Name>$thisValue</Name>
-    </Step>
-    <Step enable="True" id="70" name="End If"></Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="89" name="# (comment)">
-        <Text>Could NOT find the start of the matching-records-block, so there are not any. All are DIFFERENT, then:</Text>
-    </Step>
-    <Step enable="True" id="68" name="If">
-        <Calculation><![CDATA[$thisValue ≠ $BreakPointFieldValue]]></Calculation>
-    </Step>
-    <Step enable="True" id="68" name="If">
-        <Calculation><![CDATA[not $OmitMatch]]></Calculation>
-    </Step>
-    <Step enable="True" id="16" name="Go to Record/Request/Page">
-        <NoInteract state="False"></NoInteract>
-        <RowPageLocation value="First"></RowPageLocation>
-    </Step>
-    <Step enable="True" id="26" name="Omit Multiple Records">
-        <NoInteract state="True"></NoInteract>
-        <Calculation><![CDATA[Get ( FoundCount )]]></Calculation>
-    </Step>
-    <Step enable="True" id="70" name="End If"></Step>
-    <Step enable="True" id="68" name="If">
-        <Calculation><![CDATA[not $originalErrorCaptureState]]></Calculation>
-    </Step>
-    <Step enable="True" id="86" name="Set Error Capture">
-        <Set state="False"></Set>
-    </Step>
-    <Step enable="True" id="70" name="End If"></Step>
-    <Step enable="True" id="141" name="Set Variable">
-        <Value>
-            <Calculation><![CDATA["Every record in the found set was DIFFERENT than the specified value."]]></Calculation>
-        </Value>
-        <Repetition>
-            <Calculation><![CDATA[1]]></Calculation>
-        </Repetition>
-        <Name>$successDesc</Name>
-    </Step>
-    <Step enable="True" id="72" name="Exit Loop If">
-        <Calculation><![CDATA[True    /* EXIT error-handling loop */]]></Calculation>
-    </Step>
-    <Step enable="True" id="103" name="Exit Script">
-        <Calculation><![CDATA[$result]]></Calculation>
-    </Step>
-    <Step enable="True" id="70" name="End If"></Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="89" name="# (comment)">
-        <Text>----------------------------------------</Text>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)">
-        <Text>Need to find the LAST record that matches:</Text>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="89" name="# (comment)">
-        <Text>Note: This loop is much easier, since we now only need to find the END point of the matching-records-block.&#13; We found the start already (and there was one).</Text>
-    </Step>
-    <Step enable="True" id="68" name="If">
-        <Calculation><![CDATA[IsEmpty ( $recNum_MatchLAST )]]></Calculation>
-    </Step>
-    <Step enable="True" id="141" name="Set Variable">
-        <Value>
-            <Calculation><![CDATA[$recNum_MatchFIRST]]></Calculation>
-        </Value>
-        <Repetition>
-            <Calculation><![CDATA[1]]></Calculation>
-        </Repetition>
-        <Name>$rnSearchSpaceStart</Name>
-    </Step>
-    <Step enable="True" id="141" name="Set Variable">
-        <Value>
+            </Value>
+            <Repetition>
+                <Calculation><![CDATA[1]]></Calculation>
+            </Repetition>
+            <Name>$thisValue</Name>
+        </Step>
+        <Step enable="True" id="70" name="End If"></Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="89" name="# (comment)">
+            <Text>Could NOT find the start of the matching-records-block, so there are not any. All are DIFFERENT, then:</Text>
+        </Step>
+        <Step enable="True" id="68" name="If">
+            <Calculation><![CDATA[$thisValue ≠ $BreakPointFieldValue]]></Calculation>
+        </Step>
+        <Step enable="True" id="68" name="If">
+            <Calculation><![CDATA[not $OmitMatch]]></Calculation>
+        </Step>
+        <Step enable="True" id="16" name="Go to Record/Request/Page">
+            <NoInteract state="False"></NoInteract>
+            <RowPageLocation value="First"></RowPageLocation>
+        </Step>
+        <Step enable="True" id="26" name="Omit Multiple Records">
+            <NoInteract state="True"></NoInteract>
             <Calculation><![CDATA[Get ( FoundCount )]]></Calculation>
-        </Value>
-        <Repetition>
-            <Calculation><![CDATA[1]]></Calculation>
-        </Repetition>
-        <Name>$rnSearchSpaceEnd</Name>
-    </Step>
-    <Step enable="True" id="71" name="Loop">
-        <FlushType value="Always"></FlushType>
-    </Step>
-    <Step enable="True" id="141" name="Set Variable">
-        <Value>
-            <Calculation><![CDATA[$rnSearchSpaceStart
+        </Step>
+        <Step enable="True" id="70" name="End If"></Step>
+        <Step enable="True" id="68" name="If">
+            <Calculation><![CDATA[not $originalErrorCaptureState]]></Calculation>
+        </Step>
+        <Step enable="True" id="86" name="Set Error Capture">
+            <Set state="False"></Set>
+        </Step>
+        <Step enable="True" id="70" name="End If"></Step>
+        <Step enable="True" id="141" name="Set Variable">
+            <Value>
+                <Calculation><![CDATA["Every record in the found set was DIFFERENT than the specified value."]]></Calculation>
+            </Value>
+            <Repetition>
+                <Calculation><![CDATA[1]]></Calculation>
+            </Repetition>
+            <Name>$successDesc</Name>
+        </Step>
+        <Step enable="True" id="72" name="Exit Loop If">
+            <Calculation><![CDATA[True    /* EXIT error-handling loop */]]></Calculation>
+        </Step>
+        <Step enable="True" id="103" name="Exit Script">
+            <Calculation><![CDATA[$result]]></Calculation>
+        </Step>
+        <Step enable="True" id="70" name="End If"></Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="89" name="# (comment)">
+            <Text>----------------------------------------</Text>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)">
+            <Text>Need to find the LAST record that matches:</Text>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="89" name="# (comment)">
+            <Text>Note: This loop is much easier, since we now only need to find the END point of the matching-records-block.&#13; We found the start already (and there was one).</Text>
+        </Step>
+        <Step enable="True" id="68" name="If">
+            <Calculation><![CDATA[IsEmpty ( $recNum_MatchLAST )]]></Calculation>
+        </Step>
+        <Step enable="True" id="141" name="Set Variable">
+            <Value>
+                <Calculation><![CDATA[$recNum_MatchFIRST]]></Calculation>
+            </Value>
+            <Repetition>
+                <Calculation><![CDATA[1]]></Calculation>
+            </Repetition>
+            <Name>$rnSearchSpaceStart</Name>
+        </Step>
+        <Step enable="True" id="141" name="Set Variable">
+            <Value>
+                <Calculation><![CDATA[Get ( FoundCount )]]></Calculation>
+            </Value>
+            <Repetition>
+                <Calculation><![CDATA[1]]></Calculation>
+            </Repetition>
+            <Name>$rnSearchSpaceEnd</Name>
+        </Step>
+        <Step enable="True" id="71" name="Loop">
+            <FlushType value="Always"></FlushType>
+        </Step>
+        <Step enable="True" id="141" name="Set Variable">
+            <Value>
+                <Calculation><![CDATA[$rnSearchSpaceStart
 +
 Ceiling ( ( $rnSearchSpaceEnd - $rnSearchSpaceStart ) / 2 )]]></Calculation>
-        </Value>
-        <Repetition>
-            <Calculation><![CDATA[1]]></Calculation>
-        </Repetition>
-        <Name>$rnTesting</Name>
-    </Step>
-    <Step enable="True" id="68" name="If">
-        <Calculation><![CDATA[$mustGoToRec]]></Calculation>
-    </Step>
-    <Step enable="True" id="16" name="Go to Record/Request/Page">
-        <NoInteract state="True"></NoInteract>
-        <RowPageLocation value="ByCalculation"></RowPageLocation>
-        <Calculation><![CDATA[$rnTesting]]></Calculation>
-    </Step>
-    <Step enable="True" id="141" name="Set Variable">
-        <Value>
-            <Calculation><![CDATA[ValueAsType ( GetField ( $BreakPointFieldName ) ; $ValueType )]]></Calculation>
-        </Value>
-        <Repetition>
-            <Calculation><![CDATA[1]]></Calculation>
-        </Repetition>
-        <Name>$thisValue</Name>
-    </Step>
-    <Step enable="True" id="69" name="Else"></Step>
-    <Step enable="True" id="141" name="Set Variable">
-        <Value>
-            <Calculation><![CDATA[Let ( [ 
+            </Value>
+            <Repetition>
+                <Calculation><![CDATA[1]]></Calculation>
+            </Repetition>
+            <Name>$rnTesting</Name>
+        </Step>
+        <Step enable="True" id="68" name="If">
+            <Calculation><![CDATA[$mustGoToRec]]></Calculation>
+        </Step>
+        <Step enable="True" id="16" name="Go to Record/Request/Page">
+            <NoInteract state="True"></NoInteract>
+            <RowPageLocation value="ByCalculation"></RowPageLocation>
+            <Calculation><![CDATA[$rnTesting]]></Calculation>
+        </Step>
+        <Step enable="True" id="141" name="Set Variable">
+            <Value>
+                <Calculation><![CDATA[ValueAsType ( GetField ( $BreakPointFieldName ) ; $ValueType )]]></Calculation>
+            </Value>
+            <Repetition>
+                <Calculation><![CDATA[1]]></Calculation>
+            </Repetition>
+            <Name>$thisValue</Name>
+        </Step>
+        <Step enable="True" id="69" name="Else"></Step>
+        <Step enable="True" id="141" name="Set Variable">
+            <Value>
+                <Calculation><![CDATA[Let ( [ 
                oneRecNum = $rnTesting
        ] ;
 
@@ -1157,104 +1089,104 @@ Ceiling ( ( $rnSearchSpaceEnd - $rnSearchSpaceStart ) / 2 )]]></Calculation>
                $ValueType 
        )
 )]]></Calculation>
-        </Value>
-        <Repetition>
-            <Calculation><![CDATA[1]]></Calculation>
-        </Repetition>
-        <Name>$thisValue</Name>
-    </Step>
-    <Step enable="True" id="70" name="End If"></Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="68" name="If">
-        <Calculation><![CDATA[$thisValue = $BreakPointFieldValue]]></Calculation>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)">
-        <Text>Matches, so need to look AFTER, since being IN the value means the last record is always earlier. &#13;BUT, this could be the Last itself, since it matches.</Text>
-    </Step>
-    <Step enable="True" id="141" name="Set Variable">
-        <Value>
-            <Calculation><![CDATA[$rnTesting]]></Calculation>
-        </Value>
-        <Repetition>
-            <Calculation><![CDATA[1]]></Calculation>
-        </Repetition>
-        <Name>$rnSearchSpaceStart</Name>
-    </Step>
-    <Step enable="True" id="69" name="Else"></Step>
-    <Step enable="True" id="89" name="# (comment)">
-        <Text>Not a match, so need to look BEFORE.</Text>
-    </Step>
-    <Step enable="True" id="141" name="Set Variable">
-        <Value>
-            <Calculation><![CDATA[$rnTesting - 1]]></Calculation>
-        </Value>
-        <Repetition>
-            <Calculation><![CDATA[1]]></Calculation>
-        </Repetition>
-        <Name>$rnSearchSpaceEnd</Name>
-    </Step>
-    <Step enable="True" id="70" name="End If"></Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="89" name="# (comment)">
-        <Text>SAME record, so we&apos;ve found the break point (matching side of the split).</Text>
-    </Step>
-    <Step enable="True" id="68" name="If">
-        <Calculation><![CDATA[$rnSearchSpaceEnd ≤ $rnSearchSpaceStart]]></Calculation>
-    </Step>
-    <Step enable="True" id="141" name="Set Variable">
-        <Value>
-            <Calculation><![CDATA[$rnSearchSpaceEnd]]></Calculation>
-        </Value>
-        <Repetition>
-            <Calculation><![CDATA[1]]></Calculation>
-        </Repetition>
-        <Name>$recNum_MatchLAST</Name>
-    </Step>
-    <Step enable="True" id="72" name="Exit Loop If">
-        <Calculation><![CDATA[True]]></Calculation>
-    </Step>
-    <Step enable="True" id="70" name="End If"></Step>
-    <Step enable="True" id="73" name="End Loop"></Step>
-    <Step enable="True" id="70" name="End If"></Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="89" name="# (comment)">
-        <Text>----------------------------------------</Text>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)">
-        <Text>Now constrain the found set</Text>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="68" name="If">
-        <Calculation><![CDATA[$OmitMatch]]></Calculation>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)">
-        <Text>OMIT those that match, so omit multiple from first to last:</Text>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="16" name="Go to Record/Request/Page">
-        <NoInteract state="True"></NoInteract>
-        <RowPageLocation value="ByCalculation"></RowPageLocation>
-        <Calculation><![CDATA[$recNum_MatchFIRST]]></Calculation>
-    </Step>
-    <Step enable="True" id="68" name="If">
-        <Calculation><![CDATA[$mustGoToRec]]></Calculation>
-    </Step>
-    <Step enable="True" id="141" name="Set Variable">
-        <Value>
-            <Calculation><![CDATA[ValueAsType ( GetField ( $BreakPointFieldName ) ; $ValueType )]]></Calculation>
-        </Value>
-        <Repetition>
-            <Calculation><![CDATA[1]]></Calculation>
-        </Repetition>
-        <Name>$thisValue</Name>
-    </Step>
-    <Step enable="True" id="69" name="Else"></Step>
-    <Step enable="True" id="141" name="Set Variable">
-        <Value>
-            <Calculation><![CDATA[Let ( [ 
+            </Value>
+            <Repetition>
+                <Calculation><![CDATA[1]]></Calculation>
+            </Repetition>
+            <Name>$thisValue</Name>
+        </Step>
+        <Step enable="True" id="70" name="End If"></Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="68" name="If">
+            <Calculation><![CDATA[$thisValue = $BreakPointFieldValue]]></Calculation>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)">
+            <Text>Matches, so need to look AFTER, since being IN the value means the last record is always earlier. &#13;BUT, this could be the Last itself, since it matches.</Text>
+        </Step>
+        <Step enable="True" id="141" name="Set Variable">
+            <Value>
+                <Calculation><![CDATA[$rnTesting]]></Calculation>
+            </Value>
+            <Repetition>
+                <Calculation><![CDATA[1]]></Calculation>
+            </Repetition>
+            <Name>$rnSearchSpaceStart</Name>
+        </Step>
+        <Step enable="True" id="69" name="Else"></Step>
+        <Step enable="True" id="89" name="# (comment)">
+            <Text>Not a match, so need to look BEFORE.</Text>
+        </Step>
+        <Step enable="True" id="141" name="Set Variable">
+            <Value>
+                <Calculation><![CDATA[$rnTesting - 1]]></Calculation>
+            </Value>
+            <Repetition>
+                <Calculation><![CDATA[1]]></Calculation>
+            </Repetition>
+            <Name>$rnSearchSpaceEnd</Name>
+        </Step>
+        <Step enable="True" id="70" name="End If"></Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="89" name="# (comment)">
+            <Text>SAME record, so we&apos;ve found the break point (matching side of the split).</Text>
+        </Step>
+        <Step enable="True" id="68" name="If">
+            <Calculation><![CDATA[$rnSearchSpaceEnd ≤ $rnSearchSpaceStart]]></Calculation>
+        </Step>
+        <Step enable="True" id="141" name="Set Variable">
+            <Value>
+                <Calculation><![CDATA[$rnSearchSpaceEnd]]></Calculation>
+            </Value>
+            <Repetition>
+                <Calculation><![CDATA[1]]></Calculation>
+            </Repetition>
+            <Name>$recNum_MatchLAST</Name>
+        </Step>
+        <Step enable="True" id="72" name="Exit Loop If">
+            <Calculation><![CDATA[True]]></Calculation>
+        </Step>
+        <Step enable="True" id="70" name="End If"></Step>
+        <Step enable="True" id="73" name="End Loop"></Step>
+        <Step enable="True" id="70" name="End If"></Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="89" name="# (comment)">
+            <Text>----------------------------------------</Text>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)">
+            <Text>Now constrain the found set</Text>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="68" name="If">
+            <Calculation><![CDATA[$OmitMatch]]></Calculation>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)">
+            <Text>OMIT those that match, so omit multiple from first to last:</Text>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="16" name="Go to Record/Request/Page">
+            <NoInteract state="True"></NoInteract>
+            <RowPageLocation value="ByCalculation"></RowPageLocation>
+            <Calculation><![CDATA[$recNum_MatchFIRST]]></Calculation>
+        </Step>
+        <Step enable="True" id="68" name="If">
+            <Calculation><![CDATA[$mustGoToRec]]></Calculation>
+        </Step>
+        <Step enable="True" id="141" name="Set Variable">
+            <Value>
+                <Calculation><![CDATA[ValueAsType ( GetField ( $BreakPointFieldName ) ; $ValueType )]]></Calculation>
+            </Value>
+            <Repetition>
+                <Calculation><![CDATA[1]]></Calculation>
+            </Repetition>
+            <Name>$thisValue</Name>
+        </Step>
+        <Step enable="True" id="69" name="Else"></Step>
+        <Step enable="True" id="141" name="Set Variable">
+            <Value>
+                <Calculation><![CDATA[Let ( [ 
                oneRecNum = Get ( RecordNumber )
        ]; 
 
@@ -1263,168 +1195,188 @@ Ceiling ( ( $rnSearchSpaceEnd - $rnSearchSpaceStart ) / 2 )]]></Calculation>
                $ValueType 
        )
 )]]></Calculation>
-        </Value>
-        <Repetition>
-            <Calculation><![CDATA[1]]></Calculation>
-        </Repetition>
-        <Name>$thisValue</Name>
-    </Step>
-    <Step enable="True" id="70" name="End If"></Step>
-    <Step enable="True" id="68" name="If">
-        <Calculation><![CDATA[$thisValue = $BreakPointFieldValue]]></Calculation>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)">
-        <Text>Just in case, check whether we actually found the specified value AT ALL, before we omit:</Text>
-    </Step>
-    <Step enable="True" id="26" name="Omit Multiple Records">
-        <NoInteract state="True"></NoInteract>
-        <Calculation><![CDATA[$recNum_MatchLAST - $recNum_MatchFIRST + 1]]></Calculation>
-    </Step>
-    <Step enable="True" id="70" name="End If"></Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="69" name="Else"></Step>
-    <Step enable="True" id="89" name="# (comment)">
-        <Text>KEEP those that match, so omit multiple AFTER, then BEFORE (don&apos;t do the earlier group omit first, since that would move the remaining record numbers):</Text>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="16" name="Go to Record/Request/Page">
-        <NoInteract state="True"></NoInteract>
-        <RowPageLocation value="ByCalculation"></RowPageLocation>
-        <Calculation><![CDATA[$recNum_MatchLAST + 1]]></Calculation>
-    </Step>
-    <Step enable="True" id="26" name="Omit Multiple Records">
-        <NoInteract state="True"></NoInteract>
-        <Calculation><![CDATA[Get ( FoundCount ) - $recNum_MatchLAST]]></Calculation>
-    </Step>
-    <Step enable="True" id="16" name="Go to Record/Request/Page">
-        <NoInteract state="False"></NoInteract>
-        <RowPageLocation value="First"></RowPageLocation>
-    </Step>
-    <Step enable="True" id="26" name="Omit Multiple Records">
-        <NoInteract state="True"></NoInteract>
-        <Calculation><![CDATA[$recNum_MatchFIRST - 1]]></Calculation>
-    </Step>
-    <Step enable="True" id="68" name="If">
-        <Calculation><![CDATA[Get ( FoundCount ) = 1]]></Calculation>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)">
-        <Text>If there were NONE that matched in the found set, we will have one left to omit:</Text>
-    </Step>
-    <Step enable="True" id="141" name="Set Variable">
-        <Value>
-            <Calculation><![CDATA[ValueAsType ( GetField ( $BreakPointFieldName ) ; $ValueType )]]></Calculation>
-        </Value>
-        <Repetition>
-            <Calculation><![CDATA[1]]></Calculation>
-        </Repetition>
-        <Name>$thisValue</Name>
-    </Step>
-    <Step enable="True" id="68" name="If">
-        <Calculation><![CDATA[$thisValue ≠ $BreakPointFieldValue]]></Calculation>
-    </Step>
-    <Step enable="True" id="25" name="Omit Record"></Step>
-    <Step enable="True" id="70" name="End If"></Step>
-    <Step enable="True" id="70" name="End If"></Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="70" name="End If"></Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="89" name="# (comment)">
-        <Text>------------------------------------</Text>
-    </Step>
-    <Step enable="True" id="72" name="Exit Loop If">
-        <Calculation><![CDATA[True    /* ALWAYS exit error-handling loop after a single pass! */]]></Calculation>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)">
-        <Text>END OF: Error-handling Loop.</Text>
-    </Step>
-    <Step enable="True" id="73" name="End Loop"></Step>
-    <Step enable="True" id="89" name="# (comment)">
-        <Text>----------------------------------------</Text>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="89" name="# (comment)">
-        <Text>----------------------------------------</Text>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)">
-        <Text>Cleanup</Text>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="141" name="Set Variable">
-        <Value>
-            <Calculation><![CDATA[     # ( "FileName" ; Get ( FileName ) ) 
+            </Value>
+            <Repetition>
+                <Calculation><![CDATA[1]]></Calculation>
+            </Repetition>
+            <Name>$thisValue</Name>
+        </Step>
+        <Step enable="True" id="70" name="End If"></Step>
+        <Step enable="True" id="68" name="If">
+            <Calculation><![CDATA[$thisValue = $BreakPointFieldValue]]></Calculation>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)">
+            <Text>Just in case, check whether we actually found the specified value AT ALL, before we omit:</Text>
+        </Step>
+        <Step enable="True" id="26" name="Omit Multiple Records">
+            <NoInteract state="True"></NoInteract>
+            <Calculation><![CDATA[$recNum_MatchLAST - $recNum_MatchFIRST + 1]]></Calculation>
+        </Step>
+        <Step enable="True" id="70" name="End If"></Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="69" name="Else"></Step>
+        <Step enable="True" id="89" name="# (comment)">
+            <Text>KEEP those that match, so omit multiple AFTER, then BEFORE (don&apos;t do the earlier group omit first, since that would move the remaining record numbers):</Text>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="16" name="Go to Record/Request/Page">
+            <NoInteract state="True"></NoInteract>
+            <RowPageLocation value="ByCalculation"></RowPageLocation>
+            <Calculation><![CDATA[$recNum_MatchLAST + 1]]></Calculation>
+        </Step>
+        <Step enable="True" id="26" name="Omit Multiple Records">
+            <NoInteract state="True"></NoInteract>
+            <Calculation><![CDATA[Get ( FoundCount ) - $recNum_MatchLAST]]></Calculation>
+        </Step>
+        <Step enable="True" id="16" name="Go to Record/Request/Page">
+            <NoInteract state="False"></NoInteract>
+            <RowPageLocation value="First"></RowPageLocation>
+        </Step>
+        <Step enable="True" id="26" name="Omit Multiple Records">
+            <NoInteract state="True"></NoInteract>
+            <Calculation><![CDATA[$recNum_MatchFIRST - 1]]></Calculation>
+        </Step>
+        <Step enable="True" id="68" name="If">
+            <Calculation><![CDATA[Get ( FoundCount ) = 1]]></Calculation>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)">
+            <Text>If there were NONE that matched in the found set, we will have one left to omit:</Text>
+        </Step>
+        <Step enable="True" id="141" name="Set Variable">
+            <Value>
+                <Calculation><![CDATA[ValueAsType ( GetField ( $BreakPointFieldName ) ; $ValueType )]]></Calculation>
+            </Value>
+            <Repetition>
+                <Calculation><![CDATA[1]]></Calculation>
+            </Repetition>
+            <Name>$thisValue</Name>
+        </Step>
+        <Step enable="True" id="68" name="If">
+            <Calculation><![CDATA[$thisValue ≠ $BreakPointFieldValue]]></Calculation>
+        </Step>
+        <Step enable="True" id="25" name="Omit Record"></Step>
+        <Step enable="True" id="70" name="End If"></Step>
+        <Step enable="True" id="70" name="End If"></Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="70" name="End If"></Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="89" name="# (comment)">
+            <Text>------------------------------------</Text>
+        </Step>
+        <Step enable="True" id="72" name="Exit Loop If">
+            <Calculation><![CDATA[True    /* ALWAYS exit error-handling loop after a single pass! */]]></Calculation>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)">
+            <Text>END OF: Error-handling Loop.</Text>
+        </Step>
+        <Step enable="True" id="73" name="End Loop"></Step>
+        <Step enable="True" id="89" name="# (comment)">
+            <Text>----------------------------------------</Text>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="89" name="# (comment)">
+            <Text>----------------------------------------</Text>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)">
+            <Text>Cleanup</Text>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="141" name="Set Variable">
+            <Value>
+                <Calculation><![CDATA[     # ( "FileName" ; Get ( FileName ) ) 
 &      # ( "ScriptName" ; Get ( ScriptName ) ) 
 &      # ( "ExecutionTimestamp" ; Get ( CurrentTimestamp ) )
 &      # ( "ExecutionAccount" ; Get ( AccountName ) )]]></Calculation>
-        </Value>
-        <Repetition>
-            <Calculation><![CDATA[1]]></Calculation>
-        </Repetition>
-        <Name>$baseResult</Name>
-    </Step>
-    <Step enable="True" id="68" name="If">
-        <Calculation><![CDATA[not IsEmpty ( $errMsg )]]></Calculation>
-    </Step>
-    <Step enable="True" id="141" name="Set Variable">
-        <Value>
-            <Calculation><![CDATA[  # ( "Result" ; "Error" )
+            </Value>
+            <Repetition>
+                <Calculation><![CDATA[1]]></Calculation>
+            </Repetition>
+            <Name>$baseResult</Name>
+        </Step>
+        <Step enable="True" id="68" name="If">
+            <Calculation><![CDATA[not IsEmpty ( $errMsg )]]></Calculation>
+        </Step>
+        <Step enable="True" id="68" name="If">
+            <Calculation><![CDATA[not $NoDialogs]]></Calculation>
+        </Step>
+        <Step enable="True" id="87" name="Show Custom Dialog">
+            <Title>
+                <Calculation><![CDATA[DictGet ( $result ; "Result" )]]></Calculation>
+            </Title>
+            <Message>
+                <Calculation><![CDATA[DictGet ( $result ; "ResultDescription" )]]></Calculation>
+            </Message>
+            <Buttons>
+                <Button CommitState="False">
+                    <Calculation><![CDATA["OK"]]></Calculation>
+                </Button>
+                <Button CommitState="False"></Button>
+                <Button CommitState="False"></Button>
+            </Buttons>
+        </Step>
+        <Step enable="True" id="70" name="End If"></Step>
+        <Step enable="True" id="141" name="Set Variable">
+            <Value>
+                <Calculation><![CDATA[      # ( "Result" ; "Error" )
 &      # ( "ResultDescription" ; $errMsg )
 &      $baseResult]]></Calculation>
-        </Value>
-        <Repetition>
-            <Calculation><![CDATA[1]]></Calculation>
-        </Repetition>
-        <Name>$result</Name>
-    </Step>
-    <Step enable="True" id="125" name="Else If">
-        <Calculation><![CDATA[not IsEmpty ( $cancelDesc )]]></Calculation>
-    </Step>
-    <Step enable="True" id="141" name="Set Variable">
-        <Value>
-            <Calculation><![CDATA[       # ( "Result" ; "Cancel" )
+            </Value>
+            <Repetition>
+                <Calculation><![CDATA[1]]></Calculation>
+            </Repetition>
+            <Name>$result</Name>
+        </Step>
+        <Step enable="True" id="125" name="Else If">
+            <Calculation><![CDATA[not IsEmpty ( $cancelDesc )]]></Calculation>
+        </Step>
+        <Step enable="True" id="141" name="Set Variable">
+            <Value>
+                <Calculation><![CDATA[       # ( "Result" ; "Cancel" )
 &      # ( "ResultDescription" ; $cancelDesc )
 &      $baseResult]]></Calculation>
-        </Value>
-        <Repetition>
-            <Calculation><![CDATA[1]]></Calculation>
-        </Repetition>
-        <Name>$result</Name>
-    </Step>
-    <Step enable="True" id="69" name="Else"></Step>
-    <Step enable="True" id="141" name="Set Variable">
-        <Value>
-            <Calculation><![CDATA[ # ( "Result" ; "Success" )
+            </Value>
+            <Repetition>
+                <Calculation><![CDATA[1]]></Calculation>
+            </Repetition>
+            <Name>$result</Name>
+        </Step>
+        <Step enable="True" id="69" name="Else"></Step>
+        <Step enable="True" id="141" name="Set Variable">
+            <Value>
+                <Calculation><![CDATA[ # ( "Result" ; "Success" )
 &      # ( "ResultDescription" ; $successDesc )
 &      $baseResult]]></Calculation>
-        </Value>
-        <Repetition>
-            <Calculation><![CDATA[1]]></Calculation>
-        </Repetition>
-        <Name>$result</Name>
-    </Step>
-    <Step enable="True" id="70" name="End If"></Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="68" name="If">
-        <Calculation><![CDATA[not $originalErrorCaptureState]]></Calculation>
-    </Step>
-    <Step enable="True" id="86" name="Set Error Capture">
-        <Set state="False"></Set>
-    </Step>
-    <Step enable="True" id="70" name="End If"></Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="103" name="Exit Script">
-        <Calculation><![CDATA[$result]]></Calculation>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="89" name="# (comment)">
-        <Text>----------------------------------------</Text>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)">
-        <Text>Debugging</Text>
-    </Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
-    <Step enable="True" id="89" name="# (comment)"></Step>
+            </Value>
+            <Repetition>
+                <Calculation><![CDATA[1]]></Calculation>
+            </Repetition>
+            <Name>$result</Name>
+        </Step>
+        <Step enable="True" id="70" name="End If"></Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="68" name="If">
+            <Calculation><![CDATA[not $originalErrorCaptureState]]></Calculation>
+        </Step>
+        <Step enable="True" id="86" name="Set Error Capture">
+            <Set state="False"></Set>
+        </Step>
+        <Step enable="True" id="70" name="End If"></Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="103" name="Exit Script">
+            <Calculation><![CDATA[$result]]></Calculation>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="89" name="# (comment)">
+            <Text>----------------------------------------</Text>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)">
+            <Text>Debugging</Text>
+        </Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+        <Step enable="True" id="89" name="# (comment)"></Step>
+    </Script>
 </fmxmlsnippet>

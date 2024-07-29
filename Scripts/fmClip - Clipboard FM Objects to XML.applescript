@@ -46,7 +46,7 @@ on run
 	end if
 	
 	clipboardConvertToXML({}) of objTrans
-		
+	
 	return result
 	
 end run

@@ -1,0 +1,168 @@
+// ClipboardXmlToFmObjects ( options )
+// version 2024-07-29
+
+/* 
+	Checks the clipboard for XML representations of FileMaker Objects, and converts to objects. 
+	NOTE: This is fairly naive/trusting - if the clipboard has text that looks like it begins with 
+		XML that could be valid FileMaker objects, it will attempt to convert them. There are no 
+		guarantees that the resulting objects are VALID. Only use this is you trust the source of 
+		the XML placed in the clipboard. 
+		
+	NOTE: the "options" param is included for future compatibility - we may want to eventually be 
+		able to call this with various options/commands, without having to update everywhere it 
+		was used with zero parameters. Set to "" for now, or just use the code below directly. 
+			
+	This function could also be used directly on a single-step button, by copying the calculation, 
+	setting options to "" at the beginning of the Let (once that is actually being used). 
+	Then, no need to add this to a file's own Manage Custom Functions. 
+
+REQUIRES:
+	BaseElements plugin
+
+
+HISTORY:
+	2024-07-29 ( danshockley ): Created. 
+
+*/
+
+Let ( [ 
+		/* Snippets include: BaseTable, CustomFunction, Field, Script, Step, ValueList: */
+		  snippetHeader = "<fmxmlsnippet type=\"FMObjectList\">"
+		/* LayoutObject text has 2 headers, and is not FMObjectList: */
+		; layoutObjectHeader1 = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+		; layoutObjectHeader2 = "<fmxmlsnippet type=\"LayoutObjectList\">"
+		; clipboardFormats = BE_ClipboardFormats
+		; charCR = Char ( 13 )
+		; isWin = Abs ( Get ( SystemPlatform ) ) = 2
+		; isMac =  Abs ( Get ( SystemPlatform ) ) = 1
+		; paddedFormats = charCR & clipboardFormats & charCR
+
+		; macPlainText1 = "public.utf8-plain-text"
+		; macPlainText2 = "public.utf16-plain-text"
+
+		; winUnicodeText = "CF_UNICODETEXT"
+		; winPlainText1 = "CF_TEXT"
+		; winPlainText2 = "CF_OEMTEXT"
+
+		/* Get text from the clipboard, in descending priority order (Unicode over plain). */
+		; textFromClipboard = 
+			Case ( 
+				isWin and PatternCount ( paddedFormats ; charCR & winUnicodeText & charCR )
+				; BE_ClipboardGetText ( winUnicodeText )
+				; 
+				isWin and PatternCount ( paddedFormats ; charCR & winPlainText1 & charCR )
+				; BE_ClipboardGetText ( winPlainText1 )
+				; 
+				isWin and PatternCount ( paddedFormats ; charCR & winPlainText2 & charCR )
+				; BE_ClipboardGetText ( winPlainText2 )
+				; 
+				isMac and PatternCount ( paddedFormats ; charCR & macPlainText1 & charCR )
+				; BE_ClipboardGetText ( macPlainText1 )
+				; 
+				isMac and PatternCount ( paddedFormats ; charCR & macPlainText2 & charCR )
+				; BE_ClipboardGetText ( macPlainText2 )
+				; 
+				""
+				)
+		; isSnippet = Left ( textFromClipboard ; Length ( snippetHeader ) ) = snippetHeader
+
+		/* LayoutObject are separate header, and we will do a LAZY test for these: */
+		; isLayoutObject = Left ( textFromClipboard ; Length ( layoutObjectHeader1 ) ) = layoutObjectHeader1
+		; isLayoutObject = isLayoutObject and PatternCount ( textFromClipboard ; layoutObjectHeader2 )
+		; afterSnippetHeader = If ( isSnippet ; Middle ( textFromClipboard ; Length ( snippetHeader ) + 1 ; 100 ) )
+		; snippetType = If ( isSnippet ; LeftWords ( Middle ( afterSnippetHeader ; Position ( afterSnippetHeader ; "<" ; 1 ; 1 ) + 1 ; 100 ) ; 1 ) )
+		; objectType = 
+			Case ( 
+				isSnippet and snippetType = "Group"
+				; "Script"
+				; 
+				isSnippet
+				; snippetType
+				; 
+				isLayoutObject
+				; "LayoutObject"
+				;
+				""
+				)
+
+		; outputClipboardType = 
+			Case (
+				/* do NOT modify the clipboard */ 
+				IsEmpty ( objectType )
+				; ""
+				; 
+				isMac and objectType = "BaseTable"
+				; "dyn.ah62d4rv4gk8zuxnykk"
+				; 
+				isMac and objectType = "CustomFunction"
+				; "dyn.ah62d4rv4gk8zuxngm2"
+				; 
+				isMac and objectType = "Field"
+				; "dyn.ah62d4rv4gk8zuxngku"
+				; 
+				isMac and objectType = "LayoutObject"
+				; "dyn.ah62d4rv4gk8zuxnqgk"
+				; 
+				isMac and objectType = "Script"
+				; "dyn.ah62d4rv4gk8zuxnxkq"
+				; 
+				isMac and objectType = "Step"
+				; "dyn.ah62d4rv4gk8zuxnxnq"
+				; 
+				isMac and objectType = "ValueList"
+				; "dyn.ah62d4rv4gk8zuxn0mu"
+				; 
+				/* Theme is unusual before v21 - this may not work */
+				isMac and objectType = "Theme" and Floor ( GetAsNumber ( Get ( ApplicationVersion ) ) ) < 21
+				; "dyn.agk8u"
+				; 
+				/* Fixed in v21 */
+				isMac and objectType = "Theme"
+				; "dyn.ah62d4rv4gk8zuxnyma"
+				; 
+				
+				/*  WINDOWS */
+				
+				isWin and objectType = "BaseTable"
+				; "Mac-XMTB"
+				; 
+				isWin and objectType = "CustomFunction"
+				; "Mac-XMFN"
+				; 
+				isWin and objectType = "Field"
+				; "Mac-XMFD"
+				; 
+				isWin and objectType = "LayoutObject"
+				; "Mac-XML2"
+				; 
+				isWin and objectType = "Script"
+				; "Mac-XMSC"
+				; 
+				isWin and objectType = "Step"
+				; "Mac-XMSS"
+				; 
+				/* Theme for Windows is a GUESS - verify this!!! */
+				isWin and objectType = "Theme"
+				; "Mac-XMTH"
+				; 
+				/* ValueList for Windows is a GUESS - verify this!!! */
+				isWin and objectType = "ValueList"
+				; "Mac-XMVL"
+				; 
+				/* UNKNOWN/EMPTY */
+				""
+				)
+				
+		; operationSetClip = 
+			If ( IsEmpty ( outputClipboardType )
+				; ""
+				; BE_ClipboardSetText ( textFromClipboard ; outputClipboardType )
+				)
+
+	]; 
+		objectType
+
+	)
+	
+	
+	

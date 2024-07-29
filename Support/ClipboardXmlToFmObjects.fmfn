@@ -160,7 +160,13 @@ Let ( [
 				)
 
 	]; 
-		objectType
+		Case ( 
+			IsEmpty ( objectType )
+			; "Could not identify any FileMaker objects in the clipboard, which begins with the following text: "
+				& Left ( textFromClipboard ; 100 )
+			; 
+			"Converted XML to FM objects of type: " & objectType
+			)
 
 	)
 	

@@ -1,4 +1,11 @@
-# custom functions
+# Support files for this project
+
+## ClipboardXmlToFmObjects.fmfn
+
+This is the calculation for a custom function that can run entirely within FileMaker to convert clipboard XML text into the appropriate FM objects for pasting. It relies on the [BaseElements plugin](https://docs.baseelementsplugin.com/collection/374-general) to read/convert the clipboard. You can either create a custom function using this calculation, then call it from a single-step button, or use this calculation directly IN a single step button that, for example, does a Show Custom Dialog with the function's resulting message.
+
+
+## custom-functions.xml
 
 Custom functions that can be used alongside FmClipTools. 
 

@@ -1372,9 +1372,6 @@ Ceiling ( ( $rnSearchSpaceEnd - $rnSearchSpaceStart ) / 2 )]]></Calculation>
         <Step enable="True" id="89" name="# (comment)">
             <Text>----------------------------------------</Text>
         </Step>
-        <Step enable="True" id="89" name="# (comment)">
-            <Text>Debugging</Text>
-        </Step>
         <Step enable="True" id="89" name="# (comment)"></Step>
         <Step enable="True" id="89" name="# (comment)"></Step>
         <Step enable="True" id="89" name="# (comment)"></Step>

@@ -5,7 +5,7 @@
 	Drops any unused auto-enter or validation calculations from Field objects in the clipboard. 
 
 HISTORY:
-	2024-09-14 ( danshockley ): Additional sub-node removal for when AutoEnter lookup is false and for when Validation valuelist is false (thanks Chris Irvine). 
+	2024-09-14 ( danshockley ): Additional sub-node removal for when AutoEnter lookup is false and for when Validation valuelist is false (thanks Chris Irvine). Renamed handler to "stripUnusedSubNodes" instead of "stripUnusedCalcs".
 	2024-09-13 ( danshockley ): Created. 
 *)
 
@@ -59,7 +59,7 @@ on run
 			end if
 		end try
 		
-		set modXML to stripUnusedCalcs(someXML)
+		set modXML to stripUnusedSubNodes(someXML)
 		
 		set the clipboard to modXML
 		
@@ -82,10 +82,10 @@ on run
 end run
 
 
-on stripUnusedCalcs(sourceStringXML)
-	-- version 2024-09-13
+on stripUnusedSubNodes(sourceStringXML)
+	-- version 2024-09-14
 	-- Either BaseTable or Field objects in XML Data.
-	-- Loop over every field, looking for auto-enter or validation calculations that are not used.
+	-- Loop over every field object, removing unused sub-nodes (calculation, valuelist, lookup) that are not used from AutoEnter or Validation nodes.
 	
 	-- Parse the XML and preserve CDATA sections
 	set xmlDoc to current application's NSXMLDocument's alloc()'s initWithXMLString:sourceStringXML options:(current application's NSXMLNodePreserveCDATA) |error|:(missing value)
@@ -120,7 +120,7 @@ on stripUnusedCalcs(sourceStringXML)
 	
 	return modifiedXMLString as text
 	
-end stripUnusedCalcs
+end stripUnusedSubNodes
 
 
 

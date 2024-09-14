@@ -1,10 +1,11 @@
 -- fmClip - Fields Drop Unused AE_or_VAL calcs
--- version 2024-09-13, Daniel A. Shockley
+-- version 2024-09-14, Daniel A. Shockley
 
 (*  
 	Drops any unused auto-enter or validation calculations from Field objects in the clipboard. 
 
 HISTORY:
+	2024-09-14 ( danshockley ): Additional sub-node removal for when AutoEnter lookup is false and for when Validation valuelist is false (thanks Chris Irvine). 
 	2024-09-13 ( danshockley ): Created. 
 *)
 
@@ -95,11 +96,24 @@ on stripUnusedCalcs(sourceStringXML)
 		node's detach()
 	end repeat
 	
+	set xpath to "//AutoEnter[@lookup='False']/Lookup"
+	set nodesToRemove to (xmlDoc's nodesForXPath:xpath |error|:(missing value))
+	repeat with node in nodesToRemove
+		node's detach()
+	end repeat
+	
 	set xpath to "//Validation[@calculation='False']/Calculation"
 	set nodesToRemove to (xmlDoc's nodesForXPath:xpath |error|:(missing value))
 	repeat with node in nodesToRemove
 		node's detach()
 	end repeat
+	
+	set xpath to "//Validation[@valuelist='False']/ValueList"
+	set nodesToRemove to (xmlDoc's nodesForXPath:xpath |error|:(missing value))
+	repeat with node in nodesToRemove
+		node's detach()
+	end repeat
+	
 	-- Extract inner XML of the root element
 	set rootElement to xmlDoc's rootElement()
 	set modifiedXMLString to (rootElement's XMLStringWithOptions:(0))

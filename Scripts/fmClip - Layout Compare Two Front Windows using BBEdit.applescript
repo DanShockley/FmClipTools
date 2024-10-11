@@ -5,6 +5,7 @@
 	In the current/frontmost copy of FileMaker (if running multiple copies/versions of the app), copy the layout objects of the two frontmost windows (BOTH MUST BE IN LAYOUT MODE!), then compare the XML, saving each XML to temporary items director, opening in BBEdit, stripping away superficial differences (internal unique keys), then running a BBEdit comparison to show any differences.
 
 HISTORY:
+	2024-10-11 ( danshockley ): Added defaultVisPanelKey.
 	2024-07-22 ( danshockley ): BUG-FIX: missing "my" for showError. BBEdit should use "file <path>" for opening. The showError handler now targets the (1st) frontmost app process for displaying the alert. Added more error-handling info. 
 	2024-07-16 ( danshockley ): Use getFmAppProcessID and then tell by process id. 
 	2024-07-15 ( danshockley ): Documentation update: we CAN specify AXStandardWindow in this script, since the windows that might contain a layout ARE standard (some other FM-scripting might need to use AXWindow, so those target windows that are NOT AXFloatingWindow.
@@ -16,6 +17,7 @@ property debugMode : true
 -- search/replace pairs for things to ignore:
 property grepReplacePairs : {{" key=\"[0-9]+\"", " key=\"9999\""}, Â
 	{" visPanelKey=\"[0-9]+\"", " visPanelKey=\"9999\""}, Â
+	{" defaultVisPanelKey=\"[0-9]+\"", " defaultVisPanelKey=\"9999\""}, Â
 	{" LabelKey=\"[0-9]+\"", " LabelKey=\"9999\""}}
 
 
@@ -177,7 +179,7 @@ on run
 			activate
 			try
 				-- Open the first XML file
-				set doc1 to open  filePathLayout1
+				set doc1 to open filePathLayout1
 			on error errMsg number errNum
 				set errMsg to errMsg & " filePathLayout1: " & filePathLayout1
 				error errMsg number errNum

@@ -21,8 +21,9 @@ end run
 on fmObjectTranslator_Instantiate(prefs)
 	
 	script fmObjectTranslator
-		-- version 4.1.4, Daniel A. Shockley
+		-- version 4.1.5, Daniel A. Shockley
 		
+		-- 4.1.5 - 2024-10-27 ( danshockley ): Corrected constant's variable name to be "charETX" instead of "charEOT" so it matches normal terminology. 
 		-- 4.1.4 - 2024-01-11 ( danshockley ): Added Theme support. Note, since this added use Foundation, had to convert logic like "file somePath" into "somePath as «class furl»" in the handlers: dataObjectToUTF8, convertXmlToObjects, and prettifyXML. 
 		-- 4.1.3 - 2023-03-13 ( danshockley ): Added modern note in the recordFromList function. Renamed dshockley to danshockley in comments. 
 		-- 4.1.2 - 2023-03-10 ( danshockley ): In prettifyXML, no longer try to use tabs instead of tidy's spaces. DO still avoid extra line-breaks around CDATA, which means scanning for leading whitespace for both CR and LF line breaks, since the recently-added HEREDOC method converted CRs to LFs. 
@@ -79,7 +80,7 @@ on fmObjectTranslator_Instantiate(prefs)
 		
 		property prettyTempName : "pretty-temp.xml"
 		
-		property charEOT : ASCII character 3
+		property charETX : ASCII character 3
 		property charLF : ASCII character 10
 		property charCR : ASCII character 13
 		-- the "bad" and "good" layout tag start code deals with a bug in FileMaker 10: 
@@ -550,9 +551,10 @@ on fmObjectTranslator_Instantiate(prefs)
 		
 		
 		on convertObjectsToXML(fmObjects)
-			-- version 1.1.1
+			-- version 1.1.2
 			
-			-- 1.1.1 - 2019-01-18 ( eshagdar ): remove all EOT characters.
+			-- 1.1.2 - 2024-10-27 ( danshockley ): renamed constant to "ETX" for "End of TeXt" (ascii char #3), since EOT means "End Of Transmission" (ascii char #4). 
+			-- 1.1.1 - 2019-01-18 ( eshagdar ): remove all End-Of-Text characters.
 			-- 1.1 - 2018-04-20 ( dshockley/eshagdar ): if prettify, do NOT also SimpleFormat. If either option, then convert CR to LF. 
 			
 			if debugMode then logConsole(ScriptName, "convertObjectsToXML: START")
@@ -566,7 +568,7 @@ on fmObjectTranslator_Instantiate(prefs)
 			end if
 			
 			
-			set objectsAsXML to replaceSimple({objectsAsXML, charEOT, ""})
+			set objectsAsXML to replaceSimple({objectsAsXML, charETX, ""})
 			if shouldPrettify or shouldSimpleFormat then set objectsAsXML to replaceSimple({objectsAsXML, charCR, charLF})
 			
 			

@@ -1,5 +1,5 @@
 -- fmClip - Custom Function Paste Or Update
--- version 2024-07-22
+-- version 2024-12-03
 
 (*
 
@@ -9,7 +9,11 @@
 	 Includes a dialog at the end saying how many were pasted and how many were updated.
 	Restores the clipboard at end of script, if it was modified. 
 
+
+TODO - 2024-12-03 ( danshockley ): Still need to fix the "UPDATE" behavior, which did not work for me today. 
+
 HISTORY: 
+	2024-12-03 ( danshockley ): Sometimes the modification of the clipboard to check target was not noticed, so added a "clipboard info" check to force notice of modification.
 	2024-07-22 ( danshockley ): The removeFunctionsFromXML handler now preserves CDATA tags, isntead of converting to escaped entities. 
 	2024-07-22 ( danshockley ): The snippetHead and snippetFoot properties are no longer needed. 
 	2024-07-22 ( danshockley ): Updated comments. Added more error handling info. Gather the "update" list, then TELL the user which will be updated so they can confirm/refuse, by picking ALL, or from the list. Added debugMode property for testing purposes (set to false once testing is done).
@@ -66,10 +70,12 @@ on run
 				end if
 				click menu item "Select All" of menu "Edit" of menu bar 1
 				click menu item "Copy" of menu "Edit" of menu bar 1
-				delay 0.5
+				delay 1
 				set restoreClipboard to true -- just modified clipboard, so should restore at end
 			end tell
 		end tell
+		
+		clipboard info -- deliberately access the clipboard so the modified content is noticed.
 		
 		try
 			-- Read Target Functions: now, read out what functions the target already has:
@@ -248,7 +254,7 @@ on updateExistingCustomFunction(prefs)
 			try
 				set frontmost to true
 				select (first row of (table 1 of scroll area 1 of window 1) whose name of static text 1 is functionName of prefs)
-				delay 0.05
+				delay 0.1
 				set selectedFunctionName to value of static text 1 of (first row of table 1 of scroll area 1 of window 1 whose selected is true)
 				if functionName of prefs is not equal to selectedFunctionName then
 					error "failed to select function even though function exists" number -1024
@@ -257,7 +263,7 @@ on updateExistingCustomFunction(prefs)
 				set editButton to first button of window 1 whose name begins with "Edit"
 				
 				click editButton
-				delay 0.1
+				delay 0.2
 				if name of window 1 is not "Edit Custom Function" then
 					error "failed to OPEN Edit window?" number -1024
 				end if
@@ -267,7 +273,7 @@ on updateExistingCustomFunction(prefs)
 				
 				-- SAVE the CALC EDIT:
 				click (first button of window 1 whose name begins with "OK")
-				delay 0.1
+				delay 0.2
 				
 				if name of window 1 is not "Edit Custom Function" then
 					error "failed to CLOSE Edit window?" number -1024

@@ -15,6 +15,8 @@ To do that:
 * Click the (AppleScript) menubar item added two steps earlier (an icon of an S-shaped sheet of paper), then pick "Open Scripts Folder." You could create a sub-folder there named "FileMaker Pro", but I prefer to have these available from any application context, so I keep them at the top level. This will open `~/Library/Scripts/` in the Finder. 
 * Put an alias to each of the `fmClip - {whatever}` scripts into that folder. 
 
+2025-01-21 update: Added the `fmClip - Duplicate ButtonBar Segment` script. Basically, you copy an entire button bar object, run this script, tell it which segment (by number) to duplicate, it does that, putting the entire new button bar back into your clipboard. Back in FileMaker, delete the original button bar (*before* pasting to avoid object name collisions!), then paste the new button bar.
+
 2024-09-14 update: Added the `fmClip - Fields Drop Unused AE_or_VAL calcs` script, which removes from Field definition objects any "phantom" (unused) calculations or lookups for AutoEnter, or calculation or valueLists for Validation.
 
 2024-07-16 update: Added the `fmClip - Custom Function Paste Or Update` script, so you can now copy a bunch of custom functions from a good/current source file, go to a target file's Manage Custom Functions, and run this script. It will paste any that do not yet exist in the target, then update any existing functions that do not match the source. NOTE: It will not (yet) rename/add/remove parameters, so that would get an error when it tries to save the modified calculation. 

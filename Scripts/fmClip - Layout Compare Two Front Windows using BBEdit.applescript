@@ -2,7 +2,7 @@
 
 (*
 
-	In the current/frontmost copy of FileMaker (if running multiple copies/versions of the app), copy the layout objects of the two frontmost windows (BOTH MUST BE IN LAYOUT MODE!), then compare the XML, saving each XML to temporary items director, opening in BBEdit, stripping away superficial differences (internal unique keys), then running a BBEdit comparison to show any differences.
+	In the current/frontmost copy of FileMaker (if running multiple copies/versions of the app), copy the layout objects of the two frontmost windows (BOTH MUST BE IN LAYOUT MODE!), then compare the XML, saving each XML to temporary items director, opening in BBEdit, stripping away superficial differences (internal unique keys), then running a BBEdit comparison to show any differences. 
 
 HISTORY:
 	2025-01-22 ( danshockley ): When doing the copy steps, brief loop to set/check clipboard so that busy layouts can work. Try to remove temp files before writing to them (though that may not help). Return false for whole script if error. 

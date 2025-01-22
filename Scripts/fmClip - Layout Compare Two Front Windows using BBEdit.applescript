@@ -5,6 +5,7 @@
 	In the current/frontmost copy of FileMaker (if running multiple copies/versions of the app), copy the layout objects of the two frontmost windows (BOTH MUST BE IN LAYOUT MODE!), then compare the XML, saving each XML to temporary items director, opening in BBEdit, stripping away superficial differences (internal unique keys), then running a BBEdit comparison to show any differences.
 
 HISTORY:
+	2025-01-22 ( danshockley ): When doing the copy steps, brief loop to set/check clipboard so that busy layouts can work. Try to remove temp files before writing to them (though that may not help). Return false for whole script if error. 
 	2024-10-11 ( danshockley ): Added defaultVisPanelKey.
 	2024-07-22 ( danshockley ): BUG-FIX: missing "my" for showError. BBEdit should use "file <path>" for opening. The showError handler now targets the (1st) frontmost app process for displaying the alert. Added more error-handling info. 
 	2024-07-16 ( danshockley ): Use getFmAppProcessID and then tell by process id. 
@@ -87,10 +88,16 @@ on run
 				
 				try
 					-- COPY all objects from window 1:
-					click menu item "Select All" of menu "Edit" of menu bar 1
-					delay 0.2
-					click menu item "Copy" of menu "Edit" of menu bar 1
-					delay 0.2
+					
+					set the clipboard to "" -- CLEAR clipboard, so we can check for copy success.
+					repeat with numAttempts from 1 to 5
+						click menu item "Select All" of menu "Edit" of menu bar 1
+						delay 0.5
+						click menu item "Copy" of menu "Edit" of menu bar 1
+						delay 0.5
+						if my clipboardContainsClass(Çclass XML2È) then exit repeat
+					end repeat
+					
 				on error errMsg number errNum
 					set errMsg to errMsg & " [COPY all objects from window 1]."
 					error errMsg number errNum
@@ -127,10 +134,14 @@ on run
 					end tell
 					
 					-- COPY all objects from window 2:
-					click menu item "Select All" of menu "Edit" of menu bar 1
-					delay 0.2
-					click menu item "Copy" of menu "Edit" of menu bar 1
-					delay 0.2
+					set the clipboard to "" -- CLEAR clipboard, so we can check for copy success.
+					repeat with numAttempts from 1 to 5
+						click menu item "Select All" of menu "Edit" of menu bar 1
+						delay 0.5
+						click menu item "Copy" of menu "Edit" of menu bar 1
+						delay 0.5
+						if my clipboardContainsClass(Çclass XML2È) then exit repeat
+					end repeat
 				on error errMsg number errNum
 					set errMsg to errMsg & " [Copy all objects from window 2]."
 					error errMsg number errNum
@@ -166,8 +177,14 @@ on run
 		try
 			-- SAVE XML of layout objects:
 			set filePathLayout1 to ((path to temporary items) as string) & layoutName1 & ".xml"
+			try
+				do shell script "rm " & quoted form of POSIX path of filePathLayout1
+			end try
 			writeToFile({targetFile:filePathLayout1, writeData:layoutObjectsXML_1, writeAs:Çclass utf8È})
 			set filePathLayout2 to ((path to temporary items) as string) & layoutName2 & ".xml"
+			try
+				do shell script "rm " & quoted form of POSIX path of filePathLayout2
+			end try
 			writeToFile({targetFile:filePathLayout2, writeData:layoutObjectsXML_2, writeAs:Çclass utf8È})
 		on error errMsg number errNum
 			set errMsg to errMsg & " [Save both layouts to temp XML files.]."
@@ -226,10 +243,21 @@ on run
 			end tell
 		end tell
 		showError({errMsg:errMsg})
+		return false
 	end try
 	
 end run
 
+
+on clipboardContainsClass(someClass)
+	-- v 2025-01-22
+	set clipItems to clipboard info
+	repeat with oneItem in clipItems
+		if item 1 of oneItem is equal to someClass then return true
+	end repeat
+	return false
+	
+end clipboardContainsClass
 
 
 on getFmAppProcessID()

@@ -1,11 +1,15 @@
 -- Button Info from Clipboard
--- version 1.0
+-- version 2025-01-21
 
 (*
-	Takes the button object(s) in the clipboard and extracts the label, the script name, and the parameters as tab-column-delimiter and linefeed-row-delimiter
+	Takes the button object(s) in the clipboard and extracts the label, the script name, and the parameters as tab-column-delimiter and linefeed-row-delimiter.
+	NOTE: this can be VERY useful when combined with the Replicate script. You can gather up the labels, script names, and script parameters 
+		for a set of simple buttons instead delimited text. Then, you can make a single-segment button bar for the 1st button, and replicate that 
+		using the delimited text.
 	
 HISTORY:
-	1.0 - 2021-10-21 ( dshockley ): first created.
+	2025-01-21 ( danshockley ): Check for layout objects by the currentCode of objTrans, not a specific run of XML. 
+	2021-10-21 ( danshockley ): Created.
 
 *)
 
@@ -14,10 +18,6 @@ property debugMode : false
 property colSep : tab
 property rowSep : ASCII character 10
 property CR : ASCII character 13
-
--- for generic layout objects:
-property earlyCharScanLengthMax : 400 -- only scan through this number of chars when looking for fmxmlsnippet
-property xmlLayoutObjectList : "<fmxmlsnippet type=\"LayoutObjectList\">"
 
 
 on run
@@ -49,19 +49,11 @@ on run
 	
 	set clipboardObjectStringXML to clipboardGetObjectsAsXML({}) of objTrans
 	
-	-- scan early characters of XML to see if it is layout objects: 
-	if length of clipboardObjectStringXML is less than earlyCharScanLengthMax then set earlyCharScanLengthMax to length of clipboardObjectStringXML
-	if ((text 1 thru earlyCharScanLengthMax of clipboardObjectStringXML) contains xmlLayoutObjectList) and not doButtonBarSegments then
-		-- These are Layout Objects (and either are not button bar segments, or user chose to handle segments like normal layout objects), so need special handling:
-		set isLayoutObjects to true
-	end if
 	
-	
-	
-	if not isLayoutObjects then
+	if currentCode of objTrans is not "XML2" then
 		-- THROW AN ERROR
-		display dialog "Not layout objects"
-		
+		display dialog "The clipboard did not contain FileMaker Layout Objects."
+		return false
 	else
 		
 		set outputInfo to ""

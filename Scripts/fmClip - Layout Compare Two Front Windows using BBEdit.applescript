@@ -5,6 +5,7 @@
 	In the current/frontmost copy of FileMaker (if running multiple copies/versions of the app), copy the layout objects of the two frontmost windows (BOTH MUST BE IN LAYOUT MODE!), then compare the XML, saving each XML to temporary items director, opening in BBEdit, stripping away superficial differences (internal unique keys), then running a BBEdit comparison to show any differences. 
 
 HISTORY:
+	2025-05-07 ( danshockley ): If the layouts have the same name, use the window names instead, since they might be same layout from different files.
 	2025-01-22 ( danshockley ): When doing the copy steps, brief loop to set/check clipboard so that busy layouts can work. Try to remove temp files before writing to them (though that may not help). Return false for whole script if error. 
 	2024-10-11 ( danshockley ): Added defaultVisPanelKey.
 	2024-07-22 ( danshockley ): BUG-FIX: missing "my" for showError. BBEdit should use "file <path>" for opening. The showError handler now targets the (1st) frontmost app process for displaying the alert. Added more error-handling info. 
@@ -75,11 +76,16 @@ on run
 				try
 					-- get LAYOUT NAMES:
 					tell win1
-						set layoutName1 to title of first button whose accessibility description is "Layout Menu"
+						set compareName1 to title of first button whose accessibility description is "Layout Menu"
 					end tell
 					tell win2
-						set layoutName2 to title of first button whose accessibility description is "Layout Menu"
+						set compareName2 to title of first button whose accessibility description is "Layout Menu"
 					end tell
+					if compareName1 is equal to compareName2 then
+						set compareName1 to name of win1
+						set compareName2 to name of win2
+					end if
+					
 				on error errMsg number errNum
 					set errMsg to errMsg & " [Get Layout Names]."
 					error errMsg number errNum
@@ -176,12 +182,12 @@ on run
 		
 		try
 			-- SAVE XML of layout objects:
-			set filePathLayout1 to ((path to temporary items) as string) & layoutName1 & ".xml"
+			set filePathLayout1 to ((path to temporary items) as string) & compareName1 & ".xml"
 			try
 				do shell script "rm " & quoted form of POSIX path of filePathLayout1
 			end try
 			writeToFile({targetFile:filePathLayout1, writeData:layoutObjectsXML_1, writeAs:Çclass utf8È})
-			set filePathLayout2 to ((path to temporary items) as string) & layoutName2 & ".xml"
+			set filePathLayout2 to ((path to temporary items) as string) & compareName2 & ".xml"
 			try
 				do shell script "rm " & quoted form of POSIX path of filePathLayout2
 			end try

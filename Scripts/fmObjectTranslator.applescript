@@ -18,11 +18,13 @@ on run
 end run
 
 
+
 on fmObjectTranslator_Instantiate(prefs)
 	
 	script fmObjectTranslator
-		-- version 4.1.5, Daniel A. Shockley
+		-- version 4.1.6, Daniel A. Shockley
 		
+		-- 4.1.6 - 2025-05-14 ( danshockley ): Support Custom Function folders by modifying the fmObjectList to have special handling when top node is Group (can be Script or CustomFunction). Note that isStringValidFMObjectXML also has changes to support this. 
 		-- 4.1.5 - 2024-10-27 ( danshockley ): Corrected constant's variable name to be "charETX" instead of "charEOT" so it matches normal terminology. 
 		-- 4.1.4 - 2024-01-11 ( danshockley ): Added Theme support. Note, since this added use Foundation, had to convert logic like "file somePath" into "somePath as Çclass furlÈ" in the handlers: dataObjectToUTF8, convertXmlToObjects, and prettifyXML. 
 		-- 4.1.3 - 2023-03-13 ( danshockley ): Added modern note in the recordFromList function. Renamed dshockley to danshockley in comments. 
@@ -103,7 +105,8 @@ on fmObjectTranslator_Instantiate(prefs)
 			{objName:"Step", objCode:"XMSS"}, Â
 			{objName:"Layout", objCode:"XML2", secondaryNode:"NOT ObjectStyle"}, Â
 			{objName:"Layout", objCode:"XMLO", secondaryNode:"HAS ObjectStyle"}, Â
-			{objName:"Group", objCode:"XMSC"}, Â
+			{objName:"Group", objCode:"XMSC", objectNodeName:"Script"}, Â
+			{objName:"Group", objCode:"XMFN", objectNodeName:"CustomFunction"}, Â
 			{objName:"Script", objCode:"XMSC"}, Â
 			{objName:"Field", objCode:"XMFD"}, Â
 			{objName:"CustomFunction", objCode:"XMFN"}, Â
@@ -134,11 +137,17 @@ on fmObjectTranslator_Instantiate(prefs)
 				else
 					set oneClass to classFromCode(oneCode)
 				end if
-				set oneSecondaryNode to ""
+				
+				set oneObjRec to {objName:objName of oneObject, objCode:objCode of oneObject, objClass:oneClass}
 				try
 					set oneSecondaryNode to secondaryNode of oneObject
+					set oneObjRec to oneObjRec & {secondaryNode:oneSecondaryNode}
 				end try
-				copy {objName:objName of oneObject, objCode:objCode of oneObject, objClass:oneClass, secondaryNode:oneSecondaryNode} to end of fmObjectList
+				try
+					set oneObjectNodeName to objectNodeName of oneObject
+					set oneObjRec to oneObjRec & {objectNodeName:oneObjectNodeName}
+				end try
+				copy oneObjRec to end of fmObjectList
 				
 			end repeat
 		end run
@@ -651,9 +660,11 @@ on fmObjectTranslator_Instantiate(prefs)
 		end isStringAnyValidXML
 		
 		on isStringValidFMObjectXML(someString)
-			-- version 1.3
+			-- version 1.4
 			-- Checks someString for XML that represents FM objects. Returns true if it does, false if not. 
+			-- ALSO, updates the currentCode property! 
 			
+			-- 1.4 - 2025-05-14 ( danshockley ): Special handling for Group to support Custom Function folders (not just Script anymore).
 			-- 1.3 - 2024-01-11 ( danshockley ): no actual change, just note that this automatically supports Theme. 
 			-- 1.2 - 2019-03-07 ( danshockley ): Added capture of error -1700. 
 			-- 1.1 - 2016-11-02 ( dshockley/eshagdar ): added comment, changed test to length of instead of empty string.
@@ -683,50 +694,87 @@ on fmObjectTranslator_Instantiate(prefs)
 			
 			if debugMode then logConsole(ScriptName, "isStringValidFMObjectXML: fmObjectName: " & fmObjectName)
 			
-			set currentCode to ""
-			repeat with oneObjectType in fmObjectList
+			try
 				
-				if debugMode then logConsole(ScriptName, objName of oneObjectType)
-				if (fmObjectName is objName of oneObjectType) then
+				-- loop over the fmObjectList, checking which the XML matches, if any:
+				set currentCode to ""
+				repeat with oneObjectRec in fmObjectList
 					
-					-- Now, the XMLO and XML2 are both "Layout" so we need to check a secondary node to know which objCode:
-					if fmObjectName is "Layout" then
-						set secondaryNode to word 2 of secondaryNode of oneObjectType
-						if word 1 of secondaryNode of oneObjectType is "HAS" then
-							set secondaryNodeShouldExist to true
+					if debugMode then logConsole(ScriptName, objName of oneObjectRec)
+					if (fmObjectName is objName of oneObjectRec) then
+						
+						-- Now, the XMLO and XML2 are both "Layout" so we need to check a secondary node to know which objCode:
+						if fmObjectName is "Layout" then
+							set secondaryNode to word 2 of secondaryNode of oneObjectRec
+							if word 1 of secondaryNode of oneObjectRec is "HAS" then
+								set secondaryNodeShouldExist to true
+							else
+								set secondaryNodeShouldExist to false
+							end if
+							
+							-- see if secondary node exists: 
+							tell application "System Events"
+								set secondaryNodeDoesExist to exists (first XML element of XML element 1 of XML element 1 of xmlData whose name is "ObjectStyle")
+							end tell
+							
+							-- if it should AND does, or should not and does not, then this is the one we want:
+							if secondaryNodeShouldExist is equal to secondaryNodeDoesExist then
+								set currentCode to objCode of oneObjectRec
+								set objectType to objClass of oneObjectRec
+								exit repeat
+							end if
+							
+						else if fmObjectName is "Group" then
+							-- the Group objects will have an objCode and objectNodeName.
+							-- the "top" (actually 2nd) node is group, so traverse sub-nodes until something other than Group is found. 
+							tell application "System Events"
+								set currentNode to XML element 1 of XML element 1 of xmlData
+								set doneTraverse to false
+								repeat until doneTraverse
+									try
+										set currentNode to XML element 1 of currentNode
+										set oneNodeName to name of currentNode
+										if debugMode then log "oneNodeName: " & oneNodeName
+										set testNodeName to objectNodeName of oneObjectRec
+										if debugMode then log "testNodeName: " & testNodeName
+										if oneNodeName is testNodeName then
+											set currentCode to objCode of oneObjectRec
+											set doneTraverse to true
+										end if
+									on error
+										-- ANY error just means we are done traversing:
+										set doneTraverse to true
+									end try
+								end repeat
+							end tell
 						else
-							set secondaryNodeShouldExist to false
-						end if
-						
-						-- see if secondary node exists: 
-						tell application "System Events"
-							set secondaryNodeDoesExist to exists (first XML element of XML element 1 of XML element 1 of xmlData whose name is "ObjectStyle")
-						end tell
-						
-						-- if it should AND does, or should not and does not, then this is the one we want:
-						if secondaryNodeShouldExist is equal to secondaryNodeDoesExist then
-							set currentCode to objCode of oneObjectType
-							set objectType to objClass of oneObjectType
+							-- NOT Layout, so just use this one:
+							set currentCode to objCode of oneObjectRec
+							set objectType to objClass of oneObjectRec
 							exit repeat
 						end if
 						
-					else
-						-- NOT Layout, so just use this one:
-						set currentCode to objCode of oneObjectType
-						set objectType to objClass of oneObjectType
-						exit repeat
 					end if
-					
+				end repeat
+				
+				if debugMode then logConsole(ScriptName, "isStringValidFMObjectXML: currentCode: " & currentCode)
+				
+				if length of currentCode is 0 then
+					return false
+				else
+					return true
 				end if
-			end repeat
-			
-			if debugMode then logConsole(ScriptName, "isStringValidFMObjectXML: currentCode: " & currentCode)
-			
-			if length of currentCode is 0 then
-				return false
-			else
-				return true
-			end if
+				
+				
+			on error errMsg number errNum
+				if debugMode then logConsole(ScriptName, "isStringValidFMObjectXML: ERROR: " & errMsg & "(" & errNum & ")")
+				if errNum is -1719 then
+					-- couldn't find an expected XML element, so NOT valid FM-XML
+					return false
+				else
+					error errMsg number errNum
+				end if
+			end try
 			
 		end isStringValidFMObjectXML
 		

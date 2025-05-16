@@ -1,11 +1,11 @@
 // ClipboardXmlToFmObjects ( options )
-// version 2024-07-29
+// version 2025-05-16
 
 /* 
 	Checks the clipboard for XML representations of FileMaker Objects, and converts to objects. 
 	NOTE: This is fairly naive/trusting - if the clipboard has text that looks like it begins with 
 		XML that could be valid FileMaker objects, it will attempt to convert them. There are no 
-		guarantees that the resulting objects are VALID. Only use this is you trust the source of 
+		guarantees that the resulting objects are VALID. Only use this if you trust the source of 
 		the XML placed in the clipboard. 
 		
 	NOTE: the "options" param is included for future compatibility - we may want to eventually be 
@@ -19,8 +19,10 @@
 REQUIRES:
 	BaseElements plugin
 
+TODO: 2025-05-16 ( danshockley ): support Custom Function folders, which means looking for first non-Group node. 
 
 HISTORY:
+	2025-05-16 ( danshockley ): Fixed typo. 
 	2024-07-29 ( danshockley ): Created. 
 
 */

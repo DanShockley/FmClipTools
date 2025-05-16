@@ -2,11 +2,10 @@
 #
 # Make file for FmObjectTranslator.app
 #
-# Daniel Shockley, NYHTC. 
-# 
+# 2025-05-16 ( danshockley ): Updated comments. 
 # 2019-03-08 ( eshagdar ): check for app existence, then quit and delete
 #     it before compiling a new one. Notify user that app is compiled.
-# 2019-03-07 ( dshockley ): created
+# 2019-03-07 ( danshockley ): created
 # 
 
 APP_NAME="FmObjectTranslator.app"

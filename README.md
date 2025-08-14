@@ -12,6 +12,11 @@ Alternatively, you could just download a zip file of the project, unzip it, and 
 To put these to good use, you can execute them from some keyboard-shortcut or macro tool like Keyboard Maestro, Alfred, Quicksilver, etc. 
 If you do that, you could add a step that performs a copy (on the currently-selected FileMaker script steps), and perhaps even a delete-and-paste afterwards, if you'd like. 
 
+
+## Setup and Usage
+
+First, there is a DEMO file: [FmClipTools Demo.fmp12](https://github.com/DanShockley/FmClipTools/blob/master/Support/FmClipTools Demo.fmp12). It shows how to use FmClipTools, including examples. 
+
 To use them without any third-party software, you can also call them from the macOS menu-bar by activating the "Scripts" menu. 
 To do that: 
 * Open up /Applications/Script Editor.app and go into its Preferences. 
@@ -20,6 +25,8 @@ To do that:
 * This will open `~/Library/Scripts/` in the Finder.  I prefer to have these available from any application context, so I keep them at the top level. 
 * Put an alias to each of the `fmClip - {whatever}` scripts into that folder. 
 * (optional) If you want to call FmObjectTranslator functions by "telling" an app, which can be useful for external scripts where you don't want to reference the separate .applescript file, you can run the `./recompile.sh` shell script to build/rebuild it, after you do a git pull.
+
+2025-08-14 update: improved documentation, mades some code updates, added the [FmClipTools Demo.fmp12](https://github.com/DanShockley/FmClipTools/blob/master/Support/FmClipTools Demo.fmp12) file.
 
 2025-01-21 update: Added the `fmClip - Duplicate ButtonBar Segment` script. Basically, you copy an entire button bar object, run this script, tell it which segment (by number) to duplicate, it does that, putting the entire new button bar back into your clipboard. Back in FileMaker, delete the original button bar (*before* pasting to avoid object name collisions!), then paste the new button bar.
 

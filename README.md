@@ -15,7 +15,7 @@ If you do that, you could add a step that performs a copy (on the currently-sele
 
 ## Setup and Usage
 
-First, there is a DEMO file: [FmClipTools Demo.fmp12](https://github.com/DanShockley/FmClipTools/blob/master/Support/FmClipTools Demo.fmp12). It shows how to use FmClipTools, including examples. 
+First, there is a DEMO file: [FmClipTools_Demo.fmp12](https://github.com/DanShockley/FmClipTools/blob/master/Support/FmClipTools_Demo.fmp12). It shows how to use FmClipTools, including examples. 
 
 To use them without any third-party software, you can also call them from the macOS menu-bar by activating the "Scripts" menu. 
 To do that: 

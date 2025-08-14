@@ -4,6 +4,11 @@ Tools for converting, modifying, and saving FileMaker Pro clipboard objects. Cod
 
 Objects that you can copy/paste in FileMaker (Scripts, Script Steps, Fields/Tables in Manage Database, Layout Objects, Custom Functions, Value Lists) are essentially XML data, but stored in the clipboard in such a way that you cannot just paste that XML into a text editor. This project includes scripts to easily convert those objects to/from XML, replace within the clipboard objects, replicate an object in bulk, and much more. 
 
+## Install Process
+
+You can install FmClipTools by doing a git clone of this repo to your desired location. If you don't already have one, you could create a ~/Code folder and clone there. 
+Alternatively, you could just download a zip file of the project, unzip it, and put it somewhere useful (maybe in a ~/Code folder), but to update you would have to download a fresh zip occasionally.  
+
 To put these to good use, you can execute them from some keyboard-shortcut or macro tool like Keyboard Maestro, Alfred, Quicksilver, etc. 
 If you do that, you could add a step that performs a copy (on the currently-selected FileMaker script steps), and perhaps even a delete-and-paste afterwards, if you'd like. 
 

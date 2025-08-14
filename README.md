@@ -11,9 +11,10 @@ To use them without any third-party software, you can also call them from the ma
 To do that: 
 * Open up /Applications/Script Editor.app and go into its Preferences. 
 * Activate the checkbox for "Show Script menu in menu bar"
-* Switch to FileMaker
-* Click the (AppleScript) menubar item added two steps earlier (an icon of an S-shaped sheet of paper), then pick "Open Scripts Folder." You could create a sub-folder there named "FileMaker Pro", but I prefer to have these available from any application context, so I keep them at the top level. This will open `~/Library/Scripts/` in the Finder. 
+* Click the (AppleScript) menubar item that should have just appeared (an icon of an S-shaped sheet of paper), then pick "Open Scripts Folder". 
+* This will open `~/Library/Scripts/` in the Finder.  I prefer to have these available from any application context, so I keep them at the top level. 
 * Put an alias to each of the `fmClip - {whatever}` scripts into that folder. 
+* (optional) If you want to call FmObjectTranslator functions by "telling" an app, which can be useful for external scripts where you don't want to reference the separate .applescript file, you can run the `./recompile.sh` shell script to build/rebuild it, after you do a git pull.
 
 2025-01-21 update: Added the `fmClip - Duplicate ButtonBar Segment` script. Basically, you copy an entire button bar object, run this script, tell it which segment (by number) to duplicate, it does that, putting the entire new button bar back into your clipboard. Back in FileMaker, delete the original button bar (*before* pasting to avoid object name collisions!), then paste the new button bar.
 

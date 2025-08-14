@@ -1,7 +1,8 @@
 -- Perform Find to Script Steps
--- version 4.0, Daniel A. Shockley, Erik Shagdar
+-- version 4.1, Daniel A. Shockley, Erik Shagdar
 -- Takes 'Perform Find' script step object in clipboard and converts to multiple script steps specifying a Find in detail. 
 
+-- 4.1 - 2025-08-13 ( danshockley ): Fixed typos in the warning message. 
 -- 4.0 - 2018-04-04 ( dshockley/eshagdar ): load fmObjectTranslator code by reference instead of embedded.
 -- 3.9.3 - 2017-08-09 ( eshagdar ): renamed 'Perform Find to Script Steps' to 'fmClip - Perform Find to Script Steps' to match other handler name pattern
 -- 3.9.2 - warn the user if any of the search-values need to be checked for data-type validity by inserting a Comment script step; also auto-pastes now. 
@@ -149,7 +150,7 @@ on xmlFindStart()
 	set xmlHeader to "<fmxmlsnippet type=\"FMObjectList\">"
 	
 	set warningCommentXML to "<Step enable=\"True\" id=\"89\" name=\"comment\">
-<Text>WARNING! The script step was converted, but the data-type of some search values may not working properly without adjustment to an operator (ellipsis, ineqaulity operators, etc), as the single-step Perform Find uses raw text strings as opposed to valid FileMaker calculations.</Text>
+<Text>WARNING! The script step was converted, but the data-type of some search values may not work properly without adjustment to an operator (ellipsis, inequality operators, etc), as the single-step Perform Find uses raw text strings as opposed to valid FileMaker calculations.</Text>
 </Step>"
 	
 	

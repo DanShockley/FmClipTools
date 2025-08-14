@@ -1,11 +1,12 @@
 -- Loop Script Steps
--- version 2021-10-06, Daniel A. Shockley
+-- version 2025-08-13, Daniel A. Shockley
 
 (* 
 
 	Puts FileMaker script steps into clipboard that loop over a return-delimited value list or the found set of records.
 
 HISTORY:
+	2025-08-13 ( danshockley ): Removed dependency on PlatformIsServer custom function. 
 	2021-10-06 ( dshockley ): Add small pause/refresh to the record loop. 
 	2020-07-29 ( dshockley ): Improved the dialog messages. 
 	2020-04-22 ( dshockley ): BUG-FIX - XML had extra $ character before ListName placeholder. 
@@ -115,7 +116,7 @@ on stringXML_RecordLoop()
 		<Calculation><![CDATA[Mod ( $iter_###Obj###_num ; 20 ) = 0 or $iter_###Obj###_num = 1 or $iter_###Obj###_num = $iter_###Obj###_exit]]></Calculation>
 	</Step>
 	<Step enable=\"True\" id=\"68\" name=\"If\">
-		<Calculation><![CDATA[not PlatformIsServer]]></Calculation>
+		<Calculation><![CDATA[not Let ( appV = Get ( ApplicationVersion ) ; GetAsBoolean ( PatternCount ( appV ; \"Server\" ) + PatternCount ( appV ; \"Cloud\" ) ) )]]></Calculation>
 	</Step>
 	<Step enable=\"True\" id=\"80\" name=\"Refresh Window\">
 		<Option state=\"False\"></Option>

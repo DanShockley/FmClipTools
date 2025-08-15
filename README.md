@@ -26,7 +26,9 @@ To do that:
 * Put an alias to each of the `fmClip - {whatever}` scripts into that folder. 
 * (optional) If you want to call FmObjectTranslator functions by "telling" an app, which can be useful for external scripts where you don't want to reference the separate .applescript file, you can run the `./recompile.sh` shell script to build/rebuild it, after you do a git pull.
 
-2025-08-14 update: improved documentation, mades some code updates, added the [FmClipTools Demo.fmp12](https://github.com/DanShockley/FmClipTools/blob/master/Support/FmClipTools Demo.fmp12) file.
+2025-08-15 update: fixed the description of the Duplicate ButtonBar Segment script and added an example for it in the [FmClipTools Demo.fmp12](https://github.com/DanShockley/FmClipTools/blob/master/Support/FmClipTools Demo.fmp12) file.
+
+2025-08-14 update: improved documentation, made some code updates, added the [FmClipTools Demo.fmp12](https://github.com/DanShockley/FmClipTools/blob/master/Support/FmClipTools Demo.fmp12) file.
 
 2025-01-21 update: Added the `fmClip - Duplicate ButtonBar Segment` script. Basically, you copy an entire button bar object, run this script, tell it which segment (by number) to duplicate, it does that, putting the entire new button bar back into your clipboard. Back in FileMaker, delete the original button bar (*before* pasting to avoid object name collisions!), then paste the new button bar.
 

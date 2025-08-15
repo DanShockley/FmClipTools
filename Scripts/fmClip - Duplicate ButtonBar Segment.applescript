@@ -1,10 +1,14 @@
 -- fmClip - Duplicate ButtonBar Segment
--- version 2025-01-21, Daniel A. Shockley
+-- version 2025-08-15, Daniel A. Shockley
 
 (*
-	Takes a return-delimited list of strings (optionally tab-delimited for multiple columns), then takes a FileMaker object in the clipboard and replicates it for each list item, then converts to multiple objects.
+	Allows you to duplicate a segment (by number) of a button bar in the clipboard. It adds another copy of that segment to the button bar, immediately after the original segment, putting that new button bar in the clipboard. 
+	So, if you have a 4-segment button bar, and choose to duplicate segment 2, it will now have 5 segments, with the new segment placed between the original #2 and #3. 
+	Pro-tip: before you paste back into FileMaker, delete the old button bar, to avoid your new pasted button bar have object name collision.
+	
 	
 HISTORY:
+	2025-08-15 ( danshockley ): Fixed description to what this actually does. Added the pre-paste reminder message to the dialog. 
 	2025-01-21 ( danshockley ): Created.
 
 *)
@@ -18,7 +22,7 @@ global objTrans
 
 
 on run
-		
+	
 	set objTrans to run script alias (((((path to me as text) & "::") as alias) as string) & "fmObjectTranslator.applescript")
 	(* If you need a self-contained script, copy the code from fmObjectTranslator into this script and use the following instead of the run script step above:
 			set objTrans to fmObjectTranslator_Instantiate({})
@@ -67,7 +71,7 @@ on run
 		
 		tell me to activate
 		
-		set segDialog to (display dialog "Which segment should be duplicated?" with title ScriptName default answer "" buttons {"Cancel", "Duplicate"} default button "Duplicate")
+		set segDialog to (display dialog "Which segment should be duplicated?" & return & "Reminder: Before you paste back into FileMaker, delete the original button bar to avoid your new pasted button bar having object name collision." with title ScriptName default answer "" buttons {"Cancel", "Duplicate"} default button "Duplicate")
 		set chosenSegNum to (text returned of segDialog) as number
 		
 		---------------------------------

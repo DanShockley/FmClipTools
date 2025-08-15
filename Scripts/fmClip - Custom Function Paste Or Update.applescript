@@ -1,5 +1,5 @@
 -- fmClip - Custom Function Paste Or Update
--- version 2024-12-03
+-- version 2025-08-15
 
 (*
 
@@ -10,9 +10,8 @@
 	Restores the clipboard at end of script, if it was modified. 
 
 
-TODO - 2024-12-03 ( danshockley ): Still need to fix the "UPDATE" behavior, which did not work for me today. 
-
 HISTORY: 
+	2025-08-15 ( danshockley ): Added explanation to the Update list picker to use command-click. Tried to bring picker to front, but that did not work. 
 	2024-12-03 ( danshockley ): Sometimes the modification of the clipboard to check target was not noticed, so added a "clipboard info" check to force notice of modification.
 	2024-07-22 ( danshockley ): The removeFunctionsFromXML handler now preserves CDATA tags, isntead of converting to escaped entities. 
 	2024-07-22 ( danshockley ): The snippetHead and snippetFoot properties are no longer needed. 
@@ -170,7 +169,7 @@ on run
 				copy "No existing functions were different, so none needed to be updated." to end of resultMsgList
 				
 			else
-				set dialogChooseUpdate to choose from list differentFunctionNames with title "Update existing functions?" with prompt "The following " & countDiff & " custom functions already exist in the target file, and are DIFFERENT from the source. By default, those will all be updated, but you can choose to deselect any that should not, or Cancel doing any updates of existing functions." default items differentFunctionNames OK button name "Update" with multiple selections allowed
+				set dialogChooseUpdate to choose from list differentFunctionNames with title "Update existing functions?" with prompt "The following " & countDiff & " custom functions already exist in the target file, and are DIFFERENT from the source. By default, those will all be updated, but you can choose to deselect any that should not, or Cancel doing any updates of existing functions." & return & "Command-click to select/deselect items." default items differentFunctionNames OK button name "Update" with multiple selections allowed
 				
 				if class of dialogChooseUpdate is equal to class of false then
 					-- they chose to CANCEL, so do not update any.

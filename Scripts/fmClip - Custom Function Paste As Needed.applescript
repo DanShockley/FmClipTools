@@ -51,9 +51,9 @@ on run
 		
 		-- get the NAMEs of the source functions:
 		set sourceFunctionNames to listCustomFunctionNamesFromXML(sourceTextXML)
+		set countSource to count of sourceFunctionNames
 		
 		tell application "System Events"
-			
 			-- get the target's existing functions into the clipboard:
 			set fmAppProcID to my getFmAppProcessID()
 			tell process id fmAppProcID
@@ -62,15 +62,15 @@ on run
 				if frontWinName does not start with winNameManageCFs then
 					error "You must have the " & winNameManageCFs & " window open in your target database." number -1024
 				end if
-				
 				click menu item "Select All" of menu "Edit" of menu bar 1
+				delay 1
 				click menu item "Copy" of menu "Edit" of menu bar 1
-				delay 0.5
+				delay 1
 				set restoreClipboard to true -- just modified clipboard, so should restore at end
 			end tell
 		end tell
 		
-		set countSource to count of sourceFunctionNames
+		clipboard info -- deliberately access the clipboard so the modified content is noticed.
 		
 		-- now, read out what functions the target already has:
 		checkClipboardForObjects({}) of objTrans
@@ -81,19 +81,19 @@ on run
 		if debugMode then log "targetFunctionNames: " & targetFunctionNames
 		
 		-- get the (possibly) reduced set of functions, then put those in clipboard:
-		set keepFunctionNames to listRemoveFromFirstList({sourceFunctionNames, targetFunctionNames})
+		set pasteFunctionNames to listRemoveFromFirstList({sourceFunctionNames, targetFunctionNames})
 		
-		if (count of keepFunctionNames) is 0 then
+		if (count of pasteFunctionNames) is 0 then
 			display dialog "All " & countSource & " custom functions from the clipboard already exist in the target." buttons {"OK"} default button "OK"
 			set convertResult to true
 		else
 			-- there are CFs we need to paste
 			-- So, modify the XML to keep only those needed:
-			set keepResult to keepOnlyTheseFunctionsInXML(sourceTextXML, keepFunctionNames)
-			set justPasteFunctionsXML to outputXML of keepResult
+			set keepResult to keepOnlyTheseFunctionsInXML(sourceTextXML, pasteFunctionNames)
+			set pasteFunctionsXML to outputXML of keepResult
 			
 			-- put the XML into the clipboard
-			set the clipboard to justPasteFunctionsXML
+			set the clipboard to pasteFunctionsXML
 			
 			-- modify the clipboard to include the objects to paste: 
 			set convertResult to clipboardConvertToFMObjects({}) of objTrans

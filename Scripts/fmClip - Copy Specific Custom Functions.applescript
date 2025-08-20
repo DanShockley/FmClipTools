@@ -1,12 +1,13 @@
 -- fmClip - Copy Specific Custom Functions
--- version 2024-07-22
+-- version 2025-08-20
 
 (*
 
 	Asks for a list of custom function names, copies the existing custom functions from an ALREADY-OPEN Manage Custom Functions window in the "source" file, then modifies clipboard to contain ONLY the specified functions.  
 
 HISTORY: 
-	2024-07-22 ( danshockley ): The removeFunctionsFromXML handler now preserves CDATA tags, isntead of converting to escaped entities. 
+	2025-08-20 ( danshockley ): Updated to work with Custom Function "Group" sub-folders by keeping desired functions, instead of a removal of those not in the desired list.
+	2024-07-22 ( danshockley ): The removeFunctionsFromXML handler now preserves CDATA tags, instead of converting to escaped entities. 
 	2024-07-22 ( danshockley ): The snippetHead and snippetFoot properties are no longer needed. 
 	2024-07-22 ( danshockley ): Added more error handling info. Says how many were copied at end of script.
 	2024-07-22 ( danshockley ): Fixed description. Updated the removeFunctionsFromXML handler. 
@@ -72,8 +73,9 @@ on run
 					(* NOTE: IDEALLY, we would select only the functions specified, but UI Scripting has a bug where setting selected=true for one row ALWAYS deselects other rows. So, instead we must SELECT ALL, COPY, REMOVE unwanted, SET CLIPBOARD. 
 				*)
 					click menu item "Select All" of menu "Edit" of menu bar 1
+					delay 1
 					click menu item "Copy" of menu "Edit" of menu bar 1
-					delay 2
+					delay 1
 				end tell
 			end tell
 		on error errMsg number errNum
@@ -107,11 +109,11 @@ on run
 		end try
 		
 		try
-			-- REDUCE FUNCTIONS: get the (possibly) reduced set of functions, then put only those desired objects into the clipboard:
-			-- just the list of functions we do NOT want from the source:
-			set removeFunctionNames to listRemoveFromFirstList({sourceFunctionNames, desiredFunctionNames})
+			-- KEEP only the specified function names: get the (possibly) reduced set of functions, then put only those desired objects into the clipboard:	
+			set keepResult to keepOnlyTheseFunctionsInXML(sourceTextXML, desiredFunctionNames)
+			set justDesiredFunctionsXML to outputXML of keepResult
+			set missingFunctionNames to missingNodeNames of keepResult
 			
-			set justDesiredFunctionsXML to removeFunctionsFromXML(sourceTextXML, removeFunctionNames)
 			
 			tell application "System Events"
 				set the clipboard to justDesiredFunctionsXML
@@ -123,14 +125,18 @@ on run
 			error errMsg number errNum
 		end try
 		
-		set copiedFunctionNames to listRemoveFromFirstList({sourceFunctionNames, removeFunctionNames})
-		set missingFunctionNames to listRemoveFromFirstList({desiredFunctionNames, copiedFunctionNames})
+		set copiedFunctionNames to listRemoveFromFirstList({desiredFunctionNames, missingFunctionNames})
 		try
 			set countCopied to count of copiedFunctionNames
 			set countMissing to count of missingFunctionNames
-			set dialogMsg to "There were " & countCopied & " functions were copied to your clipboard"
+			set dialogMsg to "There were " & countCopied & " functions copied to your clipboard"
 			if countMissing is greater than 0 then
-				set dialogMsg to dialogMsg & ". WARNING! " & countMissing & " of your desired functions did NOT exist in the source file, so they will NOT be available to paste/update in target file: " & return & my unParseChars(missingFunctionNames, return)
+				if countMissing is 1 then
+					set msgPronoun to "it"
+				else
+					set msgPronoun to "they"
+				end if
+				set dialogMsg to dialogMsg & ". WARNING! " & countMissing & " of your desired functions did NOT exist in the source file, so " & msgPronoun & " will NOT be available to paste/update in target file: " & return & my unParseChars(missingFunctionNames, return)
 				set dialogBtn to "Understood"
 			else
 				set dialogMsg to dialogMsg & ", so you can go paste into a target file."
@@ -138,6 +144,7 @@ on run
 			end if
 			display dialog dialogMsg buttons {dialogBtn} default button dialogBtn
 		end try
+		
 		return result
 		
 		
@@ -180,28 +187,81 @@ on getFmAppProcessID()
 end getFmAppProcessID
 
 
-on removeFunctionsFromXML(sourceStringXML, removeNames)
-	-- version 2024-07-22
+on keepOnlyTheseFunctionsInXML(sourceStringXML, keepTheseNames)
+	-- version 2025-08-20
 	
-	-- Removes any CustomFunction nodes with one of the names to remove.
+	(* 
+		Keeps only the CustomFunction nodes whose @name is in keepTheseNames.
+		Groups are retained only if they contain (directly or indirectly) at least one kept function.
+		Groups with no kept functions under them are removed, even if their parent Group survives.
+		Returns {outputXML:"...", missingNodeNames:{...}}
+		
+	HISTORY: 
+		2025-08-20 ( danshockley ): Created, interacting with ChatGPT.	
+	*)
 	
-	-- Parse the XML and preserve CDATA sections
+	
 	set xmlDoc to current application's NSXMLDocument's alloc()'s initWithXMLString:sourceStringXML options:(current application's NSXMLNodePreserveCDATA) |error|:(missing value)
 	
-	repeat with oneRemoveName in removeNames
-		set xpath to "//CustomFunction[@name='" & oneRemoveName & "']"
-		set nodesToRemove to (xmlDoc's nodesForXPath:xpath |error|:(missing value))
-		repeat with node in nodesToRemove
-			node's detach()
-		end repeat
+	-- Prepare a mutable list of found names
+	set foundNames to {}
+	
+	-- Prune from root
+	pruneChildren(xmlDoc's rootElement(), keepTheseNames, foundNames)
+	
+	-- Compute missing names
+	set missingNodeNames to {}
+	repeat with oneName in keepTheseNames
+		if foundNames does not contain (oneName as text) then
+			set end of missingNodeNames to (oneName as text)
+		end if
 	end repeat
-	-- Extract inner XML of the root element
+	
+	-- Return modified XML
 	set rootElement to xmlDoc's rootElement()
-	set modifiedXMLString to (rootElement's XMLStringWithOptions:(0))
+	set modifiedXMLString to (rootElement's XMLStringWithOptions:(0)) as text
 	
-	return modifiedXMLString as text
-	
-end removeFunctionsFromXML
+	return {outputXML:modifiedXMLString, missingNodeNames:missingNodeNames}
+end keepOnlyTheseFunctionsInXML
+
+
+on pruneChildren(parentNode, keepTheseNames, foundNames)
+	set children to parentNode's children()
+	repeat with child in children
+		set childNode to contents of child
+		
+		-- Skip non-element nodes
+		if ((childNode's |kind|()) as integer) = (current application's NSXMLElementKind) then
+			set nodeName to (childNode's |name|()) as text
+			
+			if nodeName = "CustomFunction" then
+				set nameAttr to (childNode's attributeForName:"name")
+				if nameAttr is missing value then
+					set funcName to ""
+				else
+					set funcName to (nameAttr's stringValue()) as text
+				end if
+				
+				if keepTheseNames contains funcName then
+					-- record that we saw this one
+					if foundNames does not contain funcName then
+						set end of foundNames to funcName
+					end if
+				else
+					(childNode's detach())
+				end if
+				
+			else if nodeName = "Group" then
+				my pruneChildren(childNode, keepTheseNames, foundNames)
+				-- Drop group if empty of CustomFunction descendants
+				set keptFunctions to (childNode's nodesForXPath:".//CustomFunction" |error|:(missing value))
+				if (count of keptFunctions) = 0 then
+					(childNode's detach())
+				end if
+			end if
+		end if
+	end repeat
+end pruneChildren
 
 
 on listRemoveFromFirstList(prefs)

@@ -1,5 +1,5 @@
 -- fmClip - Custom Function Paste As Needed
--- version 2024-07-22
+-- version 2025-08-20
 
 (*
 
@@ -7,7 +7,8 @@
 	Restores the clipboard at end of script, if it was modified. 
 
 HISTORY: 
-	2024-07-22 ( danshockley ): The removeFunctionsFromXML handler now preserves CDATA tags, isntead of converting to escaped entities. 
+	2025-08-20 ( danshockley ): Updated to work with Custom Function "Group" sub-folders by keeping desired functions, instead of a removal of those not in the desired list. Also improved the everything-already-there dialog.
+	2024-07-22 ( danshockley ): The removeFunctionsFromXML handler now preserves CDATA tags, instead of converting to escaped entities. 
 	2024-07-22 ( danshockley ): The snippetHead and snippetFoot properties are no longer needed. 
 	2024-07-22 ( danshockley ): Updated comments. 
 	2024-07-16 ( danshockley ): Better variable names for "source" values. 
@@ -47,10 +48,11 @@ on run
 		-- get the source functions:
 		set sourceTextXML to clipboardGetObjectsasXML({}) of objTrans
 		
+		
+		-- get the NAMEs of the source functions:
+		set sourceFunctionNames to listCustomFunctionNamesFromXML(sourceTextXML)
+		
 		tell application "System Events"
-			-- get the NAMEs of the source functions:
-			set sourceXMLData to make new XML data with properties {text:sourceTextXML}
-			set sourceFunctionNames to value of XML attribute "name" of (every XML element of XML element 1 of sourceXMLData whose name is "CustomFunction")
 			
 			-- get the target's existing functions into the clipboard:
 			set fmAppProcID to my getFmAppProcessID()
@@ -73,21 +75,27 @@ on run
 		-- now, read out what functions the target already has:
 		checkClipboardForObjects({}) of objTrans
 		set targetTextXML to clipboardGetObjectsasXML({}) of objTrans
-		tell application "System Events"
-			set targetXMLData to make new XML data with properties {text:targetTextXML}
-			set targetFunctionNames to value of XML attribute "name" of (every XML element of XML element 1 of targetXMLData whose name is "CustomFunction")
-		end tell
+		set targetFunctionNames to listCustomFunctionNamesFromXML(targetTextXML)
+		
 		
 		if debugMode then log "targetFunctionNames: " & targetFunctionNames
 		
 		-- get the (possibly) reduced set of functions, then put those in clipboard:
-		set justFunctionsXML to removeFunctionsFromXML(sourceTextXML, targetFunctionNames)
+		set keepFunctionNames to listRemoveFromFirstList({sourceFunctionNames, targetFunctionNames})
 		
-		if length of justFunctionsXML is 0 then
-			display dialog "All " & countSource & " custom functions from the clipboard already exist in the target."
+		if (count of keepFunctionNames) is 0 then
+			display dialog "All " & countSource & " custom functions from the clipboard already exist in the target." buttons {"OK"} default button "OK"
+			set convertResult to true
 		else
-			set the clipboard to justFunctionsXML
+			-- there are CFs we need to paste
+			-- So, modify the XML to keep only those needed:
+			set keepResult to keepOnlyTheseFunctionsInXML(sourceTextXML, keepFunctionNames)
+			set justPasteFunctionsXML to outputXML of keepResult
 			
+			-- put the XML into the clipboard
+			set the clipboard to justPasteFunctionsXML
+			
+			-- modify the clipboard to include the objects to paste: 
 			set convertResult to clipboardConvertToFMObjects({}) of objTrans
 			
 			-- PASTE only the needed functions:
@@ -144,31 +152,121 @@ on getFmAppProcessID()
 	
 end getFmAppProcessID
 
-
-
-on removeFunctionsFromXML(sourceStringXML, removeNames)
-	-- version 2024-07-22
+on listCustomFunctionNamesFromXML(sourceStringXML)
+	-- version 2025-08-20
 	
-	-- Removes any CustomFunction nodes with one of the names to remove.
+	-- Returns a list of all @name values of CustomFunction nodes, at any depth
 	
-	-- Parse the XML and preserve CDATA sections
 	set xmlDoc to current application's NSXMLDocument's alloc()'s initWithXMLString:sourceStringXML options:(current application's NSXMLNodePreserveCDATA) |error|:(missing value)
 	
-	repeat with oneRemoveName in removeNames
-		set xpath to "//CustomFunction[@name='" & oneRemoveName & "']"
-		set nodesToRemove to (xmlDoc's nodesForXPath:xpath |error|:(missing value))
-		repeat with node in nodesToRemove
-			node's detach()
-		end repeat
+	-- Get all CustomFunction nodes anywhere
+	set funcNodes to (xmlDoc's nodesForXPath:"//CustomFunction" |error|:(missing value))
+	
+	set funcNames to {}
+	repeat with oneNode in funcNodes
+		set nodeObj to contents of oneNode
+		set nameAttr to (nodeObj's attributeForName:"name")
+		if nameAttr is not missing value then
+			set funcName to (nameAttr's stringValue()) as text
+			set end of funcNames to funcName
+		end if
 	end repeat
-	-- Extract inner XML of the root element
-	set rootElement to xmlDoc's rootElement()
-	set modifiedXMLString to (rootElement's XMLStringWithOptions:(0))
 	
-	return modifiedXMLString as text
-	
-end removeFunctionsFromXML
+	return funcNames
+end listCustomFunctionNamesFromXML
 
+
+
+on keepOnlyTheseFunctionsInXML(sourceStringXML, keepTheseNames)
+	-- version 2025-08-20
+	
+	(* 
+		Keeps only the CustomFunction nodes whose @name is in keepTheseNames.
+		Groups are retained only if they contain (directly or indirectly) at least one kept function.
+		Groups with no kept functions under them are removed, even if their parent Group survives.
+		Returns {outputXML:"...", missingNodeNames:{...}}
+		
+	HISTORY: 
+		2025-08-20 ( danshockley ): Created, interacting with ChatGPT.	
+	*)
+	
+	
+	set xmlDoc to current application's NSXMLDocument's alloc()'s initWithXMLString:sourceStringXML options:(current application's NSXMLNodePreserveCDATA) |error|:(missing value)
+	
+	-- Prepare a mutable list of found names
+	set foundNames to {}
+	
+	-- Prune from root
+	pruneChildren(xmlDoc's rootElement(), keepTheseNames, foundNames)
+	
+	-- Compute missing names
+	set missingNodeNames to {}
+	repeat with oneName in keepTheseNames
+		if foundNames does not contain (oneName as text) then
+			set end of missingNodeNames to (oneName as text)
+		end if
+	end repeat
+	
+	-- Return modified XML
+	set rootElement to xmlDoc's rootElement()
+	set modifiedXMLString to (rootElement's XMLStringWithOptions:(0)) as text
+	
+	return {outputXML:modifiedXMLString, missingNodeNames:missingNodeNames}
+end keepOnlyTheseFunctionsInXML
+
+
+on pruneChildren(parentNode, keepTheseNames, foundNames)
+	set children to parentNode's children()
+	repeat with child in children
+		set childNode to contents of child
+		
+		-- Skip non-element nodes
+		if ((childNode's |kind|()) as integer) = (current application's NSXMLElementKind) then
+			set nodeName to (childNode's |name|()) as text
+			
+			if nodeName = "CustomFunction" then
+				set nameAttr to (childNode's attributeForName:"name")
+				if nameAttr is missing value then
+					set funcName to ""
+				else
+					set funcName to (nameAttr's stringValue()) as text
+				end if
+				
+				if keepTheseNames contains funcName then
+					-- record that we saw this one
+					if foundNames does not contain funcName then
+						set end of foundNames to funcName
+					end if
+				else
+					(childNode's detach())
+				end if
+				
+			else if nodeName = "Group" then
+				my pruneChildren(childNode, keepTheseNames, foundNames)
+				-- Drop group if empty of CustomFunction descendants
+				set keptFunctions to (childNode's nodesForXPath:".//CustomFunction" |error|:(missing value))
+				if (count of keptFunctions) = 0 then
+					(childNode's detach())
+				end if
+			end if
+		end if
+	end repeat
+end pruneChildren
+
+
+on listRemoveFromFirstList(prefs)
+	-- version 1.2.1
+	
+	set {mainList, listOfItemsToRemove} to prefs
+	
+	set absentList to {}
+	repeat with oneItem in mainList
+		set oneItem to contents of oneItem
+		if listOfItemsToRemove does not contain oneItem then copy oneItem to end of absentList
+	end repeat
+	
+	return absentList
+end listRemoveFromFirstList
 
 
 

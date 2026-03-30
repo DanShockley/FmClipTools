@@ -26,6 +26,8 @@ To do that:
 * Put an alias to each of the `fmClip - {whatever}` scripts into that folder. 
 * (optional) If you want to call FmObjectTranslator functions by "telling" an app, which can be useful for external scripts where you don't want to reference the separate .applescript file, you can run the `./recompile.sh` shell script to build/rebuild it, after you do a git pull.
 
+2026-03-30 update: Added `SVG Extractor` script, which pulls the XML of any SVG from the layout objects in the clipboard. For now, just puts multiple SVGs into clipboard, separated by multiple empty lines. 
+
 2025-08-20 update: The Custom Function scripts (Copy Specific, Paste Needed, Paste or Update) should now work with custom function folders in FileMaker Pro 2025. The basic to/from XML already did, but those required more work, including some UI scripting updates for Paste or Update. When tested, they still work with FileMaker Pro 2024 (so, presumably, also older versions).  
 
 2025-08-15 update: fixed the description of the Duplicate ButtonBar Segment script and added an example for it in the [FmClipTools Demo.fmp12](https://github.com/DanShockley/FmClipTools/blob/master/Support/FmClipTools Demo.fmp12) file.

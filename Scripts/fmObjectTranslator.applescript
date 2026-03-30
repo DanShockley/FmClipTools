@@ -22,8 +22,9 @@ end run
 on fmObjectTranslator_Instantiate(prefs)
 	
 	script fmObjectTranslator
-		-- version 4.1.6, Daniel A. Shockley
+		-- version 4.1.7, Daniel A. Shockley
 		
+		-- 4.1.7 - 2026-03-30 ( danshockley ): Added getTextBetweenMultiple for use by scripts loading this object. 
 		-- 4.1.6 - 2025-05-14 ( danshockley ): Support Custom Function folders by modifying the fmObjectList to have special handling when top node is Group (can be Script or CustomFunction). Note that isStringValidFMObjectXML also has changes to support this. 
 		-- 4.1.5 - 2024-10-27 ( danshockley ): Corrected constant's variable name to be "charETX" instead of "charEOT" so it matches normal terminology. 
 		-- 4.1.4 - 2024-01-11 ( danshockley ): Added Theme support. Note, since this added use Foundation, had to convert logic like "file somePath" into "somePath as «class furl»" in the handlers: dataObjectToUTF8, convertXmlToObjects, and prettifyXML. 
@@ -1564,6 +1565,38 @@ on fmObjectTranslator_Instantiate(prefs)
 			
 			return finalResult
 		end getTextBetween
+		
+		
+		
+		
+		on getTextBetweenMultiple(sourceText, beforeText, afterText)
+			-- version 1.2
+			-- gets the text between all occurrences of beforeText and afterText in sourceText, and returns a list of strings
+			-- the beforeText and afterText cannot overlap (ie. cannot parse "<LI>Apple<LI>Orange</UL>" using "<LI>" and "<")
+			-- NEEDs parseChars()
+			try
+				
+				set parsedByBefore to my parseChars({sourceText, beforeText})
+				if length of parsedByBefore is 1 then return {}
+				set parsedByBefore to items 2 through -1 of parsedByBefore
+				
+				set foundTextList to {}
+				repeat with oneParsedSection in parsedByBefore
+					set parsedList to my parseChars({oneParsedSection as string, afterText})
+					if length of parsedList is not 1 then
+						copy (item 1 of parsedList) as string to end of foundTextList
+					end if
+					
+				end repeat
+				
+				return foundTextList
+			on error errMsg number errNum
+				-- will not error if parsing datum not found, will return empty list (see above)
+				error "getTextBetweenMultiple FAILED: " & errMsg number errNum
+				
+			end try
+		end getTextBetweenMultiple
+		
 		
 		
 		on repeatString(prefs)

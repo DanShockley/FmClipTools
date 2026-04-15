@@ -5,6 +5,7 @@
 	In the current/frontmost copy of FileMaker (if running multiple copies/versions of the app), copy the layout objects of the two frontmost windows (BOTH MUST BE IN LAYOUT MODE!), then compare the XML, saving each XML to temporary items director, opening in BBEdit, stripping away superficial differences (internal unique keys), then running a BBEdit comparison to show any differences. 
 
 HISTORY:
+	2026-04-14 ( danshockley ): BUG-FIX: was stripping away field names because of RegEx syntax mistake. 
 	2026-04-03 ( danshockley ): Strip out ids for fields and scripts. 
 	2026-01-16 ( danshockley ): Make fontID generic, since those are different for file-specific reasons. 
 	2025-05-07 ( danshockley ): If the layouts have the same name, use the window names instead, since they might be same layout from different files.
@@ -25,7 +26,7 @@ property grepReplacePairs : {{" key=\"[0-9]+\"", " key=\"9999\""}, Â
 	{" LabelKey=\"[0-9]+\"", " LabelKey=\"9999\""}, Â
 	{" fontId=\"[0-9]+\"", " fontId=\"9999\""}, Â
 	{"<Script id=\"[0-9]+\"", "<Script id=\"9999\""}, Â
-	{"<Field name=\"([^\"])+\" id=\"[0-9]+\"", "<Field name=\"\\1\" id=\"9999\""}}
+	{"<Field name=\"([^\"]+)\" id=\"[0-9]+\"", "<Field name=\"\\1\" id=\"9999\""}}
 
 
 on run

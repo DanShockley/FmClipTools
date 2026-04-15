@@ -1,5 +1,5 @@
 -- SVG Extractor
--- version 2026-03-30, Daniel A. Shockley
+-- version 2026-04-15, Daniel A. Shockley
 
 (*
 	Extracts SVG objects from the clipboard FileMaker objects.
@@ -7,10 +7,11 @@
 	Note: this does sloppy parsing, not true XML-parsing, for speed and to reduce dependencies. 
 
 	HISTORY: 
+		2026-04-15 ( danshockley ): turn off debugMode. 
 		2026-03-30 ( danshockley ): Created.
 *)
 
-property debugMode : true -- ONLY enable this while developing/testing
+property debugMode : false -- ONLY enable this while developing/testing
 
 on run
 	

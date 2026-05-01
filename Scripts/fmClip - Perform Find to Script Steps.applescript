@@ -1,7 +1,7 @@
 -- Perform Find to Script Steps
--- version 4.1, Daniel A. Shockley, Erik Shagdar
+-- version 4.2, Daniel A. Shockley, Erik Shagdar
 -- Takes 'Perform Find' script step object in clipboard and converts to multiple script steps specifying a Find in detail. 
-
+-- 4.2 - 2026-05-01 ( danshockley ): updated XML headers to include declaration. 
 -- 4.1 - 2025-08-13 ( danshockley ): Fixed typos in the warning message. 
 -- 4.0 - 2018-04-04 ( dshockley/eshagdar ): load fmObjectTranslator code by reference instead of embedded.
 -- 3.9.3 - 2017-08-09 ( eshagdar ): renamed 'Perform Find to Script Steps' to 'fmClip - Perform Find to Script Steps' to match other handler name pattern
@@ -147,7 +147,8 @@ end getXmlSetField
 
 on xmlFindStart()
 	
-	set xmlHeader to "<fmxmlsnippet type=\"FMObjectList\">"
+	set xmlHeader_declaration to "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+	set xmlHeader_FMObjectList to "<fmxmlsnippet type=\"FMObjectList\">"
 	
 	set warningCommentXML to "<Step enable=\"True\" id=\"89\" name=\"comment\">
 <Text>WARNING! The script step was converted, but the data-type of some search values may not work properly without adjustment to an operator (ellipsis, inequality operators, etc), as the single-step Perform Find uses raw text strings as opposed to valid FileMaker calculations.</Text>
@@ -162,7 +163,7 @@ on xmlFindStart()
 </Step>
 "
 	
-	set outputXML to xmlHeader
+	set outputXML to xmlHeader_declaration & (ASCII character 10) & xmlHeader_FMObjectList
 	
 	if needsDataTypeWarning then
 		set outputXML to outputXML & return & warningCommentXML
@@ -197,10 +198,11 @@ end xmlFindEnd
 on somePerformFindScriptStepXML()
 	-- used when testing, as an example canned Perform Find. 
 	
-	return "<fmxmlsnippet type=\"FMObjectList\"><Step enable=\"True\" id=\"28\" name=\"Perform Find\"><Restore state=\"True\"></Restore><Query><RequestRow operation=\"Include\"><Criteria><Field table=\"C_WORKER\" id=\"37\" name=\"a16C_DriveID\"></Field><Text>dv316</Text></Criteria><Criteria><Field table=\"C_WORKER\" id=\"84\" name=\"b16C_AdrApt\"></Field><Text>2F</Text></Criteria></RequestRow><RequestRow operation=\"Exclude\"><Criteria><Field table=\"C_WORKER\" id=\"92\" name=\"b16C_BargainingUnit\"></Field><Text>YES</Text></Criteria><Criteria><Field table=\"C_WORKER\" id=\"32956\" name=\"b16C_Active__b\"></Field><Text>1</Text></Criteria></RequestRow></Query></Step></fmxmlsnippet>"
+	return "<?xml version=\"1.0\" encoding=\"UTF-8\"?><fmxmlsnippet type=\"FMObjectList\"><Step enable=\"True\" id=\"28\" name=\"Perform Find\"><Restore state=\"True\"></Restore><Query><RequestRow operation=\"Include\"><Criteria><Field table=\"C_WORKER\" id=\"37\" name=\"a16C_DriveID\"></Field><Text>dv316</Text></Criteria><Criteria><Field table=\"C_WORKER\" id=\"84\" name=\"b16C_AdrApt\"></Field><Text>2F</Text></Criteria></RequestRow><RequestRow operation=\"Exclude\"><Criteria><Field table=\"C_WORKER\" id=\"92\" name=\"b16C_BargainingUnit\"></Field><Text>YES</Text></Criteria><Criteria><Field table=\"C_WORKER\" id=\"32956\" name=\"b16C_Active__b\"></Field><Text>1</Text></Criteria></RequestRow></Query></Step></fmxmlsnippet>"
 	
 	(*
-	return "<fmxmlsnippet type=\"FMObjectList\">
+	return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
+<fmxmlsnippet type=\"FMObjectList\">
 <Step enable=\"True\" id=\"28\" name=\"Perform Find\"><Restore state=\"True\"></Restore><Query><RequestRow operation=\"Include\"><Criteria><Field table=\"C_WORKER\" id=\"37\" name=\"a16C_DriveID\"></Field><Text>dv316</Text></Criteria><Criteria><Field table=\"C_WORKER\" id=\"92\" name=\"b16C_BargainingUnit\"></Field><Text>YES</Text></Criteria><Criteria><Field table=\"C_WORKER\" id=\"32956\" name=\"b16C_Active__b\"></Field><Text>1</Text></Criteria></RequestRow></Query></Step>
 </fmxmlsnippet>"
 	*)

@@ -56,7 +56,7 @@ on run
 		set objTrans to run script alias (((((path to me as text) & "::") as alias) as string) & "fmObjectTranslator.applescript")
 		(* If you need a self-contained script, copy the code from fmObjectTranslator into this script and use the following instead of the run script step above:
 			set objTrans to fmObjectTranslator_Instantiate({})
-	*)
+		*)
 		
 		-- init Translator properties:
 		set shouldPrettify of objTrans to false
@@ -165,7 +165,6 @@ on run
 		else -- ANY other (non-layout) objects:
 			set templateObjectXML to objTrans's removeHeaderFooter(clipboardObjectStringXML)
 		end if
-		
 		
 		
 		---------------------------------

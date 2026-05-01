@@ -22,8 +22,9 @@ end run
 on fmObjectTranslator_Instantiate(prefs)
 	
 	script fmObjectTranslator
-		-- version 4.1.7, Daniel A. Shockley
+		-- version 4.1.8, Daniel A. Shockley
 		
+		-- 4.1.8 - 2026-05-01 ( danshockley ): In removeHeaderFooter, notice and remove the XML declaration before fmxmlsnippet for all types, since FileMaker Pro 22.0.6 (maybe earlier?) now (but not always?!) includes that for objects, breaking some code. AND, in addHeaderFooter, include it for ALL types, since FileMaker Pro 22 expects that and earlier versions back at least to FM 17.07 accept pasted objects that include it. Added handlers getTextAfter, getTextBefore, and trimWhitespace.
 		-- 4.1.7 - 2026-03-30 ( danshockley ): Added getTextBetweenMultiple for use by scripts loading this object. 
 		-- 4.1.6 - 2025-05-14 ( danshockley ): Support Custom Function folders by modifying the fmObjectList to have special handling when top node is Group (can be Script or CustomFunction). Note that isStringValidFMObjectXML also has changes to support this. 
 		-- 4.1.5 - 2024-10-27 ( danshockley ): Corrected constant's variable name to be "charETX" instead of "charEOT" so it matches normal terminology. 
@@ -90,14 +91,15 @@ on fmObjectTranslator_Instantiate(prefs)
 		property badLayoutCodeStart : "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" & charLF & "<Layout" & (ASCII character 10) & " enclosingRectTop=\""
 		property goodLayoutCodeStart : "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" & charLF & "<Layout enclosingRectTop=\""
 		
-		property xmlHeader : "<fmxmlsnippet type=\"FMObjectList\">"
+		property xmlHeader_declaration : "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+		property xmlHeader_FMObjectList : "<fmxmlsnippet type=\"FMObjectList\">"
 		property xmlFooter : "</fmxmlsnippet>"
 		
-		-- different header for layout objects: 
+		-- different header for layout objects (not FMObjectList): 
 		property xmlHeader_LO_Line1 : "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
 		property xmlHeader_LO_Line2 : "<fmxmlsnippet type=\"LayoutObjectList\">"
 		property xmlHeader_LO_LIST : {xmlHeader_LO_Line1 & xmlHeader_LO_Line2, xmlHeader_LO_Line1 & charLF & xmlHeader_LO_Line2, xmlHeader_LO_Line1 & charCR & xmlHeader_LO_Line2, xmlHeader_LO_Line1 & charCR & charLF & xmlHeader_LO_Line2}
-		property xmlHeader_LO_current : ""
+		property xmlHeader_LO_current : "" -- this will persist within a single run. Gets set when header stripped, and used when header added back. 
 		
 		property themeClipboardType : "dyn.agk8u" -- FileMaker's clipboard type for Theme data
 		property themeCode : "FakeCodeTheme"
@@ -809,68 +811,87 @@ on fmObjectTranslator_Instantiate(prefs)
 		
 		
 		on removeHeaderFooter(someXML)
-			-- version 1.2
+			-- version 1.3
 			
+			-- 1.3 - 2026-05-01 ( danshockley ): Handle xml declaration, as well, for any type. Also improved logic to avoid a "footer" in the middle of the XML. 
 			-- 1.2 - 2018-04-04 ( dshockley/eshagdar ): remove leading blank line after removing header.
 			-- 1.1 - 2017-12-18 ( danshockley ): handles layout objects special header.
 			-- 1.0 - 2017-04-25 ( dshockley/eshagdar ): first created.
 			
+			(*
+				What we want is for any XML header and footer to be removed, and the remaining XML to have no leading/trailing whitespace.
+				We also want to acknowledge there might be header/footer-looking strings embedded within (e.g. in a CDATA). 
+				So, we want to check for the someXML starting with a header and ending with a footer.
+				The LOGIC is: 
+				 - Check for XML declaration. If present, remove it from pendingXML, and set hasDeclaration true. 
+				 - Check for FMObjectList. If present, remove it from pendingXML, and set hasHeader true.
+				 - If declaration found, but not FMObjectList, check for Layout headers. If found, remove  from pendingXML, and set hasHeader true.
+				 - If hasHeader, check for footer. If found, remove it from pending XML, and set hasFooter true.
+				 - If both header and footer were found, return pending XML, otherwise return original someXML. 
+			*)
 			
 			if debugMode then logConsole(ScriptName, "removeHeaderFooter: START")
 			try
-				if someXML begins with xmlHeader and someXML ends with xmlFooter then
-					try
-						set {oldDelims, AppleScript's text item delimiters} to {AppleScript's text item delimiters, xmlHeader}
-						set modifiedXML to (text items 2 thru -1 of someXML) as string
-						set AppleScript's text item delimiters to xmlFooter
-						set modifiedXML to ((text items 1 thru -2 of modifiedXML) as string)
-						set AppleScript's text item delimiters to oldDelims
-					on error errMsg number errNum
-						-- trap here so we can restore ASTIDs, then pass out the actual error: 
-						set AppleScript's text item delimiters to oldDelims
-						error errMsg number errNum
-					end try
+				set hasDeclaration to false
+				set hasHeader to false
+				set hasFooter to false
+				set pendingXML to trimWhitespace(someXML)
+				
+				(* Remove XML declaration, if any: *)
+				if pendingXML begins with xmlHeader_declaration then
+					set hasDeclaration to true
+					set pendingXML to getTextAfter(pendingXML, xmlHeader_declaration)
+					(* trim leading/trailing whitespace *)
+					set pendingXML to trimWhitespace(pendingXML)
+				end if
+				
+				(* Remove FMObjectList, if any, and FOUND header: *)
+				if pendingXML begins with xmlHeader_FMObjectList then
+					set hasHeader to true
+					set pendingXML to getTextAfter(pendingXML, xmlHeader_FMObjectList)
+					(* trim leading/trailing whitespace *)
+					set pendingXML to trimWhitespace(pendingXML)
+				end if
+				
+				
+				(* Found declaration, but not FMObjectList, so check for special Layouts header(s): *)
+				if hasDeclaration and not hasHeader then
 					
-					return modifiedXML
-				else
-					-- was NOT a simple exact header match, so check for layout objects:
-					set hasHeader to false
-					set hasFooter to someXML ends with xmlFooter
-					
+					-- Loop over the multiple possible layout headers, checking for use:
 					repeat with oneHeader in xmlHeader_LO_LIST
 						set oneHeader to contents of oneHeader
 						if someXML begins with oneHeader then
+							-- found a layout header
 							set hasHeader to true
 							set xmlHeader_LO_current to oneHeader
 						end if
-						
 					end repeat
-					if hasHeader and hasFooter then
-						try
-							set {oldDelims, AppleScript's text item delimiters} to {AppleScript's text item delimiters, xmlHeader_LO_current}
-							set modifiedXML to (text items 2 thru -1 of someXML) as string
-							set AppleScript's text item delimiters to xmlFooter
-							set modifiedXML to ((text items 1 thru -2 of modifiedXML) as string)
-							set AppleScript's text item delimiters to oldDelims
-						on error errMsg number errNum
-							-- trap here so we can restore ASTIDs, then pass out the actual error: 
-							set AppleScript's text item delimiters to oldDelims
-							error errMsg number errNum
-						end try
-						
-						-- the code above may leave the modified XML with a leading blank line. Strip it off:
-						if text 1 thru 1 of modifiedXML is in {charLF, charCR} then
-							set modifiedXML to text 2 thru -1 of modifiedXML
-						end if
-						
-						return modifiedXML
-						
-						
-					else
-						-- was ALSO NOT layout objects, so return unchanged:
-						return someXML
+					if hasHeader then
+						-- remove the layout header found:
+						set pendingXML to getTextAfter(pendingXML, xmlHeader_LO_current)
+						(* trim leading/trailing whitespace *)
+						set pendingXML to trimWhitespace(pendingXML)
 					end if
 				end if
+				
+				(* Remove footer, if any, ONLY if header was found and removed: *)
+				if hasHeader and pendingXML ends with xmlFooter then
+					set hasFooter to true
+					set pendingXML to getTextBefore(pendingXML, xmlFooter)
+					(* trim leading/trailing whitespace *)
+					set pendingXML to trimWhitespace(pendingXML)
+				end if
+				
+				
+				
+				if hasHeader and hasFooter then
+					-- found (and removed) header and footer, so return the modified XML:
+					return pendingXML
+				else
+					-- did not find both header and footer, so return unchanged:
+					return someXML
+				end if
+				
 			on error errMsg number errNum
 				-- any error above should fail gracefully and just return the original code
 				if debugMode then logConsole(ScriptName, "removeHeaderFooter: ERROR: " & errMsg & "(" & errNum & ")")
@@ -879,26 +900,63 @@ on fmObjectTranslator_Instantiate(prefs)
 			end try
 		end removeHeaderFooter
 		
+		
+		
 		on addHeaderFooter(someXML)
-			-- version 1.2
+			-- version 1.3
 			
+			-- 1.3 - 2026-05-01 ( danshockley ): If has header or footer already, no need to modify, except to prepend missing declaration. 
 			-- 1.2 - 2020-08-11 ( danshockley ): log was using wrong function name. 
 			-- 1.1 - 2017-12-18 ( danshockley ): support layout objects.
 			-- 1.0 - 2017-04-25 ( dshockley/eshagdar ): first created.
 			
+			(*
+				What we want is, if the header and footer are not there, put them on.
+				The LOGIC is: 
+				 - Check for XML declaration. If present, return original. 
+				 - Check for FMObjectList. If present, return original, but with declaration prepended. 
+				 - Check for special Layout snippet header. If present, return original. 
+				 - If starts with Layout _node_, prepend the "current" (when removed) LayoutObjectList header.
+				 - Else, prepend the generic XML declaration and FMObjectList.
+				 - Append footer, if needed.
+				 - Return the modified XML. 
+			*)
+			
 			if debugMode then logConsole(ScriptName, "addHeaderFooter: START")
 			try
-				if someXML does not start with xmlHeader and someXML does not end with xmlFooter then
-					if someXML starts with "<Layout" then
-						-- layout objects get a special header:
-						return xmlHeader_LO_current & charLF & someXML & charLF & xmlFooter
-					else
-						-- all other FileMaker objects:
-						return xmlHeader & charLF & someXML & charLF & xmlFooter
-					end if
-				else
+				set isHeaderDone to false
+				set pendingXML to trimWhitespace(someXML)
+				
+				(* Check for declaration FIRST, since we might need to prepend if it is not present. *)
+				if pendingXML begins with xmlHeader_declaration then
+					(* has XML declaration, so we assume original has ALL it needs: *)
 					return someXML
 				end if
+				
+				if pendingXML begins with xmlHeader_FMObjectList then
+					(* has FMObjectList, but didn't have declaration, so prepend that: *)
+					set isHeaderDone to true
+					set pendingXML to xmlHeader_declaration & charLF & pendingXML
+				end if
+				
+				-- Add appropriate header, if not already done:
+				if not isHeaderDone then
+					if pendingXML starts with "<Layout" then
+						-- layout objects get a special header:
+						set pendingXML to xmlHeader_LO_current & charLF & pendingXML & charLF
+					else
+						-- all other FileMaker objects, so add declaration and FMObjectList:
+						set pendingXML to xmlHeader_declaration & charLF & xmlHeader_FMObjectList & charLF & pendingXML
+					end if
+				end if -- was header already done above?
+				
+				if pendingXML does not end with xmlFooter then
+					(* need to add the footer still *)
+					set pendingXML to pendingXML & charLF & xmlFooter
+				end if
+				
+				return pendingXML
+				
 			on error errMsg number errNum
 				-- any error above should fail gracefully and just return the original code
 				if debugMode then logConsole(ScriptName, "addHeaderFooter: ERROR: " & errMsg & "(" & errNum & ")")
@@ -1516,7 +1574,52 @@ on fmObjectTranslator_Instantiate(prefs)
 		end coerceToString
 		
 		
+		on getTextAfter(sourceText, afterThis)
+			-- version 1.2, Daniel A. Shockley, http://www.danshockley.com
+			
+			-- gets ALL text from source after marker, not just through next occurrence
+			-- 1.2 - changed to get ALL, not thru next occurrence, which changes behavior to match handler NAME
+			
+			try
+				set {oldDelims, AppleScript's text item delimiters} to {AppleScript's text item delimiters, {afterThis}}
+				
+				if (count of text items of sourceText) is 1 then
+					-- the split-string didn't appear at all
+					set AppleScript's text item delimiters to oldDelims
+					return ""
+				else
+					set the resultAsList to text items 2 thru -1 of sourceText
+				end if
+				set AppleScript's text item delimiters to {afterThis}
+				set finalResult to resultAsList as string
+				set AppleScript's text item delimiters to oldDelims
+				return finalResult
+			on error errMsg number errNum
+				set AppleScript's text item delimiters to oldDelims
+				return "" -- return nothing if the stop text is not found
+			end try
+		end getTextAfter
 		
+		
+		
+		on getTextBefore(sourceText, stopHere)
+			-- version 1.1, Daniel A. Shockley, http://www.danshockley.com
+			-- gets the text before the first occurrence stopHere
+			try
+				set {oldDelims, AppleScript's text item delimiters} to {AppleScript's text item delimiters, stopHere}
+				if (count of text items of sourceText) is 1 then
+					set AppleScript's text item delimiters to oldDelims
+					return ""
+				else
+					set the finalResult to text item 1 of sourceText
+				end if
+				set AppleScript's text item delimiters to oldDelims
+				return finalResult
+			on error errMsg number errNum
+				set AppleScript's text item delimiters to oldDelims
+				return "" -- return nothing if the stop text is not found
+			end try
+		end getTextBefore
 		
 		
 		on getTextBetween(prefs)
@@ -1596,6 +1699,56 @@ on fmObjectTranslator_Instantiate(prefs)
 				
 			end try
 		end getTextBetweenMultiple
+		
+		on trimWhitespace(inputString)
+			-- version 1.1: 
+			
+			-- 1.1 - changed to correctly handle when the whole input string is whitespace
+			-- 1.0 - loop actually works, since the ASTIDs method fails with return / ascii character 13
+			-- note also that the "contains" AppleScript function breaks with ASCII character 13
+			-- that is why a list of ASCII numbers is used, instead of a list of strings
+			set whiteSpaceAsciiNumbers to {13, 10, 32, 9}
+			
+			set textLength to length of inputString
+			if textLength is 0 then return ""
+			set endSpot to -textLength -- if only whitespace is found, will chop whole string
+			
+			-- chop from end
+			set i to -1
+			repeat while -i is less than or equal to textLength
+				set testChar to text i thru i of inputString
+				if whiteSpaceAsciiNumbers does not contain (ASCII number testChar) then
+					set endSpot to i
+					exit repeat
+				end if
+				set i to i - 1
+			end repeat
+			
+			
+			if -endSpot is equal to textLength then
+				if whiteSpaceAsciiNumbers contains (ASCII number testChar) then return ""
+			end if
+			
+			set inputString to text 1 thru endSpot of inputString
+			set textLength to length of inputString
+			set newStart to 1
+			
+			-- chop from beginning
+			set i to 1
+			repeat while i is less than or equal to textLength
+				set testChar to text i thru i of inputString
+				if whiteSpaceAsciiNumbers does not contain (ASCII number testChar) then
+					set newStart to i
+					exit repeat
+				end if
+				set i to i + 1
+			end repeat
+			
+			set inputString to text newStart thru textLength of inputString
+			
+			return inputString
+			
+		end trimWhitespace
 		
 		
 		

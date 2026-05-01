@@ -1,10 +1,11 @@
 -- fmClip - Clipboard FM Objects to XML
--- version 4.0.4, Daniel A. Shockley, Erik Shagdar
+-- version 4.0.5, Daniel A. Shockley, Erik Shagdar
 
 (*  
 	Converts any FileMaker objects in the clipboard into XML, then ADDS that XML TEXT to the clipboard as an additional object. 
 
 HISTORY:
+	4.0.5 - 2026-05-01 ( danshockley ): If clipboard already contains utf8, assume that must be a text representation of the XML, and do not try to update/add. That might be done by helpful plugins like MBS.
 	4.0.4 - 2024-01-11 ( danshockley ): Testing added Theme support, renamed clipboardHasFM variable for clarity.
 	4.0.3 - 2023-03-10 ( dshockley ): Turned off default to prettify XML. 
 	4.0.2 - 2023-03-04 ( dshockley ): Turned off debugMode property of objTrans, since not needed for normal use. 
@@ -18,15 +19,23 @@ HISTORY:
 	1.1 - added ability to determine which FM class is in clipboard
 *)
 
+property debugMode : false -- ONLY enable this while developing/testing
 
 on run
+	
+	if debugMode then display dialog "DEBUG MODE IS ON!!!"
+	
 	
 	set objTrans to run script alias (((((path to me as text) & "::") as alias) as string) & "fmObjectTranslator.applescript")
 	(* If you need a self-contained script, copy the code from fmObjectTranslator into this script and use the following instead of the run script step above:
 			set objTrans to fmObjectTranslator_Instantiate({})
 	*)
 	
+	
+	if debugMode then set debugMode of objTrans to true
+	
 	set clipboardHasFM to checkClipboardForObjects({}) of objTrans
+	set clipboardHasText to checkClipboardForText({}) of objTrans
 	
 	
 	if currentCode of objTrans is "XML2" then
@@ -38,15 +47,20 @@ on run
 		set shouldPrettify of objTrans to false
 	end if
 	
-	--set debugMode of objTrans to true  -- ONLY enable this while developing/testing
+	
+	
 	
 	if clipboardHasFM is false then
 		display dialog "The clipboard did not contain any FileMaker objects."
 		return false
 	end if
 	
-	clipboardConvertToXML({}) of objTrans
-	
-	return result
+	if clipboardHasText then
+		get the clipboard as Çclass utf8È
+		return result
+	else
+		clipboardConvertToXML({}) of objTrans
+		return result
+	end if
 	
 end run

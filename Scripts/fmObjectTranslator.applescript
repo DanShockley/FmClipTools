@@ -24,7 +24,7 @@ on fmObjectTranslator_Instantiate(prefs)
 	script fmObjectTranslator
 		-- version 4.1.8, Daniel A. Shockley
 		
-		-- 4.1.8 - 2026-05-01 ( danshockley ): In removeHeaderFooter, notice and remove the XML declaration before fmxmlsnippet for all types, since FileMaker Pro 22.0.6 (maybe earlier?) now (but not always?!) includes that for objects, breaking some code. AND, in addHeaderFooter, include it for ALL types, since FileMaker Pro 22 expects that and earlier versions back at least to FM 17.07 accept pasted objects that include it. Added handlers getTextAfter, getTextBefore, and trimWhitespace.
+		-- 4.1.8 - 2026-05-01 ( danshockley ): In removeHeaderFooter, notice and remove the XML declaration before fmxmlsnippet for all types, since the popular MBS plugin includes that for objects, breaking some FmClipTools code. AND, in addHeaderFooter, include it for ALL types, since FileMaker has supported that back at least to FM 17.0.7. Added handlers getTextAfter, getTextBefore, and trimWhitespace.
 		-- 4.1.7 - 2026-03-30 ( danshockley ): Added getTextBetweenMultiple for use by scripts loading this object. 
 		-- 4.1.6 - 2025-05-14 ( danshockley ): Support Custom Function folders by modifying the fmObjectList to have special handling when top node is Group (can be Script or CustomFunction). Note that isStringValidFMObjectXML also has changes to support this. 
 		-- 4.1.5 - 2024-10-27 ( danshockley ): Corrected constant's variable name to be "charETX" instead of "charEOT" so it matches normal terminology. 
@@ -560,6 +560,31 @@ on fmObjectTranslator_Instantiate(prefs)
 			
 			
 		end checkClipboardForObjects
+		
+		
+		on checkClipboardForText(prefs)
+			-- version 1.0
+			-- Checks clipboard for utf8. Returns true if it does, false if not. 
+			-- Reason? If the clipboard has both FM objects AND text, we will assume that is an XML representation of the objects.
+			
+			-- 1.0 - 2026-05-01 ( danshockley ): Created. 
+			
+			--if debugMode then 
+			logConsole(ScriptName, "checkClipboardForText: START")
+			
+			set clipboardClasses to clipboard info
+			
+			set foundText to false
+			repeat with oneTypeAndLength in clipboardClasses
+				set oneTypeAndLength to contents of oneTypeAndLength
+				if item 1 of oneTypeAndLength is Çclass utf8È then set foundText to true
+			end repeat
+			
+			if debugMode then logConsole(ScriptName, "checkClipboardForText: FINISH: foundText: " & foundText)
+			
+			return foundText
+			
+		end checkClipboardForText
 		
 		
 		on convertObjectsToXML(fmObjects)
